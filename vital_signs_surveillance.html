@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vital Signs Surveillance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:        #F0F4F8;
+    --surface:   #FFFFFF;
+    --surface2:  #E8EFF5;
+    --border:    #D0DCE8;
+    --ink:       #1A2533;
+    --ink2:      #4A5E72;
+    --ink3:      #8A9EAF;
+    --accent:    #3B82C4;
+    --accent2:   #E8F1FA;
+    --good:      #2D9E6B;
+    --good-bg:   #E8F7F1;
+    --warn:      #E07B39;
+    --warn-bg:   #FDF0E8;
+    --danger:    #C94040;
+    --danger-bg: #FAEAEA;
+    --radius:    12px;
+    --radius-sm: 8px;
+
+    /* Vital accent colors */
+    --spo2-color:   #3B82C4;
+    --spo2-bg:      #E8F1FA;
+    --hr-color:     #C94040;
+    --hr-bg:        #FAEAEA;
+    --bp-color:     #7B5EA7;
+    --bp-bg:        #F3EEFA;
+    --wt-color:     #E07B39;
+    --wt-bg:        #FDF0E8;
+    --temp-color:   #2D9E6B;
+    --temp-bg:      #E8F7F1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 15px; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+    height: 60px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: baseline; gap: 8px; }
+  .logo-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--ink); letter-spacing: -0.3px; }
+  .logo-sub { font-size: 11px; color: var(--ink3); font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex; background: var(--surface2); border-bottom: 1px solid var(--border);
+    padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 11px 14px; font-size: 12px; font-weight: 500; color: var(--ink2);
+    cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none;
+    flex-shrink: 0;
+  }
+  .nav-tab:hover { color: var(--accent); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 20px; max-width: 640px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── DASHBOARD GRID ── */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .dash-tile {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; cursor: pointer;
+    transition: all 0.15s; position: relative; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dash-tile:hover { border-color: var(--accent); }
+  .dash-tile::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; border-radius: 4px 0 0 4px;
+  }
+  .dash-tile.spo2::before  { background: var(--spo2-color); }
+  .dash-tile.hr::before    { background: var(--hr-color); }
+  .dash-tile.bp::before    { background: var(--bp-color); }
+  .dash-tile.wt::before    { background: var(--wt-color); }
+  .dash-tile.temp::before  { background: var(--temp-color); }
+  .dash-tile-eyebrow { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 6px; padding-left: 8px; }
+  .dash-tile-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--ink); line-height: 1; padding-left: 8px; }
+  .dash-tile-unit { font-size: 12px; color: var(--ink3); margin-left: 3px; }
+  .dash-tile-since { font-size: 11px; color: var(--ink3); margin-top: 4px; padding-left: 8px; }
+  .dash-tile-status { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 4px; margin-left: 8px; }
+  .status-ok   { background: var(--good-bg);   color: var(--good); }
+  .status-warn { background: var(--warn-bg);   color: var(--warn); }
+  .status-high { background: var(--danger-bg); color: var(--danger); }
+  .status-low  { background: var(--accent2);   color: var(--accent); }
+  .status-none { background: var(--surface2);  color: var(--ink3); }
+
+  /* ── CARDS ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); margin-bottom: 14px; }
+
+  /* ── VITAL INPUT AREA ── */
+  .vital-input-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+    border-left: 4px solid var(--border);
+  }
+  .vital-input-card.spo2 { border-left-color: var(--spo2-color); }
+  .vital-input-card.hr   { border-left-color: var(--hr-color); }
+  .vital-input-card.bp   { border-left-color: var(--bp-color); }
+  .vital-input-card.wt   { border-left-color: var(--wt-color); }
+  .vital-input-card.temp { border-left-color: var(--temp-color); }
+
+  /* ── BIG NUMBER INPUT ── */
+  .big-inputs { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+  .big-input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .big-input-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink3); text-align: center; }
+  .big-input {
+    width: 100%; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 500;
+    padding: 14px 8px; border-radius: var(--radius); border: 2px solid var(--border);
+    background: var(--bg); color: var(--ink); transition: all 0.15s;
+    -moz-appearance: textfield;
+  }
+  .big-input::-webkit-outer-spin-button, .big-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .big-input:focus { outline: none; border-color: var(--accent); background: var(--accent2); box-shadow: 0 0 0 3px rgba(59,130,196,0.1); }
+  .big-input.filled { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+  .big-input.alert-high { border-color: var(--danger) !important; background: var(--danger-bg) !important; color: var(--danger) !important; }
+  .big-input.alert-low  { border-color: var(--accent) !important; background: var(--accent2) !important; color: var(--accent) !important; }
+  .bp-slash { font-family: 'DM Mono', monospace; font-size: 36px; color: var(--ink3); padding-top: 18px; flex-shrink: 0; }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    display: none; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 10px;
+    font-size: 13px; font-weight: 500;
+  }
+  .alert-banner.show { display: flex; }
+  .alert-banner.high { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0c0c0; }
+  .alert-banner.low  { background: var(--accent2); color: var(--accent); border: 1px solid #bdd5ee; }
+  .alert-banner.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #f0d0b0; }
+
+  /* ── FORM ── */
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 130px; }
+  label { font-size: 11px; font-weight: 500; color: var(--ink2); letter-spacing: 0.3px; text-transform: uppercase; }
+  input[type="date"], input[type="text"], input[type="number"], textarea, select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
+    transition: border-color 0.15s; width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,196,0.1); }
+  textarea { resize: vertical; min-height: 60px; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2d6faa; }
+  .btn-primary:disabled { background: var(--border); color: var(--ink3); cursor: not-allowed; }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--ink2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent2); }
+  .btn-danger-soft { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0c0c0; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+  .btn-icon:active { background: var(--surface2); }
+
+  /* ── HISTORY CARDS ── */
+  .hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+  .hist-top { display: flex; align-items: center; padding: 12px 16px; gap: 12px; }
+  .hist-date-block { flex: 1; }
+  .hist-date { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink); }
+  .hist-time-text { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+  .hist-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; line-height: 1; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .hist-val-unit { font-size: 10px; color: var(--ink3); font-family: 'DM Sans', sans-serif; margin-top: 2px; }
+  .hist-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .hist-notes { padding: 6px 16px 10px; font-size: 12px; color: var(--ink3); font-style: italic; border-top: 1px solid var(--border); }
+  .del-confirm { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--danger-bg); border-top: 1px solid #f0c0c0; flex-wrap: wrap; }
+
+  /* ── TREND SECTION ── */
+  .trend-stat-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .stat-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 3px; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+  .chart-title { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .chart-wrap { position: relative; height: 180px; }
+
+  /* ── VS BANNER ── */
+  .vs-banner { border-radius: var(--radius); padding: 12px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .vs-banner-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .vs-banner-note { font-size: 12px; color: var(--ink2); }
+  .vs-banner-pct { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 500; line-height: 1; }
+
+  /* ── SETTINGS ── */
+  .settings-section { margin-bottom: 20px; }
+  .settings-section-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .threshold-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .threshold-group { display: flex; flex-direction: column; gap: 4px; }
+  .threshold-label { font-size: 11px; font-weight: 500; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.3px; }
+  .threshold-input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 16px; color: var(--ink); width: 100%; text-align: center; -moz-appearance: textfield; }
+  .threshold-input::-webkit-outer-spin-button, .threshold-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .threshold-input:focus { outline: none; border-color: var(--accent); }
+  .cadence-note { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+
+  /* ── TIME PICKER ── */
+  .tp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
+  .tp-modal.open { display: flex; }
+  .tp-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 22px 22px 34px; width: 100%; max-width: 480px; }
+  .tp-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); margin-bottom: 18px; text-align: center; }
+  .tp-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
+  .tp-scroll { display: flex; flex-direction: column; align-items: center; }
+  .tp-scroll-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 5px; }
+  .tp-scroll button { background: none; border: none; font-size: 20px; color: var(--ink3); cursor: pointer; padding: 4px 12px; border-radius: 6px; line-height: 1; }
+  .tp-scroll button:active { background: var(--surface2); }
+  .tp-val { font-family: 'DM Mono', monospace; font-size: 38px; font-weight: 500; color: var(--ink); min-width: 60px; text-align: center; background: var(--bg); border-radius: 10px; padding: 7px 10px; line-height: 1; }
+  .tp-sep { font-family: 'DM Mono', monospace; font-size: 32px; color: var(--ink2); margin-bottom: 18px; }
+  .ampm-toggle { display: flex; flex-direction: column; gap: 6px; margin-left: 8px; margin-top: 18px; }
+  .ampm-btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink2); transition: all 0.15s; }
+  .ampm-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tp-actions { display: flex; gap: 10px; }
+
+  /* ── EDIT MODAL ── */
+  .edit-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
+  .edit-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 22px 20px 34px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; }
+  .edit-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink); margin-bottom: 16px; }
+
+  /* ── MISC ── */
+  .empty { text-align: center; padding: 40px 20px; color: var(--ink3); }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink2); margin-bottom: 5px; }
+  .empty-sub { font-size: 13px; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: #fff; padding: 11px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: var(--good); }
+  .toast.error { background: var(--danger); }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .last-logged { font-size: 12px; color: var(--ink3); text-align: center; margin-bottom: 12px; }
+  .last-logged.overdue { color: var(--warn); font-weight: 500; }
+
+  @media (max-width: 480px) {
+    .page { padding: 14px; }
+    header { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-title">Vital Signs</span>
+    <span class="logo-sub">Surveillance</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('settings')">⚙️ Settings</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('dashboard')" id="tab-dashboard">Dashboard</button>
+  <button class="nav-tab" onclick="showPage('spo2')"      id="tab-spo2">SpO₂</button>
+  <button class="nav-tab" onclick="showPage('hr')"        id="tab-hr">Heart Rate</button>
+  <button class="nav-tab" onclick="showPage('bp')"        id="tab-bp">Blood Pressure</button>
+  <button class="nav-tab" onclick="showPage('wt')"        id="tab-wt">Weight</button>
+  <button class="nav-tab" onclick="showPage('temp')"      id="tab-temp">Temperature</button>
+</div>
+
+<!-- ═══════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div id="dashContent"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SPO2
+═══════════════════════════════════ -->
+<div class="page" id="page-spo2">
+  <div id="spo2-last-logged" class="last-logged"></div>
+  <div class="vital-input-card spo2">
+    <div class="card-title">Log SpO₂ Reading</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="spo2-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('spo2')" data-vital="spo2">
+          <span class="tdtext" id="spo2-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="spo2-time">
+      </div>
+    </div>
+    <div class="big-inputs">
+      <div class="big-input-group">
+        <div class="big-input-label">SpO₂ %</div>
+        <input type="number" class="big-input" id="spo2-val" min="70" max="100" placeholder="—" oninput="checkVital('spo2')">
+      </div>
+      <div class="big-input-group">
+        <div class="big-input-label">Pulse (opt)</div>
+        <input type="number" class="big-input" id="spo2-pulse" min="30" max="220" placeholder="—" oninput="checkVital('spo2')">
+      </div>
+    </div>
+    <div class="alert-banner" id="spo2-alert"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="spo2-notes" placeholder="e.g. after activity, at rest…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearLog('spo2')">Clear</button>
+      <button class="btn btn-primary" id="spo2-save" onclick="saveVital('spo2')" disabled>Save Reading</button>
+    </div>
+  </div>
+  <div id="spo2-history"></div>
+  <div id="spo2-trends"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     HEART RATE
+═══════════════════════════════════ -->
+<div class="page" id="page-hr">
+  <div id="hr-last-logged" class="last-logged"></div>
+  <div class="vital-input-card hr">
+    <div class="card-title">Log Heart Rate</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="hr-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('hr')" data-vital="hr">
+          <span class="tdtext" id="hr-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="hr-time">
+      </div>
+    </div>
+    <div class="big-inputs">
+      <div class="big-input-group">
+        <div class="big-input-label">BPM</div>
+        <input type="number" class="big-input" id="hr-val" min="20" max="300" placeholder="—" oninput="checkVital('hr')">
+      </div>
+    </div>
+    <div class="alert-banner" id="hr-alert"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="hr-notes" placeholder="e.g. resting, after walk…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearLog('hr')">Clear</button>
+      <button class="btn btn-primary" id="hr-save" onclick="saveVital('hr')" disabled>Save Reading</button>
+    </div>
+  </div>
+  <div id="hr-history"></div>
+  <div id="hr-trends"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     BLOOD PRESSURE
+═══════════════════════════════════ -->
+<div class="page" id="page-bp">
+  <div id="bp-last-logged" class="last-logged"></div>
+  <div class="vital-input-card bp">
+    <div class="card-title">Log Blood Pressure</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="bp-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('bp')" data-vital="bp">
+          <span class="tdtext" id="bp-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="bp-time">
+      </div>
+    </div>
+    <div class="big-inputs">
+      <div class="big-input-group">
+        <div class="big-input-label">Systolic</div>
+        <input type="number" class="big-input" id="bp-sys" min="50" max="250" placeholder="—" oninput="checkVital('bp')">
+      </div>
+      <div class="bp-slash">/</div>
+      <div class="big-input-group">
+        <div class="big-input-label">Diastolic</div>
+        <input type="number" class="big-input" id="bp-dia" min="30" max="150" placeholder="—" oninput="checkVital('bp')">
+      </div>
+    </div>
+    <div class="alert-banner" id="bp-alert"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="bp-notes" placeholder="e.g. after rest, morning reading…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearLog('bp')">Clear</button>
+      <button class="btn btn-primary" id="bp-save" onclick="saveVital('bp')" disabled>Save Reading</button>
+    </div>
+  </div>
+  <div id="bp-history"></div>
+  <div id="bp-trends"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     WEIGHT
+═══════════════════════════════════ -->
+<div class="page" id="page-wt">
+  <div id="wt-last-logged" class="last-logged"></div>
+  <div class="vital-input-card wt">
+    <div class="card-title">Log Weight</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="wt-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('wt')" data-vital="wt">
+          <span class="tdtext" id="wt-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="wt-time">
+      </div>
+    </div>
+    <div class="big-inputs">
+      <div class="big-input-group">
+        <div class="big-input-label">Weight (lbs)</div>
+        <input type="number" class="big-input" id="wt-val" min="50" max="500" step="0.1" placeholder="—" oninput="checkVital('wt')">
+      </div>
+    </div>
+    <div class="alert-banner" id="wt-alert"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="wt-notes" placeholder="e.g. morning, before breakfast…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearLog('wt')">Clear</button>
+      <button class="btn btn-primary" id="wt-save" onclick="saveVital('wt')" disabled>Save Reading</button>
+    </div>
+  </div>
+  <div id="wt-history"></div>
+  <div id="wt-trends"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     TEMPERATURE
+═══════════════════════════════════ -->
+<div class="page" id="page-temp">
+  <div id="temp-last-logged" class="last-logged"></div>
+  <div class="vital-input-card temp">
+    <div class="card-title">Log Temperature</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="temp-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('temp')" data-vital="temp">
+          <span class="tdtext" id="temp-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="temp-time">
+      </div>
+    </div>
+    <div class="big-inputs">
+      <div class="big-input-group">
+        <div class="big-input-label">°F</div>
+        <input type="number" class="big-input" id="temp-val" min="90" max="110" step="0.1" placeholder="—" oninput="checkVital('temp')">
+      </div>
+    </div>
+    <div class="alert-banner" id="temp-alert"></div>
+    <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="temp-notes" placeholder="e.g. oral, feeling chills…"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearLog('temp')">Clear</button>
+      <button class="btn btn-primary" id="temp-save" onclick="saveVital('temp')" disabled>Save Reading</button>
+    </div>
+  </div>
+  <div id="temp-history"></div>
+  <div id="temp-trends"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SETTINGS
+═══════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">Alert Thresholds</div>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:16px">Set based on Cocomi's discharge targets from UF Health Shands. These calibrate all alerts and color indicators throughout the app.</p>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🩸 SpO₂ (%)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-spo2-low" min="70" max="99" placeholder="92">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-spo2" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="2">2-3x per week</option>
+            <option value="7">Weekly</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">❤️ Heart Rate (BPM)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-hr-low" min="20" max="80" placeholder="60">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ High Alert Above</div>
+          <input type="number" class="threshold-input" id="th-hr-high" min="60" max="220" placeholder="100">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-hr" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="3">Every 3 days</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">💜 Blood Pressure (mmHg)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Systolic Low</div>
+          <input type="number" class="threshold-input" id="th-bp-sys-low" min="50" max="120" placeholder="90">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Systolic High</div>
+          <input type="number" class="threshold-input" id="th-bp-sys-high" min="100" max="250" placeholder="130">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Diastolic Low</div>
+          <input type="number" class="threshold-input" id="th-bp-dia-low" min="30" max="80" placeholder="60">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Diastolic High</div>
+          <input type="number" class="threshold-input" id="th-bp-dia-high" min="60" max="150" placeholder="80">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-bp" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="14">Bi-weekly</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🟠 Weight (lbs)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ Flag gain of ≥</div>
+          <input type="number" class="threshold-input" id="th-wt-gain" min="1" max="20" step="0.5" placeholder="2">
+          <div class="cadence-note">lbs within 7 days</div>
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-wt" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="3">Every 3 days</option>
+            <option value="14">Bi-weekly</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🟢 Temperature (°F)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ Fever Alert Above</div>
+          <input type="number" class="threshold-input" id="th-temp-high" min="97" max="105" step="0.1" placeholder="99.5">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-temp-low" min="90" max="98" step="0.1" placeholder="97.0">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-ghost" onclick="loadSettings()">Reset</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- Time Picker -->
+<div class="tp-modal" id="tp-modal" onclick="if(event.target===this)closeTP()">
+  <div class="tp-sheet">
+    <div class="tp-title">Set Time</div>
+    <div class="tp-row">
+      <div class="tp-scroll">
+        <div class="tp-scroll-label">Hour</div>
+        <button ontouchstart="startR('h',1)" onmousedown="startR('h',1)" ontouchend="stopR()" onmouseup="stopR()">▲</button>
+        <div class="tp-val" id="tp-h">12</div>
+        <button ontouchstart="startR('h',-1)" onmousedown="startR('h',-1)" ontouchend="stopR()" onmouseup="stopR()">▼</button>
+      </div>
+      <div class="tp-sep">:</div>
+      <div class="tp-scroll">
+        <div class="tp-scroll-label">Min</div>
+        <button ontouchstart="startR('m',1)" onmousedown="startR('m',1)" ontouchend="stopR()" onmouseup="stopR()">▲</button>
+        <div class="tp-val" id="tp-m">00</div>
+        <button ontouchstart="startR('m',-1)" onmousedown="startR('m',-1)" ontouchend="stopR()" onmouseup="stopR()">▼</button>
+      </div>
+      <div class="ampm-toggle">
+        <button class="ampm-btn active" id="tp-am" onclick="setAP('AM')">AM</button>
+        <button class="ampm-btn" id="tp-pm" onclick="setAP('PM')">PM</button>
+      </div>
+    </div>
+    <div class="tp-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeTP()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="confirmTP()">OK — Set Time</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="edit-modal" id="edit-modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="edit-sheet">
+    <div class="edit-title" id="edit-title">Edit Reading</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="edit-date"></div>
+      <div class="form-group">
+        <label>Time</label>
+        <div class="time-display-field" onclick="openTP('edit')">
+          <span class="tdtext" id="edit-td-text">Tap to set</span><span>🕐</span>
+        </div>
+        <input type="hidden" id="edit-time">
+      </div>
+    </div>
+    <div id="edit-fields"></div>
+    <div class="form-group" style="margin-bottom:16px"><label>Notes</label><textarea id="edit-notes"></textarea></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('edit-modal').style.display='none'">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<style>
+  .time-display-field {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-size: 14px; color: var(--ink); cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+</style>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════
+const VITALS = ['spo2','hr','bp','wt','temp'];
+const SK = k => 'vss_' + k + '_v1';
+
+function getRecords(vital) {
+  try { return JSON.parse(localStorage.getItem(SK(vital)) || '[]'); }
+  catch(e) { return []; }
+}
+function saveRecords(vital, data) { localStorage.setItem(SK(vital), JSON.stringify(data)); }
+
+// ══════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════
+const SETTINGS_KEY = 'vss_settings_v1';
+const DEFAULT_SETTINGS = {
+  spo2: { low: 92 }, cadSpo2: '2',
+  hr:   { low: 60, high: 100 }, cadHr: '7',
+  bp:   { sysLow: 90, sysHigh: 130, diaLow: 60, diaHigh: 80 }, cadBp: '7',
+  wt:   { gainAlert: 2 }, cadWt: '7',
+  temp: { low: 97.0, high: 99.5 }
+};
+
+function getSettings() {
+  try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch(e) { return DEFAULT_SETTINGS; }
+}
+function loadSettings() {
+  const s = getSettings();
+  document.getElementById('th-spo2-low').value  = s.spo2.low;
+  document.getElementById('th-hr-low').value    = s.hr.low;
+  document.getElementById('th-hr-high').value   = s.hr.high;
+  document.getElementById('th-bp-sys-low').value  = s.bp.sysLow;
+  document.getElementById('th-bp-sys-high').value = s.bp.sysHigh;
+  document.getElementById('th-bp-dia-low').value  = s.bp.diaLow;
+  document.getElementById('th-bp-dia-high').value = s.bp.diaHigh;
+  document.getElementById('th-wt-gain').value   = s.wt.gainAlert;
+  document.getElementById('th-temp-high').value = s.temp.high;
+  document.getElementById('th-temp-low').value  = s.temp.low;
+  if (s.cadSpo2) document.getElementById('cad-spo2').value = s.cadSpo2;
+  if (s.cadHr)   document.getElementById('cad-hr').value   = s.cadHr;
+  if (s.cadBp)   document.getElementById('cad-bp').value   = s.cadBp;
+  if (s.cadWt)   document.getElementById('cad-wt').value   = s.cadWt;
+}
+function saveSettings() {
+  const s = {
+    spo2: { low:  parseFloat(document.getElementById('th-spo2-low').value)  || 92 },
+    hr:   { low:  parseFloat(document.getElementById('th-hr-low').value)    || 60,
+            high: parseFloat(document.getElementById('th-hr-high').value)   || 100 },
+    bp:   { sysLow:  parseFloat(document.getElementById('th-bp-sys-low').value)  || 90,
+            sysHigh: parseFloat(document.getElementById('th-bp-sys-high').value) || 130,
+            diaLow:  parseFloat(document.getElementById('th-bp-dia-low').value)  || 60,
+            diaHigh: parseFloat(document.getElementById('th-bp-dia-high').value) || 80 },
+    wt:   { gainAlert: parseFloat(document.getElementById('th-wt-gain').value) || 2 },
+    temp: { low:  parseFloat(document.getElementById('th-temp-low').value)  || 97.0,
+            high: parseFloat(document.getElementById('th-temp-high').value) || 99.5 },
+    cadSpo2: document.getElementById('cad-spo2').value,
+    cadHr:   document.getElementById('cad-hr').value,
+    cadBp:   document.getElementById('cad-bp').value,
+    cadWt:   document.getElementById('cad-wt').value
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  showToast('Settings saved ✓', 'success');
+  showPage('dashboard');
+}
+
+// ══════════════════════════════════════════════════
+//  VITAL CHECK & ALERT
+// ══════════════════════════════════════════════════
+function checkVital(vital) {
+  const s = getSettings();
+  const inp = document.getElementById(vital + '-val');
+  const alertEl = document.getElementById(vital + '-alert');
+  const saveBtn = document.getElementById(vital + '-save');
+  let val = parseFloat(inp ? inp.value : 0);
+  let alertMsg = '', alertClass = '', isAlert = false;
+
+  if (vital === 'spo2') {
+    const hasSpo2 = inp.value !== '';
+    saveBtn.disabled = !hasSpo2;
+    if (hasSpo2) {
+      inp.classList.toggle('alert-low', val < s.spo2.low);
+      inp.classList.toggle('filled', val >= s.spo2.low);
+      if (val < s.spo2.low) { alertMsg = `⚠️ SpO₂ ${val}% is below threshold (${s.spo2.low}%). Notify care team.`; alertClass = 'low'; isAlert = true; }
+    }
+  } else if (vital === 'hr') {
+    saveBtn.disabled = inp.value === '';
+    if (inp.value !== '') {
+      const isHigh = val > s.hr.high, isLow = val < s.hr.low;
+      inp.classList.toggle('alert-high', isHigh);
+      inp.classList.toggle('alert-low', isLow && !isHigh);
+      inp.classList.toggle('filled', !isHigh && !isLow);
+      if (isHigh) { alertMsg = `⚠️ Heart rate ${val} BPM is above threshold (${s.hr.high} BPM) — possible tachycardia.`; alertClass = 'high'; isAlert = true; }
+      else if (isLow) { alertMsg = `⚠️ Heart rate ${val} BPM is below threshold (${s.hr.low} BPM) — possible bradycardia.`; alertClass = 'low'; isAlert = true; }
+    }
+  } else if (vital === 'bp') {
+    const sys = parseFloat(document.getElementById('bp-sys').value);
+    const dia = parseFloat(document.getElementById('bp-dia').value);
+    const hasBoth = !isNaN(sys) && !isNaN(dia);
+    saveBtn.disabled = !hasBoth;
+    if (hasBoth) {
+      const sysHigh = sys > s.bp.sysHigh, sysLow = sys < s.bp.sysLow;
+      const diaHigh = dia > s.bp.diaHigh, diaLow = dia < s.bp.diaLow;
+      document.getElementById('bp-sys').classList.toggle('alert-high', sysHigh);
+      document.getElementById('bp-sys').classList.toggle('alert-low', sysLow && !sysHigh);
+      document.getElementById('bp-sys').classList.toggle('filled', !sysHigh && !sysLow);
+      document.getElementById('bp-dia').classList.toggle('alert-high', diaHigh);
+      document.getElementById('bp-dia').classList.toggle('alert-low', diaLow && !diaHigh);
+      document.getElementById('bp-dia').classList.toggle('filled', !diaHigh && !diaLow);
+      if (sysHigh || diaHigh) { alertMsg = `⚠️ Blood pressure ${sys}/${dia} is above threshold (${s.bp.sysHigh}/${s.bp.diaHigh}).`; alertClass = 'high'; isAlert = true; }
+      else if (sysLow || diaLow) { alertMsg = `⚠️ Blood pressure ${sys}/${dia} is below threshold (${s.bp.sysLow}/${s.bp.diaLow}).`; alertClass = 'low'; isAlert = true; }
+    }
+  } else if (vital === 'wt') {
+    saveBtn.disabled = inp.value === '';
+    if (inp.value !== '') {
+      inp.classList.add('filled');
+      // Check 7-day weight gain
+      const recs = getRecords('wt');
+      const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const recent = recs.filter(r => new Date(r.date) >= sevenDaysAgo);
+      if (recent.length > 0) {
+        const oldest = Math.min(...recent.map(r => r.val));
+        const gain = val - oldest;
+        if (gain >= s.wt.gainAlert) { alertMsg = `⚠️ Weight up ${gain.toFixed(1)} lbs in 7 days — possible fluid retention. Notify care team.`; alertClass = 'warn'; isAlert = true; }
+      }
+    }
+  } else if (vital === 'temp') {
+    saveBtn.disabled = inp.value === '';
+    if (inp.value !== '') {
+      const isHigh = val >= s.temp.high, isLow = val < s.temp.low;
+      inp.classList.toggle('alert-high', isHigh);
+      inp.classList.toggle('alert-low', isLow && !isHigh);
+      inp.classList.toggle('filled', !isHigh && !isLow);
+      if (isHigh) { alertMsg = `🌡️ Temperature ${val}°F is above fever threshold (${s.temp.high}°F). Notify care team.`; alertClass = 'high'; isAlert = true; }
+      else if (isLow) { alertMsg = `🌡️ Temperature ${val}°F is below low threshold (${s.temp.low}°F).`; alertClass = 'low'; isAlert = true; }
+    }
+  }
+
+  alertEl.className = 'alert-banner' + (isAlert ? ' show ' + alertClass : '');
+  alertEl.textContent = alertMsg;
+}
+
+// ══════════════════════════════════════════════════
+//  SAVE VITAL
+// ══════════════════════════════════════════════════
+function saveVital(vital) {
+  const date  = document.getElementById(vital + '-date').value;
+  const time  = document.getElementById(vital + '-time').value || null;
+  const notes = document.getElementById(vital + '-notes').value.trim();
+  if (!date) { showToast('Please set a date', 'error'); return; }
+
+  let record = { id: Date.now(), date, time, notes };
+
+  if (vital === 'spo2') {
+    record.val   = parseFloat(document.getElementById('spo2-val').value);
+    record.pulse = document.getElementById('spo2-pulse').value ? parseFloat(document.getElementById('spo2-pulse').value) : null;
+  } else if (vital === 'bp') {
+    record.sys = parseFloat(document.getElementById('bp-sys').value);
+    record.dia = parseFloat(document.getElementById('bp-dia').value);
+    record.val = record.sys; // for trend charting
+  } else {
+    record.val = parseFloat(document.getElementById(vital + '-val').value);
+  }
+
+  const recs = getRecords(vital);
+  recs.push(record);
+  recs.sort((a,b) => a.date.localeCompare(b.date));
+  saveRecords(vital, recs);
+  showToast('Reading saved ✓', 'success');
+  clearLog(vital);
+  renderVitalHistory(vital);
+  renderVitalTrends(vital);
+  updateLastLogged(vital);
+}
+
+function clearLog(vital) {
+  document.getElementById(vital + '-date').value = '';
+  document.getElementById(vital + '-time').value = '';
+  document.getElementById(vital + '-td-text').textContent = 'Tap to set';
+  document.getElementById(vital + '-notes').value = '';
+  if (vital === 'bp') {
+    document.getElementById('bp-sys').value = '';
+    document.getElementById('bp-dia').value = '';
+    document.getElementById('bp-sys').className = 'big-input';
+    document.getElementById('bp-dia').className = 'big-input';
+  } else {
+    const inp = document.getElementById(vital + '-val');
+    if (inp) { inp.value = ''; inp.className = 'big-input'; }
+    if (vital === 'spo2') { document.getElementById('spo2-pulse').value = ''; document.getElementById('spo2-pulse').className = 'big-input'; }
+  }
+  document.getElementById(vital + '-alert').className = 'alert-banner';
+  document.getElementById(vital + '-save').disabled = true;
+  initVitalDateTime(vital);
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORY RENDER
+// ══════════════════════════════════════════════════
+function renderVitalHistory(vital) {
+  const el = document.getElementById(vital + '-history');
+  const recs = getRecords(vital);
+  const s = getSettings();
+
+  if (!recs.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">${vitalIcon(vital)}</div><div class="empty-title">No readings yet</div><div class="empty-sub">Log your first ${vitalName(vital)} reading above.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = '<div class="card-title" style="margin-bottom:10px;font-family:DM Serif Display,serif;font-size:15px">History</div>' +
+    [...recs].reverse().map(r => {
+      const statusCls = getStatusClass(vital, r, s);
+      const valDisplay = vital === 'bp' ? `${r.sys}/${r.dia}` : r.val;
+      const unitDisplay = vitalUnit(vital);
+      return `
+      <div class="hist-card" id="hcard-${vital}-${r.id}">
+        <div class="hist-top">
+          <div class="hist-date-block">
+            <div class="hist-date">${formatDate(r.date)}</div>
+            <div class="hist-time-text">${r.time ? formatTime(r.time) : 'No time set'}</div>
+            ${r.pulse ? `<div style="font-size:11px;color:var(--ink3);margin-top:2px">Pulse: ${r.pulse} bpm</div>` : ''}
+          </div>
+          <div class="hist-val" style="color:${statusColor(statusCls)}">
+            ${valDisplay}<span class="hist-val-unit">${unitDisplay}</span>
+            <span class="dash-tile-status ${statusCls}">${statusCls.replace('status-','').toUpperCase()}</span>
+          </div>
+          <div class="hist-actions">
+            <button class="btn-icon" onclick="openEditModal('${vital}',${r.id})">✏️</button>
+            <button class="btn-icon" onclick="confirmDeleteVital('${vital}',${r.id})">🗑️</button>
+          </div>
+        </div>
+        ${r.notes ? `<div class="hist-notes">${r.notes}</div>` : ''}
+      </div>`;
+    }).join('');
+}
+
+function confirmDeleteVital(vital, id) {
+  const card = document.getElementById(`hcard-${vital}-${id}`);
+  const existing = card.querySelector('.del-confirm');
+  if (existing) { existing.remove(); return; }
+  const bar = document.createElement('div');
+  bar.className = 'del-confirm';
+  bar.innerHTML = `<span style="font-size:13px;color:var(--danger)">Delete this reading?</span>
+    <button class="btn btn-danger-soft btn-sm" onclick="deleteVital('${vital}',${id})">Yes, delete</button>
+    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">Cancel</button>`;
+  card.appendChild(bar);
+}
+
+function deleteVital(vital, id) {
+  saveRecords(vital, getRecords(vital).filter(r => r.id !== id));
+  renderVitalHistory(vital);
+  renderVitalTrends(vital);
+  updateLastLogged(vital);
+  showToast('Reading deleted');
+}
+
+// ══════════════════════════════════════════════════
+//  TRENDS RENDER
+// ══════════════════════════════════════════════════
+let charts = {};
+
+function renderVitalTrends(vital) {
+  const el = document.getElementById(vital + '-trends');
+  const recs = getRecords(vital);
+  if (charts[vital]) { charts[vital].destroy(); delete charts[vital]; }
+  if (vital === 'bp' && charts['bp-dia']) { charts['bp-dia'].destroy(); delete charts['bp-dia']; }
+
+  if (recs.length < 2) { el.innerHTML = ''; return; }
+
+  const sorted = [...recs].sort((a,b) => a.date.localeCompare(b.date));
+  const labels = sorted.map(r => formatDateShort(r.date));
+  const vals   = sorted.map(r => r.val);
+  const runAvg = vals.map((_,i) => parseFloat((vals.slice(0,i+1).reduce((a,b)=>a+b,0)/(i+1)).toFixed(1)));
+  const latest = vals[vals.length-1];
+  const accAvg = runAvg[runAvg.length-1];
+  const pct    = parseFloat(((latest - accAvg) / accAvg * 100).toFixed(1));
+  const sign   = pct >= 0 ? '+' : '';
+  const isBigDrop = pct <= -10, isBigRise = pct >= 10;
+  const vsBg     = isBigDrop ? 'var(--danger-bg)' : isBigRise ? 'var(--good-bg)' : 'var(--surface2)';
+  const vsBorder = isBigDrop ? '#f0c0c0' : isBigRise ? '#a8dfc5' : 'var(--border)';
+  const vsColor  = isBigDrop ? 'var(--danger)' : isBigRise ? 'var(--good)' : 'var(--ink2)';
+  const vsNote   = isBigDrop ? '⚠️ Significant drop' : isBigRise ? '✅ Significant rise' : 'vs accumulated avg';
+  const color    = vitalChartColor(vital);
+
+  let bpDiaHtml = '';
+  if (vital === 'bp') {
+    const dias = sorted.map(r => r.dia);
+    const diaAvg = (dias.reduce((a,b)=>a+b,0)/dias.length).toFixed(1);
+    bpDiaHtml = `<div class="chart-card"><div class="chart-title">Diastolic over time</div><div class="chart-wrap"><canvas id="chart-bp-dia"></canvas></div></div>`;
+    setTimeout(() => {
+      const diaRunAvg = dias.map((_,i) => parseFloat((dias.slice(0,i+1).reduce((a,b)=>a+b,0)/(i+1)).toFixed(1)));
+      charts['bp-dia'] = new Chart(document.getElementById('chart-bp-dia'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Diastolic', data: dias, borderColor: '#9B7ABF', backgroundColor: 'rgba(123,94,167,0.07)', borderWidth: 2.5, pointRadius: 4, fill: true, tension: 0.3 },
+          { label: 'Accumulated Avg', data: diaRunAvg, borderColor: '#8A9EAF', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 }
+        ]},
+        options: chartOptions(true)
+      });
+    }, 50);
+  }
+
+  el.innerHTML = `
+    <div class="vs-banner" style="background:${vsBg};border:1px solid ${vsBorder}">
+      <div>
+        <div class="vs-banner-label" style="color:${vsColor}">Latest vs Accumulated Avg</div>
+        <div class="vs-banner-note">${vsNote}</div>
+      </div>
+      <div class="vs-banner-pct" style="color:${vsColor}">${sign}${pct}%</div>
+    </div>
+    <div class="trend-stat-row">
+      <div class="stat-card"><div class="stat-eyebrow">Latest</div><div class="stat-val">${latest}<span style="font-size:13px;color:var(--ink3);margin-left:3px">${vitalUnit(vital)}</span></div></div>
+      <div class="stat-card"><div class="stat-eyebrow">Accumulated Avg</div><div class="stat-val">${accAvg}<span style="font-size:13px;color:var(--ink3);margin-left:3px">${vitalUnit(vital)}</span></div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">${vital === 'bp' ? 'Systolic' : vitalName(vital)} over time</div>
+      <div class="chart-wrap"><canvas id="chart-${vital}"></canvas></div>
+    </div>
+    ${bpDiaHtml}
+  `;
+
+  setTimeout(() => {
+    charts[vital] = new Chart(document.getElementById('chart-' + vital), {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: vitalName(vital), data: vals, borderColor: color, backgroundColor: color + '15', borderWidth: 2.5, pointBackgroundColor: color, pointRadius: 4, fill: true, tension: 0.3 },
+        { label: 'Accumulated Avg', data: runAvg, borderColor: '#3B82C4', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 }
+      ]},
+      options: chartOptions(true)
+    });
+  }, 50);
+}
+
+function chartOptions(showLegend) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: showLegend ? { display: true, labels: { font: { family: 'DM Sans', size: 11 }, color: '#4A5E72', usePointStyle: true, pointStyle: 'line', boxWidth: 30, padding: 12 } } : { display: false },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } },
+      y: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } }
+    }
+  };
+}
+
+// ══════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════
+function renderDashboard() {
+  const el = document.getElementById('dashContent');
+  const s  = getSettings();
+  const tiles = VITALS.map(vital => {
+    const recs = getRecords(vital);
+    const latest = recs.length ? recs[recs.length-1] : null;
+    const daysSince = latest ? Math.floor((new Date() - new Date(latest.date)) / 86400000) : null;
+    const valDisplay = latest ? (vital === 'bp' ? `${latest.sys}/${latest.dia}` : latest.val) : '—';
+    const statusCls  = latest ? getStatusClass(vital, latest, s) : 'status-none';
+    const statusTxt  = latest ? statusCls.replace('status-','').toUpperCase() : 'NO DATA';
+    const sinceText  = daysSince === null ? 'Never logged' : daysSince === 0 ? 'Today' : daysSince === 1 ? 'Yesterday' : `${daysSince} days ago`;
+    return `
+    <div class="dash-tile ${vital}" onclick="showPage('${vital}')">
+      <div class="dash-tile-eyebrow">${vitalName(vital)}</div>
+      <div class="dash-tile-val">${valDisplay}<span class="dash-tile-unit">${latest ? vitalUnit(vital) : ''}</span></div>
+      <div><span class="dash-tile-status ${statusCls}">${statusTxt}</span></div>
+      <div class="dash-tile-since">${sinceText}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:14px">Today's Overview</div>
+    <div class="dash-grid">${tiles}</div>
+    <p style="font-size:12px;color:var(--ink3);text-align:center;margin-top:4px">Tap any vital to log a new reading</p>
+  `;
+}
+
+// ══════════════════════════════════════════════════
+//  EDIT MODAL
+// ══════════════════════════════════════════════════
+let editingVital = null, editingId = null;
+
+function openEditModal(vital, id) {
+  const recs = getRecords(vital);
+  const r = recs.find(x => x.id === id);
+  if (!r) return;
+  editingVital = vital; editingId = id;
+
+  document.getElementById('edit-title').textContent = 'Edit ' + vitalName(vital);
+  document.getElementById('edit-date').value  = r.date;
+  document.getElementById('edit-time').value  = r.time || '';
+  document.getElementById('edit-notes').value = r.notes || '';
+
+  if (r.time) {
+    const [hh,mm] = r.time.split(':');
+    const h = parseInt(hh), m = parseInt(mm);
+    const h12 = h%12||12, ap = h>=12?'PM':'AM';
+    document.getElementById('edit-td-text').textContent = String(h12).padStart(2,'0')+':'+String(m).padStart(2,'0')+' '+ap;
+  } else {
+    document.getElementById('edit-td-text').textContent = 'Tap to set';
+  }
+
+  let fields = '';
+  if (vital === 'bp') {
+    fields = `<div class="big-inputs" style="margin-bottom:14px">
+      <div class="big-input-group"><div class="big-input-label">Systolic</div><input type="number" class="big-input" id="edit-val" value="${r.sys}" style="font-size:28px"></div>
+      <div class="bp-slash">/</div>
+      <div class="big-input-group"><div class="big-input-label">Diastolic</div><input type="number" class="big-input" id="edit-dia" value="${r.dia}" style="font-size:28px"></div>
+    </div>`;
+  } else if (vital === 'spo2') {
+    fields = `<div class="big-inputs" style="margin-bottom:14px">
+      <div class="big-input-group"><div class="big-input-label">SpO₂ %</div><input type="number" class="big-input" id="edit-val" value="${r.val}" style="font-size:28px"></div>
+      <div class="big-input-group"><div class="big-input-label">Pulse (opt)</div><input type="number" class="big-input" id="edit-pulse" value="${r.pulse||''}" style="font-size:28px"></div>
+    </div>`;
+  } else {
+    fields = `<div class="big-inputs" style="margin-bottom:14px">
+      <div class="big-input-group"><div class="big-input-label">${vitalUnit(vital)}</div><input type="number" class="big-input" id="edit-val" value="${r.val}" style="font-size:28px"></div>
+    </div>`;
+  }
+  document.getElementById('edit-fields').innerHTML = fields;
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveEdit() {
+  const date  = document.getElementById('edit-date').value;
+  const time  = document.getElementById('edit-time').value || null;
+  const notes = document.getElementById('edit-notes').value.trim();
+  if (!date) { showToast('Date is required', 'error'); return; }
+
+  const recs = getRecords(editingVital);
+  const idx  = recs.findIndex(r => r.id === editingId);
+  if (idx === -1) return;
+
+  recs[idx] = { ...recs[idx], date, time, notes };
+  if (editingVital === 'bp') {
+    recs[idx].sys = parseFloat(document.getElementById('edit-val').value);
+    recs[idx].dia = parseFloat(document.getElementById('edit-dia').value);
+    recs[idx].val = recs[idx].sys;
+  } else {
+    recs[idx].val = parseFloat(document.getElementById('edit-val').value);
+    if (editingVital === 'spo2') {
+      const p = document.getElementById('edit-pulse').value;
+      recs[idx].pulse = p ? parseFloat(p) : null;
+    }
+  }
+  recs.sort((a,b) => a.date.localeCompare(b.date));
+  saveRecords(editingVital, recs);
+  document.getElementById('edit-modal').style.display = 'none';
+  renderVitalHistory(editingVital);
+  renderVitalTrends(editingVital);
+  showToast('Reading updated ✓', 'success');
+}
+
+// ══════════════════════════════════════════════════
+//  TIME PICKER
+// ══════════════════════════════════════════════════
+let tpH=12, tpM=0, tpAP='AM', tpRepeat=null, tpTarget='';
+
+function openTP(vital) {
+  tpTarget = vital;
+  const now = new Date();
+  const existing = vital !== 'edit' ? document.getElementById(vital+'-time').value : document.getElementById('edit-time').value;
+  if (existing) {
+    const [hh,mm] = existing.split(':');
+    tpH = parseInt(hh)%12||12; tpM = parseInt(mm); tpAP = parseInt(hh)>=12?'PM':'AM';
+  } else {
+    tpH = now.getHours()%12||12; tpM = now.getMinutes(); tpAP = now.getHours()>=12?'PM':'AM';
+  }
+  renderTP();
+  document.getElementById('tp-modal').classList.add('open');
+}
+function closeTP() { document.getElementById('tp-modal').classList.remove('open'); }
+function renderTP() {
+  document.getElementById('tp-h').textContent = String(tpH).padStart(2,'0');
+  document.getElementById('tp-m').textContent = String(tpM).padStart(2,'0');
+  document.getElementById('tp-am').classList.toggle('active', tpAP==='AM');
+  document.getElementById('tp-pm').classList.toggle('active', tpAP==='PM');
+}
+function nudgeTP(f,d) { if(f==='h') tpH=(tpH-1+d+12)%12+1; if(f==='m') tpM=(tpM+d+60)%60; renderTP(); }
+function startR(f,d) { nudgeTP(f,d); stopR(); tpRepeat=setInterval(()=>nudgeTP(f,d),130); }
+function stopR() { if(tpRepeat){clearInterval(tpRepeat);tpRepeat=null;} }
+function setAP(v) { tpAP=v; renderTP(); }
+function confirmTP() {
+  let h24 = tpH%12; if(tpAP==='PM') h24+=12;
+  const ts = String(h24).padStart(2,'0')+':'+String(tpM).padStart(2,'0');
+  const ds = String(tpH).padStart(2,'0')+':'+String(tpM).padStart(2,'0')+' '+tpAP;
+  if (tpTarget === 'edit') {
+    document.getElementById('edit-time').value = ts;
+    document.getElementById('edit-td-text').textContent = ds;
+  } else {
+    document.getElementById(tpTarget+'-time').value = ts;
+    document.getElementById(tpTarget+'-td-text').textContent = ds;
+  }
+  closeTP();
+}
+
+// ══════════════════════════════════════════════════
+//  LAST LOGGED NUDGE
+// ══════════════════════════════════════════════════
+function updateLastLogged(vital) {
+  const el = document.getElementById(vital + '-last-logged');
+  if (!el) return;
+  const recs = getRecords(vital);
+  if (!recs.length) { el.textContent = ''; return; }
+  const last = recs[recs.length-1];
+  const days = Math.floor((new Date() - new Date(last.date)) / 86400000);
+  const s = getSettings();
+  const cadMap = { spo2: parseInt(s.cadSpo2||2), hr: parseInt(s.cadHr||7), bp: parseInt(s.cadBp||7), wt: parseInt(s.cadWt||7), temp: 0 };
+  const cad = cadMap[vital];
+  if (days === 0) { el.textContent = '✓ Logged today'; el.className = 'last-logged'; }
+  else if (cad > 0 && days >= cad) { el.textContent = `⏰ Last logged ${days} day${days>1?'s':''} ago — due for a reading`; el.className = 'last-logged overdue'; }
+  else { el.textContent = `Last logged ${days} day${days>1?'s':''} ago`; el.className = 'last-logged'; }
+}
+
+// ══════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════
+function getStatusClass(vital, r, s) {
+  if (vital === 'spo2') return r.val < s.spo2.low ? 'status-low' : 'status-ok';
+  if (vital === 'hr')   return r.val > s.hr.high ? 'status-high' : r.val < s.hr.low ? 'status-low' : 'status-ok';
+  if (vital === 'bp')   return (r.sys > s.bp.sysHigh || r.dia > s.bp.diaHigh) ? 'status-high' : (r.sys < s.bp.sysLow || r.dia < s.bp.diaLow) ? 'status-low' : 'status-ok';
+  if (vital === 'wt')   return 'status-ok';
+  if (vital === 'temp') return r.val >= s.temp.high ? 'status-high' : r.val < s.temp.low ? 'status-low' : 'status-ok';
+  return 'status-ok';
+}
+function statusColor(cls) {
+  return cls==='status-high' ? 'var(--danger)' : cls==='status-low' ? 'var(--accent)' : cls==='status-warn' ? 'var(--warn)' : cls==='status-ok' ? 'var(--good)' : 'var(--ink3)';
+}
+function vitalName(v) { return {spo2:'SpO₂',hr:'Heart Rate',bp:'Blood Pressure',wt:'Weight',temp:'Temperature'}[v]; }
+function vitalUnit(v) { return {spo2:'%',hr:'bpm',bp:'mmHg',wt:'lbs',temp:'°F'}[v]; }
+function vitalIcon(v) { return {spo2:'🩸',hr:'❤️',bp:'💜',wt:'🟠',temp:'🌡️'}[v]; }
+function vitalChartColor(v) { return {spo2:'#3B82C4',hr:'#C94040',bp:'#7B5EA7',wt:'#E07B39',temp:'#2D9E6B'}[v]; }
+function formatDate(d) { const [y,m,day]=d.split('-'); return `${m}/${day}/${y}`; }
+function formatDateShort(d) { const [y,m,day]=d.split('-'); return `${m}/${day}`; }
+function formatTime(t) { const [h,m]=t.split(':'); const hh=parseInt(h); return `${hh>12?hh-12:hh||12}:${m} ${hh>=12?'PM':'AM'}`; }
+function showToast(msg,type='') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); setTimeout(()=>el.className='toast',2800); }
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (VITALS.includes(name)) {
+    renderVitalHistory(name);
+    renderVitalTrends(name);
+    updateLastLogged(name);
+  }
+  if (name === 'settings') loadSettings();
+}
+
+// ══════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════
+function exportData() {
+  const all = {};
+  VITALS.forEach(v => all[v] = getRecords(v));
+  all.settings = getSettings();
+  const blob = new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vital_signs_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('Exported ✓','success');
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function initVitalDateTime(vital) {
+  const now = new Date();
+  const yyyy=now.getFullYear(), mm=String(now.getMonth()+1).padStart(2,'0'), dd=String(now.getDate()).padStart(2,'0');
+  document.getElementById(vital+'-date').value = `${yyyy}-${mm}-${dd}`;
+  const hh=now.getHours(), min=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById(vital+'-time').value = String(hh).padStart(2,'0')+':'+min;
+  const h12=hh%12||12, ap=hh>=12?'PM':'AM';
+  document.getElementById(vital+'-td-text').textContent = String(h12).padStart(2,'0')+':'+min+' '+ap;
+}
+
+VITALS.forEach(v => initVitalDateTime(v));
+loadSettings();
+renderDashboard();
+</script>
+</body>
+</html>
