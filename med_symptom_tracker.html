@@ -201,6 +201,22 @@
   .med-list-since { font-size: 11px; color: var(--ink3); margin-top: 2px; }
   .med-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .add-med-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; border-left: 4px solid var(--good); }
+
+  /* ── MED IMPORT ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .import-med-row {
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 10px 12px; display: grid;
+    grid-template-columns: 1fr 80px 100px auto;
+    gap: 8px; align-items: center;
+  }
+  .import-med-row input {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink);
+    width: 100%;
+  }
+  .import-med-row input:focus { outline: none; border-color: var(--med); }
 </style>
 </head>
 <body>
@@ -212,6 +228,7 @@
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
+  <button id="gdrive-btn" class="btn btn-ghost btn-sm" style="font-size:12px" onclick="gdriveSignIn()">☁️ Connect Drive</button>
   </div>
 </header>
 
@@ -222,6 +239,7 @@
   <button class="tab" onclick="showTab('meds-list')" id="tab-meds-list">💊 Current Meds</button>
   <button class="tab" onclick="showTab('correlate')" id="tab-correlate">Correlations</button>
 </div>
+<div id="gdrive-status" style="text-align:center;font-size:11px;color:var(--ink3);padding:4px 0 0"></div>
 
 <!-- ═══════════════════
      TIMELINE
@@ -372,6 +390,34 @@
      CURRENT MEDS LIST
 ═══════════════════ -->
 <div class="page" id="page-meds-list">
+
+  <!-- Import options bar -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="btn btn-med btn-sm" onclick="toggleAddMedForm('manual')">✏️ Add Manually</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-input').click()">📄 Import CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('img-med-input').click()">📷 Import from Image</button>
+    <input type="file" id="csv-input"     accept=".csv,.txt" style="display:none" onchange="importMedsCSV(this)">
+    <input type="file" id="img-med-input" accept="image/*"   style="display:none" onchange="importMedsImage(this)">
+  </div>
+
+  <!-- Analyzing bar for image import -->
+  <div id="med-import-analyzing" style="display:none;align-items:center;gap:12px;padding:12px 16px;background:var(--med-bg);border:1px solid #c8b0e8;border-radius:var(--radius-sm);margin-bottom:14px;font-size:13px;color:var(--med);font-weight:500">
+    <div style="width:16px;height:16px;border:2px solid #c8b0e8;border-top-color:var(--med);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0"></div>
+    <span>Claude is reading your medication list…</span>
+  </div>
+
+  <!-- Import notice -->
+  <div id="med-import-notice" style="display:none;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:500"></div>
+
+  <!-- CSV format hint -->
+  <div id="csv-hint" style="display:none;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--ink2);line-height:1.6">
+    <strong>CSV format:</strong> One medication per row.<br>
+    Columns: <code style="background:var(--bg);padding:1px 5px;border-radius:3px">name, dose, frequency, notes</code><br>
+    Example: <code style="background:var(--bg);padding:1px 5px;border-radius:3px">Tacrolimus, 2mg, twice daily, take with food</code><br>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('csv-hint').style.display='none'">Got it</button>
+  </div>
+
+  <!-- Manual add form -->
   <div class="add-med-form" id="add-med-form" style="display:none">
     <div class="card-title" style="margin-bottom:12px">Add Medication</div>
     <div class="form-row">
@@ -395,13 +441,30 @@
       <input type="text" id="new-med-notes" placeholder="e.g. take with food">
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost btn-sm" onclick="toggleAddMedForm(false)">Cancel</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleAddMedForm('close')">Cancel</button>
       <button class="btn btn-med btn-sm" onclick="addCurrentMed()">Add Medication</button>
     </div>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+
+  <!-- Image preview for med import -->
+  <div id="med-img-preview-wrap" style="display:none;margin-bottom:14px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);position:relative">
+    <img id="med-img-preview" style="width:100%;max-height:220px;object-fit:contain;background:var(--surface2);display:block">
+    <button onclick="document.getElementById('med-img-preview-wrap').style.display='none'" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">✕</button>
+  </div>
+
+  <!-- Pending import review -->
+  <div id="med-import-review" style="display:none">
+    <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);margin-bottom:10px">Review Imported Medications</div>
+    <div id="med-import-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="cancelMedImport()">Cancel</button>
+      <button class="btn btn-med btn-sm" onclick="confirmMedImport()">Add All to List</button>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink)">Active Medications</div>
-    <button class="btn btn-med btn-sm" onclick="toggleAddMedForm(true)">+ Add Med</button>
+    <div style="font-size:11px;color:var(--ink3)" id="med-count"></div>
   </div>
   <div id="meds-list-content"></div>
 </div>
@@ -665,7 +728,6 @@ function setFilter(f) {
   timelineFilter = f;
   ['all','med','sym'].forEach(x => document.getElementById('filter-'+x).classList.toggle('active', x===f));
   renderTimeline();
-renderCurrentMeds();
 }
 
 function renderTimeline() {
@@ -1053,6 +1115,186 @@ function confirmTP(){
 }
 
 
+
+// ══════════════════════════════════════════════════
+//  MED LIST IMPORT — CSV & IMAGE
+// ══════════════════════════════════════════════════
+let pendingMedImport = [];
+
+function toggleAddMedForm(mode) {
+  const form = document.getElementById('add-med-form');
+  const review = document.getElementById('med-import-review');
+  if (mode === 'manual') {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    review.style.display = 'none';
+    if (form.style.display === 'block') document.getElementById('new-med-name').focus();
+  } else {
+    // 'close' or any falsy value — just hide
+    form.style.display = 'none';
+  }
+}
+
+// ── CSV Import ──
+function importMedsCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+    const meds = [];
+    lines.forEach(line => {
+      // Skip header rows
+      if (line.toLowerCase().startsWith('name') || line.toLowerCase().startsWith('drug')) return;
+      const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+      if (!cols[0]) return;
+      meds.push({
+        name:  cols[0] || '',
+        dose:  cols[1] || '',
+        freq:  cols[2] || '',
+        notes: cols[3] || ''
+      });
+    });
+    if (!meds.length) {
+      showMedImportNotice('No medications found in CSV. Check the format hint.', 'warn');
+      document.getElementById('csv-hint').style.display = 'block';
+      return;
+    }
+    pendingMedImport = meds;
+    showMedImportReview(meds);
+    showMedImportNotice(`Found ${meds.length} medication${meds.length>1?'s':''} in CSV — review below`, 'success');
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── Image Import via Claude ──
+async function importMedsImage(input) {
+  const file = input.files[0]; if (!file) return;
+
+  // Show preview
+  const previewWrap = document.getElementById('med-img-preview-wrap');
+  const previewImg  = document.getElementById('med-img-preview');
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    previewWrap.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  const bar = document.getElementById('med-import-analyzing');
+  bar.style.display = 'flex';
+
+  try {
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    const prompt = `You are reading a medication list from a medical document, discharge paperwork, or prescription printout.
+
+Extract every medication listed. For each one provide:
+- name: the drug name (generic or brand)
+- dose: the dose amount (e.g. "2mg", "500mg")
+- freq: how often taken (e.g. "twice daily", "once daily", "every 12 hours")
+- notes: any special instructions (e.g. "take with food", "morning only") or empty string
+
+Return ONLY a valid JSON array, no markdown, no explanation.
+Example: [{"name":"Tacrolimus","dose":"2mg","freq":"twice daily","notes":"take with food"}]
+
+If no medications are found, return an empty array: []`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: file.type || 'image/jpeg', data: b64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      })
+    });
+
+    const data = await response.json();
+    bar.style.display = 'none';
+    if (data.error) throw new Error(data.error.message);
+
+    const text  = data.content.map(c => c.text || '').join('').trim();
+    const clean = text.replace(/```json|```/g, '').trim();
+    const meds  = JSON.parse(clean);
+
+    if (!meds.length) {
+      showMedImportNotice('No medications found in image. Try a clearer photo or enter manually.', 'warn');
+      return;
+    }
+
+    pendingMedImport = meds;
+    showMedImportReview(meds);
+    showMedImportNotice(`Claude found ${meds.length} medication${meds.length>1?'s':''} — review below`, 'success');
+
+  } catch(err) {
+    bar.style.display = 'none';
+    showMedImportNotice('Could not read image: ' + err.message + '. Try manual entry.', 'warn');
+  }
+  input.value = '';
+}
+
+function showMedImportReview(meds) {
+  const review = document.getElementById('med-import-review');
+  const list   = document.getElementById('med-import-list');
+  review.style.display = 'block';
+  list.innerHTML = meds.map((m, i) => `
+    <div class="import-med-row" id="imrow-${i}">
+      <input id="im-name-${i}" value="${m.name}"  placeholder="Drug name">
+      <input id="im-dose-${i}" value="${m.dose}"  placeholder="Dose">
+      <input id="im-freq-${i}" value="${m.freq}"  placeholder="Frequency">
+      <button onclick="removePendingMed(${i})" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px" title="Remove">✕</button>
+    </div>
+  `).join('') + `<div style="font-size:10px;color:var(--ink3);margin-top:4px;padding:0 2px">NAME · DOSE · FREQUENCY — edit any field before adding</div>`;
+}
+
+function removePendingMed(i) {
+  document.getElementById('imrow-' + i)?.remove();
+}
+
+function cancelMedImport() {
+  pendingMedImport = [];
+  document.getElementById('med-import-review').style.display = 'none';
+  document.getElementById('med-import-notice').style.display = 'none';
+  document.getElementById('med-img-preview-wrap').style.display = 'none';
+}
+
+function confirmMedImport() {
+  // Read current values from the review form (user may have edited)
+  const rows = document.querySelectorAll('[id^="imrow-"]');
+  const meds = getCurrentMeds();
+  let added = 0;
+  rows.forEach((row, i) => {
+    const idx = row.id.replace('imrow-', '');
+    const name = document.getElementById(`im-name-${idx}`)?.value.trim();
+    const dose = document.getElementById(`im-dose-${idx}`)?.value.trim();
+    const freq = document.getElementById(`im-freq-${idx}`)?.value.trim();
+    if (!name) return;
+    meds.push({ id: Date.now() + added, name, dose: dose||'', freq: freq||'', notes: '', since: toDateStr(new Date()), active: true });
+    added++;
+  });
+  saveCurrentMeds(meds);
+  cancelMedImport();
+  renderCurrentMeds();
+  showToast(`${added} medication${added>1?'s':''} added ✓`, 'success');
+}
+
+function showMedImportNotice(msg, type) {
+  const el = document.getElementById('med-import-notice');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = type === 'success' ? 'var(--good-bg)'  : 'var(--warn-bg)';
+  el.style.border      = type === 'success' ? '1px solid #a8dfc5' : '1px solid #f0d0b0';
+  el.style.color       = type === 'success' ? 'var(--good)'    : 'var(--warn)';
+}
+
 // ══════════════════════════════════════════════════
 //  CURRENT MEDICATIONS LIST
 // ══════════════════════════════════════════════════
@@ -1063,17 +1305,6 @@ function getCurrentMeds() {
 }
 function saveCurrentMeds(d) { localStorage.setItem(CUR_MED_KEY, JSON.stringify(d)); }
 
-function toggleAddMedForm(show) {
-  document.getElementById('add-med-form').style.display = show ? 'block' : 'none';
-  if (show) {
-    document.getElementById('new-med-name').value = '';
-    document.getElementById('new-med-dose').value = '';
-    document.getElementById('new-med-freq').value = '';
-    document.getElementById('new-med-notes').value = '';
-    document.getElementById('new-med-name').focus();
-  }
-}
-
 function addCurrentMed() {
   const name  = document.getElementById('new-med-name').value.trim();
   const dose  = document.getElementById('new-med-dose').value.trim();
@@ -1083,7 +1314,7 @@ function addCurrentMed() {
   const meds = getCurrentMeds();
   meds.push({ id: Date.now(), name, dose, freq, notes, since: toDateStr(new Date()), active: true });
   saveCurrentMeds(meds);
-  toggleAddMedForm(false);
+  toggleAddMedForm('close');
   renderCurrentMeds();
   showToast(name + ' added ✓','success');
 }
@@ -1149,6 +1380,7 @@ function renderCurrentMeds() {
 
   const active = meds.filter(m=>m.active);
   const disc   = meds.filter(m=>!m.active);
+  const cntEl = document.getElementById('med-count'); if(cntEl) cntEl.textContent = active.length + ' active' + (disc.length ? ', ' + disc.length + ' discontinued' : '');
 
   let html = '';
 
@@ -1227,6 +1459,211 @@ buildSymptomChips();
 clearMedForm();
 clearSymForm();
 renderTimeline();
+
+// ══════════════════════════════════════════════════════════
+//  GOOGLE DRIVE SYNC — Cocomi Care
+//  Injected into all modules
+// ══════════════════════════════════════════════════════════
+
+const GDRIVE_CLIENT_ID = '685596805396-ll3aopssndr5p32p4adktb2d2s4lmdt4.apps.googleusercontent.com';
+const GDRIVE_API_KEY   = 'AIzaSyDhfOrxkCduHMLVz6NoyD0nPeJnNad83VQ';
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FOLDER    = 'appDataFolder';
+
+let gdriveToken    = null;
+let gdriveReady    = false;
+let gdriveSyncing  = false;
+let gdriveFileIds  = {}; // { filename: fileId }
+
+// ── Load Google Identity Services ──
+function gdriveLoadGIS() {
+  if (document.getElementById('gis-script')) return;
+  const s = document.createElement('script');
+  s.id  = 'gis-script';
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => { gdriveReady = true; };
+  document.head.appendChild(s);
+
+  const s2 = document.createElement('script');
+  s2.src = 'https://apis.google.com/js/api.js';
+  s2.onload = () => {
+    gapi.load('client', async () => {
+      await gapi.client.init({ apiKey: GDRIVE_API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    });
+  };
+  document.head.appendChild(s2);
+}
+
+// ── Sign In ──
+function gdriveSignIn(callback) {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: (resp) => {
+      if (resp.error) { showGDriveStatus('Sign in failed: ' + resp.error, 'error'); return; }
+      gdriveToken = resp.access_token;
+      gapi.client.setToken({ access_token: gdriveToken });
+      localStorage.setItem('gdrive_token', gdriveToken);
+      showGDriveStatus('Connected to Google Drive ✓', 'success');
+      updateGDriveUI(true);
+      if (callback) callback();
+    }
+  });
+  client.requestAccessToken();
+}
+
+// ── Sign Out ──
+function gdriveSignOut() {
+  if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
+  gdriveToken = null;
+  localStorage.removeItem('gdrive_token');
+  updateGDriveUI(false);
+  showGDriveStatus('Disconnected from Google Drive', '');
+}
+
+// ── Save data to Drive ──
+async function gdriveSave(filename, data) {
+  if (!gdriveToken) return false;
+  try {
+    gdriveSyncing = true;
+    const content  = JSON.stringify(data, null, 2);
+    const existing = gdriveFileIds[filename];
+
+    if (existing) {
+      // Update existing file
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existing}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
+        body: content
+      });
+    } else {
+      // Create new file in appDataFolder
+      const meta = { name: filename, parents: [GDRIVE_FOLDER] };
+      const form  = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file',     new Blob([content],              { type: 'application/json' }));
+      const res  = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + gdriveToken },
+        body: form
+      });
+      const json = await res.json();
+      gdriveFileIds[filename] = json.id;
+    }
+    gdriveSyncing = false;
+    return true;
+  } catch(e) {
+    gdriveSyncing = false;
+    console.warn('Drive save failed:', e);
+    return false;
+  }
+}
+
+// ── Load data from Drive ──
+async function gdriveLoad(filename) {
+  if (!gdriveToken) return null;
+  try {
+    // Find the file
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_FOLDER}&q=name='${filename}'&fields=files(id,name)`,
+      { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+    );
+    const list = await res.json();
+    if (!list.files || !list.files.length) return null;
+    const fileId = list.files[0].id;
+    gdriveFileIds[filename] = fileId;
+
+    // Download content
+    const dl = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { 'Authorization': 'Bearer ' + gdriveToken }
+    });
+    return await dl.json();
+  } catch(e) {
+    console.warn('Drive load failed:', e);
+    return null;
+  }
+}
+
+// ── Sync all localStorage keys to Drive ──
+async function gdriveSyncAll(storageKeys) {
+  if (!gdriveToken) return;
+  showGDriveStatus('Syncing to Drive…', '');
+  let saved = 0;
+  for (const key of storageKeys) {
+    const val = localStorage.getItem(key);
+    if (val) {
+      const ok = await gdriveSave(key + '.json', JSON.parse(val));
+      if (ok) saved++;
+    }
+  }
+  showGDriveStatus(`Synced ${saved} files to Drive ✓`, 'success');
+}
+
+// ── Restore all from Drive ──
+async function gdriveRestoreAll(storageKeys) {
+  if (!gdriveToken) return;
+  showGDriveStatus('Restoring from Drive…', '');
+  let restored = 0;
+  for (const key of storageKeys) {
+    const data = await gdriveLoad(key + '.json');
+    if (data !== null) {
+      localStorage.setItem(key, JSON.stringify(data));
+      restored++;
+    }
+  }
+  showGDriveStatus(`Restored ${restored} files from Drive ✓`, 'success');
+  return restored;
+}
+
+function showGDriveStatus(msg, type) {
+  const el = document.getElementById('gdrive-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'success' ? 'var(--good)' : type === 'error' ? 'var(--danger)' : 'var(--ink3)';
+}
+
+function updateGDriveUI(connected) {
+  const btn  = document.getElementById('gdrive-btn');
+  const stat = document.getElementById('gdrive-status');
+  if (!btn) return;
+  if (connected) {
+    btn.textContent = '☁️ Drive Connected';
+    btn.style.background = 'var(--good)';
+    btn.onclick = gdriveSignOut;
+  } else {
+    btn.textContent = '☁️ Connect Drive';
+    btn.style.background = '';
+    btn.onclick = () => gdriveSignIn();
+  }
+}
+
+// ── Auto-save hook: wrap localStorage.setItem ──
+function gdriveEnableAutoSave(storageKeys) {
+  const orig = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value) {
+    orig(key, value);
+    if (gdriveToken && storageKeys.includes(key)) {
+      try { gdriveSave(key + '.json', JSON.parse(value)); } catch(e) {}
+    }
+  };
+}
+
+// ── Init ──
+function gdriveInit(storageKeys) {
+  gdriveLoadGIS();
+  gdriveEnableAutoSave(storageKeys);
+  // Restore token if exists
+  const saved = localStorage.getItem('gdrive_token');
+  if (saved) {
+    gdriveToken = saved;
+    gapi?.client?.setToken?.({ access_token: saved });
+    updateGDriveUI(true);
+  }
+}
+
+// ── Google Drive Init ──
+gdriveInit(['msc_meds_v1', 'msc_syms_v1', 'msc_cur_meds_v1']);
+
 </script>
 </body>
 </html>
