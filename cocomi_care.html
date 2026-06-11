@@ -196,11 +196,15 @@
         <div class="app-name">Cocomi Care</div>
         <div class="app-sub">Lung Transplant Surveillance</div>
       </div>
-      <div style="font-size:28px">🫁</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="gdrive-btn" onclick="gdriveSignIn()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:500">☁️ Connect Drive</button>
+        <div style="font-size:28px">🫁</div>
+      </div>
     </div>
     <div class="greeting" id="greeting"></div>
   </div>
 
+  <div id="gdrive-home-status" style="text-align:center;font-size:11px;padding:4px 20px 0;color:var(--ink3)"></div>
   <div class="global-alert" id="global-alert"></div>
 
   <div class="dashboard">
@@ -526,6 +530,238 @@ renderDashboard();
 
 // Auto-refresh dashboard every 60 seconds
 setInterval(renderDashboard, 60000);
+
+// ══════════════════════════════════════════════════════════
+//  GOOGLE DRIVE SYNC — Cocomi Care
+//  Injected into all modules
+// ══════════════════════════════════════════════════════════
+
+const GDRIVE_CLIENT_ID = '685596805396-ll3aopssndr5p32p4adktb2d2s4lmdt4.apps.googleusercontent.com';
+const GDRIVE_API_KEY   = 'AIzaSyDhfOrxkCduHMLVz6NoyD0nPeJnNad83VQ';
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FOLDER    = 'appDataFolder';
+
+let gdriveToken    = null;
+let gdriveReady    = false;
+let gdriveSyncing  = false;
+let gdriveFileIds  = {}; // { filename: fileId }
+
+// ── Load Google Identity Services ──
+function gdriveLoadGIS() {
+  if (document.getElementById('gis-script')) return;
+  const s = document.createElement('script');
+  s.id  = 'gis-script';
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = () => { gdriveReady = true; };
+  document.head.appendChild(s);
+
+  const s2 = document.createElement('script');
+  s2.src = 'https://apis.google.com/js/api.js';
+  s2.onload = () => {
+    gapi.load('client', async () => {
+      await gapi.client.init({ apiKey: GDRIVE_API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    });
+  };
+  document.head.appendChild(s2);
+}
+
+// ── Sign In ──
+function gdriveSignIn(callback) {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: (resp) => {
+      if (resp.error) { showGDriveStatus('Sign in failed: ' + resp.error, 'error'); return; }
+      gdriveToken = resp.access_token;
+      gapi.client.setToken({ access_token: gdriveToken });
+      localStorage.setItem('gdrive_token', gdriveToken);
+      showGDriveStatus('Connected to Google Drive ✓', 'success');
+      updateGDriveUI(true);
+      if (callback) callback();
+    }
+  });
+  client.requestAccessToken();
+}
+
+// ── Sign Out ──
+function gdriveSignOut() {
+  if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
+  gdriveToken = null;
+  localStorage.removeItem('gdrive_token');
+  updateGDriveUI(false);
+  showGDriveStatus('Disconnected from Google Drive', '');
+}
+
+// ── Save data to Drive ──
+async function gdriveSave(filename, data) {
+  if (!gdriveToken) return false;
+  try {
+    gdriveSyncing = true;
+    const content  = JSON.stringify(data, null, 2);
+    const existing = gdriveFileIds[filename];
+
+    if (existing) {
+      // Update existing file
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existing}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
+        body: content
+      });
+    } else {
+      // Create new file in appDataFolder
+      const meta = { name: filename, parents: [GDRIVE_FOLDER] };
+      const form  = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file',     new Blob([content],              { type: 'application/json' }));
+      const res  = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + gdriveToken },
+        body: form
+      });
+      const json = await res.json();
+      gdriveFileIds[filename] = json.id;
+    }
+    gdriveSyncing = false;
+    return true;
+  } catch(e) {
+    gdriveSyncing = false;
+    console.warn('Drive save failed:', e);
+    return false;
+  }
+}
+
+// ── Load data from Drive ──
+async function gdriveLoad(filename) {
+  if (!gdriveToken) return null;
+  try {
+    // Find the file
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_FOLDER}&q=name='${filename}'&fields=files(id,name)`,
+      { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+    );
+    const list = await res.json();
+    if (!list.files || !list.files.length) return null;
+    const fileId = list.files[0].id;
+    gdriveFileIds[filename] = fileId;
+
+    // Download content
+    const dl = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { 'Authorization': 'Bearer ' + gdriveToken }
+    });
+    return await dl.json();
+  } catch(e) {
+    console.warn('Drive load failed:', e);
+    return null;
+  }
+}
+
+// ── Sync all localStorage keys to Drive ──
+async function gdriveSyncAll(storageKeys) {
+  if (!gdriveToken) return;
+  showGDriveStatus('Syncing to Drive…', '');
+  let saved = 0;
+  for (const key of storageKeys) {
+    const val = localStorage.getItem(key);
+    if (val) {
+      const ok = await gdriveSave(key + '.json', JSON.parse(val));
+      if (ok) saved++;
+    }
+  }
+  showGDriveStatus(`Synced ${saved} files to Drive ✓`, 'success');
+}
+
+// ── Restore all from Drive ──
+async function gdriveRestoreAll(storageKeys) {
+  if (!gdriveToken) return;
+  showGDriveStatus('Restoring from Drive…', '');
+  let restored = 0;
+  for (const key of storageKeys) {
+    const data = await gdriveLoad(key + '.json');
+    if (data !== null) {
+      localStorage.setItem(key, JSON.stringify(data));
+      restored++;
+    }
+  }
+  showGDriveStatus(`Restored ${restored} files from Drive ✓`, 'success');
+  return restored;
+}
+
+function showGDriveStatus(msg, type) {
+  const el = document.getElementById('gdrive-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'success' ? 'var(--good)' : type === 'error' ? 'var(--danger)' : 'var(--ink3)';
+}
+
+function updateGDriveUI(connected) {
+  const btn  = document.getElementById('gdrive-btn');
+  const stat = document.getElementById('gdrive-status');
+  if (!btn) return;
+  if (connected) {
+    btn.textContent = '☁️ Drive Connected';
+    btn.style.background = 'var(--good)';
+    btn.onclick = gdriveSignOut;
+  } else {
+    btn.textContent = '☁️ Connect Drive';
+    btn.style.background = '';
+    btn.onclick = () => gdriveSignIn();
+  }
+}
+
+// ── Auto-save hook: wrap localStorage.setItem ──
+function gdriveEnableAutoSave(storageKeys) {
+  const orig = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value) {
+    orig(key, value);
+    if (gdriveToken && storageKeys.includes(key)) {
+      try { gdriveSave(key + '.json', JSON.parse(value)); } catch(e) {}
+    }
+  };
+}
+
+// ── Init ──
+function gdriveInit(storageKeys) {
+  gdriveLoadGIS();
+  gdriveEnableAutoSave(storageKeys);
+  // Restore token if exists
+  const saved = localStorage.getItem('gdrive_token');
+  if (saved) {
+    gdriveToken = saved;
+    gapi?.client?.setToken?.({ access_token: saved });
+    updateGDriveUI(true);
+  }
+}
+
+// ── Drive status shown on home ──
+const _origShowGDriveStatus = showGDriveStatus;
+function showGDriveStatus(msg, type) {
+  const el = document.getElementById('gdrive-home-status');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = type==='success'?'var(--good)':type==='error'?'var(--danger)':'var(--ink3)';
+  }
+}
+
+function updateGDriveUI(connected) {
+  const btn = document.getElementById('gdrive-btn');
+  if (!btn) return;
+  if (connected) {
+    btn.textContent = '☁️ Drive Connected';
+    btn.style.background = 'var(--good-bg)';
+    btn.style.color = 'var(--good)';
+    btn.style.borderColor = '#a8dfc5';
+    btn.onclick = gdriveSignOut;
+  } else {
+    btn.textContent = '☁️ Connect Drive';
+    btn.style.background = 'var(--surface)';
+    btn.style.color = 'var(--ink2)';
+    btn.onclick = () => gdriveSignIn(() => gdriveSyncAll(['flutter_sessions_v1', 'peak_flow_sessions_v1', 'vss_spo2_v1', 'vss_hr_v1', 'vss_bp_v1', 'vss_wt_v1', 'vss_temp_v1', 'vss_settings_v1', 'spiro_records_v1', 'spiro_settings_v1', 'msc_meds_v1', 'msc_syms_v1', 'msc_cur_meds_v1', 'lab_panel_v2', 'lab_records_v2', 'lab_settings_v2']));
+  }
+}
+
+// Init Drive on home shell
+gdriveInit(['flutter_sessions_v1', 'peak_flow_sessions_v1', 'vss_spo2_v1', 'vss_hr_v1', 'vss_bp_v1', 'vss_wt_v1', 'vss_temp_v1', 'vss_settings_v1', 'spiro_records_v1', 'spiro_settings_v1', 'msc_meds_v1', 'msc_syms_v1', 'msc_cur_meds_v1', 'lab_panel_v2', 'lab_records_v2', 'lab_settings_v2']);
+
 </script>
 </body>
 </html>
