@@ -373,13 +373,7 @@ body {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Transplant date</label>
-        <input type="date" class="form-input" id="profile-tx-date">
-        <div class="form-hint">Used to calculate days post-transplant throughout the app</div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Transplant center</label>
+        <label class="form-label">Transplant center <span style="font-size:11px;color:var(--ink3);font-weight:400;text-transform:none">(optional)</span></label>
         <input type="text" class="form-input" id="profile-tx-center" placeholder="e.g. UF Health Shands">
       </div>
 
@@ -388,8 +382,8 @@ body {
       <button class="btn-primary" onclick="saveProfileSetup()">Save & Open Dashboard →</button>
 
       <div class="profile-optional-note">
-        🔬 Want to contribute to lung transplant research?<br>
-        Complete your full optional profile from <strong>Settings</strong> after you're set up.
+        🔬 Want to add transplant date, medical history, and research data?<br>
+        Complete your full profile from <strong>Settings</strong> after you're set up.
       </div>
 
       <button class="profile-skip-btn" onclick="skipProfileSetup()">Skip for now — I'll do this later</button>
@@ -516,12 +510,10 @@ const MODULES = [
 // ══════════════════════════════════════════════════
 async function saveProfileSetup() {
   const name     = document.getElementById('profile-name').value.trim();
-  const txDate   = document.getElementById('profile-tx-date').value;
   const txCenter = document.getElementById('profile-tx-center').value.trim();
   const errEl    = document.getElementById('profile-error');
 
   if (!name) { showErr(errEl, 'Please enter your name or nickname.'); return; }
-  if (!txDate) { showErr(errEl, 'Please enter your transplant date.'); return; }
 
   errEl.classList.remove('show');
 
@@ -530,7 +522,6 @@ async function saveProfileSetup() {
     const { error } = await sb.from('profiles').upsert({
       id:                currentUser.id,
       display_name:      name,
-      transplant_date:   txDate,
       transplant_center: txCenter || null,
       updated_at:        new Date().toISOString()
     });
