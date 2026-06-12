@@ -31,48 +31,82 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .tab:hover{color:var(--lab);}
 .tab.active{color:var(--lab);border-bottom-color:var(--lab);}
 
-.page{display:none;padding:20px 16px 40px;max-width:600px;margin:0 auto;}
+.page{display:none;padding:20px 16px 40px;max-width:640px;margin:0 auto;}
 .page.active{display:block;}
 
-/* Upload zone */
-.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:10px;}
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:10px;}
 .upload-zone:hover{border-color:var(--lab);background:var(--lab-bg);}
 .upload-zone input{display:none;}
-.upload-icon{font-size:36px;margin-bottom:8px;}
-.upload-label{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px;}
-.upload-hint{font-size:12px;color:var(--ink3);}
 
-/* Paste button */
-.paste-btn{width:100%;padding:11px;background:var(--lab-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--lab);cursor:pointer;transition:all .15s;margin-bottom:8px;}
-.paste-btn:hover{border-color:var(--lab);background:#c8eaf0;}
+.paste-btn{width:100%;padding:11px;background:var(--lab-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--lab);cursor:pointer;transition:all .15s;margin-bottom:14px;}
+.paste-btn:hover{border-color:var(--lab);}
 
-/* Analyzing bar */
-.analyzing-bar{display:none;align-items:center;gap:12px;padding:14px 16px;background:var(--lab-bg);border-radius:var(--radius-sm);margin-bottom:14px;}
-.analyzing-bar.show{display:flex;}
+.or-div{display:flex;align-items:center;gap:10px;margin:6px 0 10px;}
+.or-div span{font-size:12px;color:var(--ink3);}
+.or-line{flex:1;height:1px;background:var(--border);}
+
+/* Analyzing */
+.analyzing{display:none;align-items:center;gap:12px;padding:14px 16px;background:var(--lab-bg);border-radius:var(--radius-sm);margin-bottom:14px;}
+.analyzing.show{display:flex;}
 .spinner{width:22px;height:22px;border:2px solid #9dd4de;border-top-color:var(--lab);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
-.card-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink);margin-bottom:14px;}
-
-/* Lab value rows */
-.lab-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
-.lab-row:last-child{border-bottom:none;}
-.lab-name{flex:1;font-size:13px;font-weight:500;color:var(--ink);}
-.lab-unit{font-size:11px;color:var(--ink3);width:60px;text-align:right;}
-.lab-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;width:80px;text-align:right;}
-.lab-flag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;flex-shrink:0;}
-.flag-high{background:var(--danger-bg);color:var(--danger);}
-.flag-low{background:#EEF2FF;color:#4338CA;}
-.flag-normal{background:var(--good-bg);color:var(--good);}
-.lab-ref{font-size:10px;color:var(--ink3);width:80px;text-align:right;}
 
 /* Notice */
 .notice{border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.5;}
 .notice.success{background:var(--good-bg);color:var(--good);}
 .notice.error{background:var(--danger-bg);color:var(--danger);}
 .notice.info{background:var(--lab-bg);color:var(--lab);}
+.notice.warn{background:var(--warn-bg);color:var(--warn);}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.card-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink);margin-bottom:14px;}
+
+/* Lab value rows */
+.lab-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
+.lab-row:last-child{border-bottom:none;}
+.lab-name{flex:1;font-size:13px;font-weight:500;color:var(--ink);}
+.lab-ref{font-size:10px;color:var(--ink3);min-width:70px;text-align:right;}
+.lab-unit{font-size:11px;color:var(--ink3);min-width:55px;text-align:right;}
+.lab-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;min-width:65px;text-align:right;}
+.lab-flag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;min-width:36px;text-align:center;}
+.flag-high{background:var(--danger-bg);color:var(--danger);}
+.flag-low{background:#EEF2FF;color:#4338CA;}
+.flag-ok{background:var(--good-bg);color:var(--good);}
+.flag-new{background:var(--lab-bg);color:var(--lab);}
+
+/* Confirm grid */
+.confirm-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:50vh;overflow-y:auto;}
+.confirm-row{display:grid;grid-template-columns:1fr 70px 65px 65px 65px;gap:6px;align-items:center;}
+.confirm-hdr{display:grid;grid-template-columns:1fr 70px 65px 65px 65px;gap:6px;margin-bottom:4px;}
+.cin{padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink);background:var(--bg);width:100%;}
+.cin:focus{outline:none;border-color:var(--lab);}
+.cin-num{padding:6px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg);width:100%;text-align:center;-moz-appearance:textfield;}
+.cin-num::-webkit-outer-spin-button,.cin-num::-webkit-inner-spin-button{-webkit-appearance:none;}
+.cin-num:focus{outline:none;border-color:var(--lab);}
+.row-new-badge{font-size:10px;font-weight:700;color:var(--lab);background:var(--lab-bg);padding:1px 5px;border-radius:6px;flex-shrink:0;}
+.row-existing-badge{font-size:10px;color:var(--ink3);padding:1px 5px;}
+
+/* History */
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.hist-header{display:flex;align-items:center;padding:12px 16px;gap:10px;cursor:pointer;transition:background .15s;}
+.hist-header:hover{background:var(--surface2);}
+.hist-datetime{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;flex:1;color:var(--ink);}
+.hist-type{font-size:11px;color:var(--ink3);background:var(--surface2);padding:2px 8px;border-radius:10px;}
+.hist-body{display:none;padding:4px 16px 14px;}
+
+/* Panel grid */
+.panel-group{margin-bottom:16px;}
+.panel-group-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+
+/* Trend selector */
+.trend-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.trend-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .15s;}
+.trend-pill.active{background:var(--lab);color:#fff;border-color:var(--lab);}
+
+/* Chart */
+.chart-wrap{position:relative;height:200px;}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
@@ -83,26 +117,15 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .btn-sm{padding:6px 12px;font-size:12px;}
 .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #f0c0c0;}
 
-/* Confirm panel grid */
-.confirm-panel-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
-.confirm-row{display:grid;grid-template-columns:1fr 80px 70px;gap:8px;align-items:center;}
-.confirm-input{padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--bg);}
-.confirm-input:focus{outline:none;border-color:var(--lab);}
-
-/* History cards */
-.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
-.hist-header{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;}
-.hist-date{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;flex:1;}
-.hist-flags{font-size:12px;}
-
-/* Trend chart */
-.chart-wrap{position:relative;height:180px;}
-
 /* Empty */
 .empty{text-align:center;padding:40px 20px;color:var(--ink3);}
 .empty-icon{font-size:36px;margin-bottom:10px;}
 .empty-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink2);margin-bottom:5px;}
 .empty-sub{font-size:13px;line-height:1.5;}
+
+/* PDF preview */
+.pdf-prev{padding:12px 16px;background:var(--surface2);display:flex;align-items:center;gap:12px;border-radius:var(--radius);margin-bottom:12px;}
+.img-prev{width:100%;max-height:160px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);display:block;margin-bottom:12px;}
 
 /* Toast */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
@@ -110,26 +133,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .toast.success{background:var(--good);}
 .toast.error{background:var(--danger);}
 
-/* Image preview */
-.img-preview-wrap{display:none;margin-bottom:12px;position:relative;}
-.img-preview-wrap img{width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);}
-.img-remove{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;}
-
-/* Panel setup screen */
-.setup-screen{text-align:center;padding:32px 20px;}
-.setup-icon{font-size:48px;margin-bottom:12px;}
-.setup-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px;}
-.setup-desc{font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:24px;max-width:440px;margin-left:auto;margin-right:auto;}
-
-/* OR divider */
-.or-divider{display:flex;align-items:center;gap:10px;margin:8px 0;}
-.or-divider span{font-size:12px;color:var(--ink3);}
-.or-line{flex:1;height:1px;background:var(--border);}
-
-/* PDF preview */
-.pdf-preview{padding:14px 16px;background:var(--surface2);display:flex;align-items:center;gap:12px;border-radius:var(--radius);margin-bottom:12px;}
-
-@media(max-width:480px){.page{padding:14px 12px 40px;}.confirm-row{grid-template-columns:1fr 65px 60px;}}
+@media(max-width:480px){
+  .page{padding:14px 12px 40px;}
+  .confirm-row,.confirm-hdr{grid-template-columns:1fr 60px 56px 56px 56px;}
+}
 </style>
 </head>
 <body>
@@ -140,46 +147,42 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
     <span class="logo-sub">Surveillance</span>
   </div>
   <div style="display:flex;gap:8px">
-    <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙️ Settings</button>
     <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
   </div>
 </header>
 
 <div class="tabs">
-  <button class="tab active" onclick="showTab('log')"      id="tab-log">Log Results</button>
-  <button class="tab"        onclick="showTab('history')"  id="tab-history">History</button>
-  <button class="tab"        onclick="showTab('trends')"   id="tab-trends">Trends</button>
-  <button class="tab"        onclick="showTab('panel')"    id="tab-panel">My Panel</button>
-  <button class="tab"        onclick="showTab('settings')" id="tab-settings">Settings</button>
+  <button class="tab active" onclick="showTab('upload')"  id="tab-upload">+ Upload</button>
+  <button class="tab"        onclick="showTab('history')" id="tab-history">History</button>
+  <button class="tab"        onclick="showTab('trends')"  id="tab-trends">Trends</button>
+  <button class="tab"        onclick="showTab('panel')"   id="tab-panel">My Panel</button>
 </div>
 
-<!-- LOG RESULTS -->
-<div class="page active" id="page-log">
-  <div id="setup-screen"></div>
-  <div id="log-screen" style="display:none">
-    <div class="analyzing-bar" id="log-analyzing">
-      <div class="spinner"></div>
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--lab)">Claude is reading your lab results…</div>
-        <div style="font-size:11px;color:var(--ink3)">Extracting values and comparing to your panel</div>
-      </div>
+<!-- UPLOAD -->
+<div class="page active" id="page-upload">
+  <div class="analyzing" id="upload-analyzing">
+    <div class="spinner"></div>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--lab)">Claude is reading your lab results…</div>
+      <div style="font-size:11px;color:var(--ink3)" id="upload-analyzing-sub">Extracting values and checking reference ranges</div>
     </div>
-    <div id="log-notice"></div>
-    <div class="img-preview-wrap" id="log-img-preview-wrap">
-      <img id="log-img-preview" alt="Lab result">
-      <button class="img-remove" onclick="removeLogImage()">✕ Remove</button>
-    </div>
-    <div class="upload-zone" id="log-upload-zone" onclick="document.getElementById('log-file-input').click()">
-      <input type="file" id="log-file-input" accept="image/*,.pdf,application/pdf" onchange="handleLogFile(this)">
-      <div class="upload-icon">📷</div>
-      <div class="upload-label">Tap to upload lab screenshot or PDF</div>
-      <div class="upload-hint">Claude will auto-fill values from your panel</div>
-    </div>
-    <div class="or-divider"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
-    <button class="paste-btn" onclick="pasteFromClipboard('log')">📋 Paste from Clipboard (Ctrl+V)</button>
-
-    <div id="log-form-wrap" style="display:none"></div>
   </div>
+  <div id="upload-notice"></div>
+  <div id="upload-preview"></div>
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('upload-file-input').click()">
+    <input type="file" id="upload-file-input" accept="image/*,.pdf,application/pdf" onchange="handleFile(this)">
+    <div style="font-size:36px;margin-bottom:8px">🧪</div>
+    <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">Tap to upload lab results</div>
+    <div style="font-size:12px;color:var(--ink3)">Screenshot, photo, or PDF — CBC, CMP, immunosuppression levels, any lab panel</div>
+  </div>
+  <div class="or-div"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
+  <button class="paste-btn" onclick="pasteFromClipboard()">📋 Paste from Clipboard (Ctrl+V)</button>
+
+  <div style="font-size:12px;color:var(--ink3);line-height:1.6;background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--border)">
+    <strong style="color:var(--ink2)">How it works:</strong> Upload any lab result document. Claude reads every test, value, and reference range. New tests are automatically added to your panel. Existing tests get a new data point for trending. Out-of-range values are flagged automatically.
+  </div>
+
+  <div id="confirm-wrap"></div>
 </div>
 
 <!-- HISTORY -->
@@ -197,446 +200,268 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <div id="panel-content"></div>
 </div>
 
-<!-- SETTINGS -->
-<div class="page" id="page-settings">
-  <div class="card">
-    <div class="card-title">Data Freshness</div>
-    <div style="font-size:13px;color:var(--ink3);margin-bottom:12px">How many days before a lab result is considered overdue?</div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <input type="number" id="setting-days" value="30" min="1" max="180"
-        style="width:80px;text-align:center;font-family:'DM Mono',monospace;font-size:20px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);">
-      <span style="font-size:13px;color:var(--ink2)">days</span>
-    </div>
-    <div style="margin-top:12px;display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="resetPanel()">🗑 Reset Panel</button>
-      <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear All Data</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 // ══════════════════════════════════════════════════
 //  STORAGE
+//  panel: { [key]: { key, name, unit, refLow, refHigh, decimals, category } }
+//  records: [ { id, date, time, datetime, category, values: { [key]: number } } ]
 // ══════════════════════════════════════════════════
-const PANEL_KEY   = 'lab_panel_v2';
-const RECORDS_KEY = 'lab_records_v2';
-const SETTINGS_KEY= 'lab_settings_v2';
+const PANEL_KEY   = 'lab_panel_v3';
+const RECORDS_KEY = 'lab_records_v3';
 
-function getPanel()    { try{return JSON.parse(localStorage.getItem(PANEL_KEY)||'null');}catch(e){return null;} }
-function getRecords()  { try{return JSON.parse(localStorage.getItem(RECORDS_KEY)||'[]');}catch(e){return[];} }
-function getSettings() { try{return {...{days:30},...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')};}catch(e){return{days:30};} }
-function savePanel(d)    { localStorage.setItem(PANEL_KEY,JSON.stringify(d)); }
-function saveRecords(d)  { localStorage.setItem(RECORDS_KEY,JSON.stringify(d)); }
-function saveSettings(d) { localStorage.setItem(SETTINGS_KEY,JSON.stringify(d)); }
-
-// ══════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════
-function init() {
-  const panel = getPanel();
-  if (panel && panel.length) {
-    showLogScreen();
-  } else {
-    showSetupScreen();
-  }
-  const s = getSettings();
-  const el = document.getElementById('setting-days');
-  if (el) el.value = s.days;
-}
-
-// ══════════════════════════════════════════════════
-//  SETUP SCREEN
-// ══════════════════════════════════════════════════
-function showSetupScreen() {
-  document.getElementById('setup-screen').innerHTML = `
-    <div class="setup-screen">
-      <div class="setup-icon">🔬</div>
-      <div class="setup-title">Set Up Your Lab Panel</div>
-      <div class="setup-desc">Upload a screenshot or PDF of Cocomi's lab results from the UF Health Shands patient portal. Claude will read every lab value and build a custom tracking panel — no manual setup needed.</div>
-    </div>
-    <div class="analyzing-bar" id="setup-analyzing">
-      <div class="spinner"></div>
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--lab)">Claude is reading your lab results…</div>
-        <div style="font-size:11px;color:var(--ink3)">Building your custom lab panel from the document</div>
-      </div>
-    </div>
-    <div id="setup-notice"></div>
-    <div id="setup-img-preview" style="margin-bottom:12px"></div>
-    <div class="upload-zone" onclick="document.getElementById('setup-file-input').click()">
-      <input type="file" id="setup-file-input" accept="image/*,.pdf,application/pdf" onchange="handleSetupFile(this)">
-      <div class="upload-icon">📋</div>
-      <div class="upload-label">Tap to upload first lab result</div>
-      <div class="upload-hint">Screenshot, photo, or PDF from UF Health Shands portal</div>
-    </div>
-    <div class="or-divider"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
-    <button class="paste-btn" onclick="pasteFromClipboard('setup')">📋 Paste from Clipboard (Ctrl+V)</button>
-    <div id="setup-confirm-wrap"></div>`;
-  document.getElementById('log-screen').style.display = 'none';
-  document.getElementById('setup-screen').style.display = 'block';
-}
-
-function showLogScreen() {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('log-screen').style.display = 'block';
-}
+function getPanel()   { try{return JSON.parse(localStorage.getItem(PANEL_KEY)||'{}');}catch(e){return{};} }
+function getRecords() { try{return JSON.parse(localStorage.getItem(RECORDS_KEY)||'[]');}catch(e){return[];} }
+function savePanel(d)   { localStorage.setItem(PANEL_KEY,JSON.stringify(d)); }
+function saveRecords(d) { localStorage.setItem(RECORDS_KEY,JSON.stringify(d)); }
 
 // ══════════════════════════════════════════════════
 //  FILE HANDLING
 // ══════════════════════════════════════════════════
-function getFileMimeType(file) {
-  if (file.type === 'application/pdf' || (file.name && file.name.endsWith('.pdf'))) return 'application/pdf';
-  return file.type || 'image/jpeg';
+function getMime(file) {
+  if (file.type==='application/pdf'||(file.name&&file.name.endsWith('.pdf'))) return 'application/pdf';
+  return file.type||'image/jpeg';
 }
-
-async function fileToB64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
+async function toB64(file) {
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
 }
-
-function showPreview(file, wrapId, imgId) {
-  const isPDF = getFileMimeType(file) === 'application/pdf';
-  const wrap  = document.getElementById(wrapId);
-  if (isPDF) {
-    wrap.innerHTML = `<div class="pdf-preview"><span style="font-size:28px">📄</span><div><div style="font-size:13px;font-weight:600;color:var(--ink)">${file.name||'Lab Results PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF — Claude will extract lab values</div></div></div>`;
-    wrap.style.display = 'block';
+function showPreview(file) {
+  const wrap = document.getElementById('upload-preview');
+  if (getMime(file)==='application/pdf') {
+    wrap.innerHTML=`<div class="pdf-prev"><span style="font-size:28px">📄</span><div><div style="font-size:13px;font-weight:600">${file.name||'Lab PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF — Claude will extract all values</div></div></div>`;
   } else {
-    const img = document.getElementById(imgId);
-    const reader = new FileReader();
-    reader.onload = e => { if(img){img.src=e.target.result;} wrap.style.display='block'; };
+    const reader=new FileReader();
+    reader.onload=e=>{wrap.innerHTML=`<img class="img-prev" src="${e.target.result}" alt="Lab result">`};
     reader.readAsDataURL(file);
   }
 }
 
-// ══════════════════════════════════════════════════
-//  CLAUDE API CALL (via Supabase proxy)
-// ══════════════════════════════════════════════════
-async function callClaude(b64, mimeType, prompt) {
-  const fileBlock = mimeType === 'application/pdf'
-    ? { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } }
-    : { type:'image',    source:{ type:'base64', media_type:mimeType, data:b64 } };
+function handleFile(input) {
+  const file=input.files?input.files[0]:null;
+  if(!file) return;
+  input.value='';
+  processFile(file);
+}
 
-  const response = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1500,
-      messages: [{ role:'user', content:[ fileBlock, { type:'text', text:prompt } ] }]
-    })
+// ══════════════════════════════════════════════════
+//  CLAUDE API
+// ══════════════════════════════════════════════════
+async function callClaude(b64, mime, prompt) {
+  const fileBlock = mime==='application/pdf'
+    ? {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
+    : {type:'image',   source:{type:'base64',media_type:mime,data:b64}};
+  const res = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages:[{role:'user',content:[fileBlock,{type:'text',text:prompt}]}]})
   });
-  const data = await response.json();
-  if (data.error) throw new Error(data.error.message);
-  return data;
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content.map(c=>c.text||'').join('').trim();
 }
 
 function parseJSON(text) {
-  // Strip markdown fences
   let clean = text.replace(/```json/gi,'').replace(/```/g,'').trim();
-  // Extract JSON array/object
-  const s = clean.indexOf('[') !== -1 ? clean.indexOf('[') : clean.indexOf('{');
-  const e = Math.max(clean.lastIndexOf(']'), clean.lastIndexOf('}'));
-  if (s !== -1 && e !== -1 && e > s) clean = clean.substring(s, e + 1);
-  // Try 1: direct
-  try { return JSON.parse(clean); } catch(e1) {}
-  // Try 2: replace all non-ASCII characters
-  const sanitized = clean.replace(/[^\x00-\x7F]/g, c => {
-    // Replace known problematic chars
-    if (c === 'µ' || c === 'μ') return 'u';
-    if (c === '×') return 'x';
-    return '';
-  });
-  try { return JSON.parse(sanitized); } catch(e2) {}
-  // Try 3: aggressive - remove all non-printable and non-ASCII
-  const aggressive = clean.replace(/[^\x20-\x7E\n\r\t]/g, '').replace(/,\s*([\]\}])/g, '$1');
-  return JSON.parse(aggressive);
+  const s = clean.indexOf('[')!==-1?clean.indexOf('['):clean.indexOf('{');
+  const e = Math.max(clean.lastIndexOf(']'),clean.lastIndexOf('}'));
+  if(s!==-1&&e!==-1&&e>s) clean=clean.substring(s,e+1);
+  // Replace known non-ASCII
+  clean = clean.replace(/µ/g,'u').replace(/μ/g,'u').replace(/×/g,'x').replace(/[^\x20-\x7E\n\r\t]/g,'');
+  // Fix trailing commas
+  clean = clean.replace(/,(\s*[}\]])/g,'$1');
+  return JSON.parse(clean);
 }
 
 // ══════════════════════════════════════════════════
-//  SETUP EXTRACTION
+//  PROCESS FILE
 // ══════════════════════════════════════════════════
-function handleSetupFile(input) {
-  const file = input.files ? input.files[0] : null;
-  if (!file) return;
-  input.value = '';
-  runSetupExtraction(file);
-}
-
-async function runSetupExtraction(file) {
-  const bar    = document.getElementById('setup-analyzing');
-  const notice = document.getElementById('setup-notice');
-  if (bar) bar.classList.add('show');
-  showPreview(file, 'setup-img-preview', 'setup-img-preview');
+async function processFile(file) {
+  const bar    = document.getElementById('upload-analyzing');
+  const notice = document.getElementById('upload-notice');
+  const zone   = document.getElementById('upload-zone');
+  bar.classList.add('show');
+  zone.style.display='none';
+  showPreview(file);
+  notice.innerHTML='';
 
   try {
-    const b64      = await fileToB64(file);
-    const mimeType = getFileMimeType(file);
-    const prompt   = `You are analyzing a lab results document from the UF Health Shands patient portal.
+    const b64  = await toB64(file);
+    const mime = getMime(file);
 
-Extract EVERY lab test result. For each return a JSON object:
-- key: camelCase id (e.g. "wbc", "hemoglobin", "plateletCount")
-- name: display name (e.g. "WBC", "Hemoglobin", "Platelet Count")  
-- value: numeric result as a number
-- unit: ASCII only — write "uL" not "µL", "x10E3/uL" not "x10E3/µL"
-- refLow: lower reference limit as number or null
-- refHigh: upper reference limit as number or null
-- decimals: 0, 1, or 2
+    const prompt = `You are analyzing a medical lab results document.
 
-IMPORTANT: ASCII characters only. No µ symbol. No special characters.
-Start response with [ end with ] — no markdown no backticks no explanation.
-Example: [{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,"refHigh":10.0,"decimals":1}]`;
-    const data      = await callClaude(b64, mimeType, prompt);
-    const text      = data.content.map(c => c.text||'').join('').trim();
+Extract EVERY lab test result you can find. For each test return:
+- key: camelCase identifier, no spaces (e.g. "wbc", "hemoglobin", "tacrolimusLevel", "crpHighSensitivity")
+- name: full display name (e.g. "WBC", "Hemoglobin", "Tacrolimus Level", "CRP High Sensitivity")
+- value: numeric result as a number (not a string)
+- unit: unit using ONLY ASCII - write uL not µL, use x10E3/uL not x10E3/µL
+- refLow: lower reference range as number or null if not provided
+- refHigh: upper reference range as number or null if not provided
+- flag: "high" if value > refHigh, "low" if value < refLow, "normal" otherwise, "na" if no reference range
+- decimals: decimal places to display (0, 1, or 2)
+- category: panel type such as "CBC", "CMP", "Immunosuppression", "Inflammation", "Thyroid", "Liver", "Kidney", "Lipids", or best match
+
+CRITICAL RULES:
+- ASCII characters ONLY — no µ, no ×, no special symbols
+- value must be a number not a string
+- Start response with [ and end with ] — no markdown, no backticks, no explanation
+
+Example:
+[{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,"refHigh":10.0,"flag":"high","decimals":1,"category":"CBC"}]`;
+
+    document.getElementById('upload-analyzing-sub').textContent = 'Reading document…';
+    const text      = await callClaude(b64, mime, prompt);
     const extracted = parseJSON(text);
 
-    if (!Array.isArray(extracted) || !extracted.length) throw new Error('No lab values found in document');
+    if(!Array.isArray(extracted)||!extracted.length) throw new Error('No lab values found in document');
 
-    if (bar) bar.classList.remove('show');
-    showPanelConfirm(extracted);
+    bar.classList.remove('show');
+    showConfirm(extracted);
 
   } catch(err) {
-    if (bar) bar.classList.remove('show');
-    const n = document.getElementById('setup-notice');
-    if (n) n.innerHTML = `<div class="notice error">Could not read document: ${err.message}. Please try again or upload a clearer image.</div>`;
+    bar.classList.remove('show');
+    zone.style.display='block';
+    notice.innerHTML=`<div class="notice error">Could not read document: ${err.message}. Please try again.</div>`;
   }
 }
 
-function showPanelConfirm(labs) {
-  const wrap = document.getElementById('setup-confirm-wrap');
-  if (!wrap) return;
+// ══════════════════════════════════════════════════
+//  CONFIRM SCREEN
+// ══════════════════════════════════════════════════
+function showConfirm(labs) {
+  const panel   = getPanel();
+  const today   = toDateStr(new Date());
+  const nowTime = new Date().toTimeString().slice(0,5);
+
+  // Mark which are new vs existing
+  labs.forEach(l => { l._isNew = !panel[l.key]; });
+  const newCount = labs.filter(l=>l._isNew).length;
+
+  const wrap = document.getElementById('confirm-wrap');
   wrap.innerHTML = `
     <div class="card" style="margin-top:16px">
-      <div class="card-title">✓ Claude found ${labs.length} lab tests — review and confirm</div>
-      <p style="font-size:13px;color:var(--ink3);margin-bottom:14px;line-height:1.5">Review the extracted values. Edit names or units if needed, remove irrelevant ones. Tap <strong>Confirm Panel</strong> to save as your tracking template.</p>
-      <div class="confirm-panel-grid" id="confirm-grid">
-        <div style="display:grid;grid-template-columns:1fr 80px 70px;gap:8px;margin-bottom:4px">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Test Name</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Unit</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Value</div>
+      <div class="card-title">✓ Claude found ${labs.length} tests — review and save</div>
+      ${newCount>0?`<div class="notice info" style="margin-bottom:12px">🆕 ${newCount} new test${newCount>1?'s':''} will be added to your panel.</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Date</div>
+          <input type="date" id="rec-date" value="${today}" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%">
         </div>
-        ${labs.map((lab,i) => `
-          <div class="confirm-row" id="confirm-row-${i}">
-            <input class="confirm-input" value="${lab.name||''}" id="cn-${i}" placeholder="Test name">
-            <input class="confirm-input" value="${lab.unit||''}" id="cu-${i}" placeholder="Unit">
-            <div style="display:flex;align-items:center;gap:4px">
-              <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ink)">${lab.value??'—'}</span>
-              <button onclick="document.getElementById('confirm-row-${i}').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:14px;padding:0 2px">✕</button>
+        <div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Time</div>
+          <input type="time" id="rec-time" value="${nowTime}" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%">
+        </div>
+      </div>
+
+      <div class="confirm-hdr">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Test Name</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Value</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Low</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">High</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Flag</div>
+      </div>
+
+      <div class="confirm-grid" id="confirm-grid">
+        ${labs.map((lab,i)=>{
+          const flagColor = lab.flag==='high'?'color:var(--danger)':lab.flag==='low'?'color:#4338CA':'color:var(--good)';
+          return `
+          <div class="confirm-row" id="cr-${i}">
+            <div style="display:flex;align-items:center;gap:5px;min-width:0">
+              <input class="cin" value="${lab.name}" id="cn-${i}" placeholder="Name" style="flex:1;min-width:0">
+              ${lab._isNew?'<span class="row-new-badge">NEW</span>':'<span class="row-existing-badge">↑</span>'}
+              <button onclick="document.getElementById('cr-${i}').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;flex-shrink:0;padding:0 2px">✕</button>
             </div>
-          </div>`).join('')}
+            <div style="display:flex;align-items:center;gap:3px">
+              <input class="cin-num" type="number" value="${lab.value??''}" id="cv-${i}" step="any">
+              <span style="font-size:9px;color:var(--ink3)">${lab.unit||''}</span>
+            </div>
+            <input class="cin-num" type="number" value="${lab.refLow??''}" id="cl-${i}" step="any" placeholder="—">
+            <input class="cin-num" type="number" value="${lab.refHigh??''}" id="ch-${i}" step="any" placeholder="—">
+            <div style="font-size:12px;font-weight:700;text-align:center;${flagColor}">${(lab.flag||'').toUpperCase()}</div>
+          </div>`;
+        }).join('')}
       </div>
+
       <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="document.getElementById('setup-confirm-wrap').innerHTML=''">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmPanel(${JSON.stringify(labs).replace(/"/g,'&quot;')})">Confirm Panel (${labs.length} tests)</button>
+        <button class="btn btn-ghost" onclick="cancelConfirm()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveRecord(${JSON.stringify(labs).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026').replace(/'/g,'\\u0027')})">Save Lab Results</button>
       </div>
     </div>`;
 }
 
-function confirmPanel(labs) {
-  // Collect confirmed labs with any edits
-  const confirmed = labs.map((lab,i) => {
-    const row = document.getElementById('confirm-row-'+i);
-    if (!row) return null;
-    return {
-      ...lab,
-      name: document.getElementById('cn-'+i)?.value || lab.name,
-      unit: document.getElementById('cu-'+i)?.value || lab.unit,
+function cancelConfirm() {
+  document.getElementById('confirm-wrap').innerHTML='';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('upload-preview').innerHTML='';
+}
+
+function saveRecord(originalLabs) {
+  const panel   = getPanel();
+  const date    = document.getElementById('rec-date')?.value || toDateStr(new Date());
+  const time    = document.getElementById('rec-time')?.value || new Date().toTimeString().slice(0,5);
+  const datetime= `${date}T${time}`;
+  const record  = { id: Date.now().toString(), date, time, datetime, values:{}, flags:{} };
+
+  // Collect categories from original labs
+  const categories = new Set();
+
+  originalLabs.forEach((lab, i) => {
+    const row = document.getElementById('cr-'+i);
+    if (!row) return; // row was removed by user
+
+    const name   = document.getElementById('cn-'+i)?.value?.trim() || lab.name;
+    const val    = parseFloat(document.getElementById('cv-'+i)?.value);
+    const refLow = parseFloat(document.getElementById('cl-'+i)?.value);
+    const refHigh= parseFloat(document.getElementById('ch-'+i)?.value);
+
+    if (!name) return;
+    if (lab.category) categories.add(lab.category);
+
+    // Update or add to panel
+    panel[lab.key] = {
+      key:      lab.key,
+      name:     name,
+      unit:     lab.unit || '',
+      refLow:   isNaN(refLow)  ? (panel[lab.key]?.refLow  ?? null) : refLow,
+      refHigh:  isNaN(refHigh) ? (panel[lab.key]?.refHigh ?? null) : refHigh,
+      decimals: lab.decimals ?? 1,
+      category: lab.category || panel[lab.key]?.category || 'Other'
     };
-  }).filter(Boolean);
 
-  savePanel(confirmed);
-
-  // Save first record
-  const record = {
-    id: Date.now().toString(),
-    date: toDateStr(new Date()),
-    values: {},
-    flags: {}
-  };
-  confirmed.forEach(lab => {
-    record.values[lab.key] = lab.value;
-    if (lab.refHigh && lab.value > lab.refHigh) record.flags[lab.key] = 'high';
-    else if (lab.refLow && lab.value < lab.refLow) record.flags[lab.key] = 'low';
-  });
-  const records = getRecords();
-  records.push(record);
-  saveRecords(records);
-
-  showLogScreen();
-  showToast(`Panel set up with ${confirmed.length} tests ✓`, 'success');
-}
-
-// ══════════════════════════════════════════════════
-//  LOG RESULTS
-// ══════════════════════════════════════════════════
-function handleLogFile(input) {
-  const file = input.files ? input.files[0] : null;
-  if (!file) return;
-  input.value = '';
-  runLogExtraction(file);
-}
-
-async function runLogExtraction(file) {
-  const bar    = document.getElementById('log-analyzing');
-  const notice = document.getElementById('log-notice');
-  const zone   = document.getElementById('log-upload-zone');
-  if (bar)  bar.classList.add('show');
-  if (zone) zone.style.display = 'none';
-  showPreview(file, 'log-img-preview-wrap', 'log-img-preview');
-
-  try {
-    const panel    = getPanel();
-    const b64      = await fileToB64(file);
-    const mimeType = getFileMimeType(file);
-
-    const panelDesc = panel.map(p => `${p.key}: "${p.name}" in ${p.unit}`).join(', ');
-    const prompt    = `You are reading a lab results document. Extract values for these specific lab tests: ${panelDesc}
-
-For each test, return the numeric value found in the document.
-Return ONLY a JSON object where keys match exactly. Use null if a test is not found.
-No markdown, no explanation.
-Example: {"wbc":5.4,"creatinine":1.2,"tacrolimusLevel":8.5}`;
-
-    const data      = await callClaude(b64, mimeType, prompt);
-    const text      = data.content.map(c => c.text||'').join('').trim();
-    const extracted = parseJSON(text);
-
-    if (bar) bar.classList.remove('show');
-
-    // Show form pre-filled with extracted values
-    showLogForm(panel, extracted);
-
-  } catch(err) {
-    if (bar) bar.classList.remove('show');
-    if (notice) notice.innerHTML = `<div class="notice error">Could not read document: ${err.message}. Enter values manually below.</div>`;
-    showLogForm(getPanel(), {});
-  }
-}
-
-function showLogForm(panel, extractedVals) {
-  const wrap = document.getElementById('log-form-wrap');
-  wrap.style.display = 'block';
-
-  const today = toDateStr(new Date());
-  wrap.innerHTML = `
-    <div class="card">
-      <div class="card-title">Review & Save Lab Results</div>
-      <div class="field-group" style="margin-bottom:14px">
-        <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--ink2)">Date</label>
-        <input type="date" id="log-date" value="${today}" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Test</div>
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Value</div>
-      </div>
-      ${panel.map(lab => {
-        const val = extractedVals[lab.key];
-        const hasVal = val !== null && val !== undefined;
-        const flag = lab.refHigh && hasVal && val > lab.refHigh ? 'high' : lab.refLow && hasVal && val < lab.refLow ? 'low' : '';
-        return `
-        <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--ink)">${lab.name}</div>
-            <div style="font-size:11px;color:var(--ink3)">${lab.unit}${lab.refLow||lab.refHigh?' · '+[lab.refLow,lab.refHigh].filter(Boolean).join('–'):''}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:4px">
-            <input type="number" id="lv-${lab.key}" value="${hasVal?val:''}" placeholder="—" step="any"
-              style="width:70px;text-align:center;font-family:'DM Mono',monospace;font-size:15px;padding:6px 8px;border:1.5px solid ${flag==='high'?'#f0c0c0':flag==='low'?'#b0b8f0':'var(--border)'};border-radius:6px;background:${flag==='high'?'var(--danger-bg)':flag==='low'?'#EEF2FF':'var(--bg)'};color:var(--ink)">
-          </div>
-        </div>`;
-      }).join('')}
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
-        <button class="btn btn-ghost" onclick="cancelLog()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveLabRecord()">Save Results</button>
-      </div>
-    </div>`;
-}
-
-function cancelLog() {
-  document.getElementById('log-form-wrap').style.display = 'none';
-  document.getElementById('log-form-wrap').innerHTML = '';
-  removeLogImage();
-}
-
-function removeLogImage() {
-  document.getElementById('log-img-preview-wrap').style.display = 'none';
-  document.getElementById('log-upload-zone').style.display = 'block';
-}
-
-function saveLabRecord() {
-  const panel  = getPanel();
-  const date   = document.getElementById('log-date')?.value || toDateStr(new Date());
-  const record = { id: Date.now().toString(), date, values:{}, flags:{} };
-
-  panel.forEach(lab => {
-    const el  = document.getElementById('lv-'+lab.key);
-    const val = el ? parseFloat(el.value) : null;
-    record.values[lab.key] = isNaN(val) ? null : val;
-    if (val !== null && !isNaN(val)) {
-      if (lab.refHigh && val > lab.refHigh) record.flags[lab.key] = 'high';
-      else if (lab.refLow && val < lab.refLow) record.flags[lab.key] = 'low';
+    // Record value
+    if (!isNaN(val)) {
+      record.values[lab.key] = val;
+      const lo = panel[lab.key].refLow;
+      const hi = panel[lab.key].refHigh;
+      if (hi !== null && val > hi) record.flags[lab.key] = 'high';
+      else if (lo !== null && val < lo) record.flags[lab.key] = 'low';
     }
   });
 
+  record.categories = [...categories];
+  savePanel(panel);
+
+  // Save record — allow multiple per date using datetime as key
   const records = getRecords();
-  const existing = records.findIndex(r => r.date === date);
+  const existing = records.findIndex(r => r.datetime === datetime);
   if (existing >= 0) records[existing] = record;
-  else { records.push(record); records.sort((a,b)=>a.date.localeCompare(b.date)); }
+  else { records.push(record); records.sort((a,b)=>a.datetime.localeCompare(b.datetime)); }
   saveRecords(records);
 
-  document.getElementById('log-form-wrap').style.display = 'none';
-  document.getElementById('log-form-wrap').innerHTML = '';
-  removeLogImage();
-  document.getElementById('log-notice').innerHTML = `<div class="notice success">✓ Lab results saved for ${date}</div>`;
-  setTimeout(() => { const n=document.getElementById('log-notice'); if(n)n.innerHTML=''; }, 3000);
-  showToast('Lab results saved ✓', 'success');
-}
+  // Reset upload UI
+  document.getElementById('confirm-wrap').innerHTML='';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('upload-preview').innerHTML='';
 
-// ══════════════════════════════════════════════════
-//  CLIPBOARD PASTE
-// ══════════════════════════════════════════════════
-async function pasteFromClipboard(target) {
-  try {
-    if (!navigator.clipboard || !navigator.clipboard.read) { showToast('Use upload button instead'); return; }
-    const items = await navigator.clipboard.read();
-    let imageItem = null;
-    for (const item of items) {
-      const t = item.types.find(x=>x.startsWith('image/'));
-      if (t) { imageItem={item,type:t}; break; }
-    }
-    if (!imageItem) { showToast('No image in clipboard — copy a screenshot first'); return; }
-    const blob = await imageItem.item.getType(imageItem.type);
-    const file = new File([blob], 'clipboard.png', { type: imageItem.type });
-    showToast('Image pasted ✓', 'success');
-    if (target === 'setup') runSetupExtraction(file);
-    else runLogExtraction(file);
-  } catch(err) {
-    if (err.name==='NotAllowedError') showToast('Allow clipboard access in browser settings');
-    else showToast('Could not paste: '+err.message);
-  }
+  const panelSize  = Object.keys(panel).length;
+  const valCount   = Object.keys(record.values).length;
+  const flagCount  = Object.keys(record.flags).length;
+  const notice     = document.getElementById('upload-notice');
+  notice.innerHTML = `<div class="notice success">✓ ${valCount} values saved${flagCount?' · ⚠️ '+flagCount+' out of range':''}. Panel now has ${panelSize} tests.</div>`;
+  setTimeout(()=>{ if(notice) notice.innerHTML=''; }, 5000);
+  showToast(`Lab results saved ✓`, 'success');
 }
-
-document.addEventListener('paste', async (e) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      e.preventDefault();
-      const file = item.getAsFile();
-      if (!file) return;
-      showToast('Image pasted ✓', 'success');
-      const panel = getPanel();
-      if (panel && panel.length) runLogExtraction(file);
-      else runSetupExtraction(file);
-      return;
-    }
-  }
-});
 
 // ══════════════════════════════════════════════════
 //  HISTORY
@@ -647,34 +472,42 @@ function renderHistory() {
   const el      = document.getElementById('history-content');
 
   if (!records.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No results yet</div><div class="empty-sub">Upload your first lab result to start tracking.</div></div>`;
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No results yet</div><div class="empty-sub">Upload your first lab result to start tracking.</div></div>`;
     return;
   }
 
   el.innerHTML = [...records].reverse().map(rec => {
-    const flagCount  = Object.keys(rec.flags||{}).length;
-    const flagsHtml  = flagCount ? `<span style="color:var(--danger);font-size:12px">⚠️ ${flagCount} flag${flagCount>1?'s':''}</span>` : `<span style="color:var(--good);font-size:12px">✓ Normal</span>`;
-    const valCount   = Object.values(rec.values||{}).filter(v=>v!==null).length;
+    const flagCount = Object.keys(rec.flags||{}).length;
+    const valCount  = Object.values(rec.values||{}).filter(v=>v!==null).length;
+    const cats      = (rec.categories||[]).join(', ') || 'Lab Results';
+    const flagBadge = flagCount
+      ? `<span style="color:var(--danger);font-size:12px;font-weight:600">⚠️ ${flagCount} flag${flagCount>1?'s':''}</span>`
+      : `<span style="color:var(--good);font-size:12px">✓ Normal</span>`;
     return `
     <div class="hist-card">
-      <div class="hist-header" onclick="toggleHistCard('hc-${rec.id}')">
-        <div class="hist-date">${formatDate(rec.date)}</div>
-        <div>${flagsHtml}</div>
-        <div style="font-size:11px;color:var(--ink3)">${valCount} values</div>
-        <button onclick="event.stopPropagation();deleteRecord('${rec.id}')" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:14px">🗑</button>
+      <div class="hist-header" onclick="toggleHist('hb-${rec.id}')">
+        <div>
+          <div class="hist-datetime">${formatDate(rec.date)} ${rec.time||''}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px">${cats} · ${valCount} values</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${flagBadge}
+          <button onclick="event.stopPropagation();deleteRecord('${rec.id}')" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:14px">🗑</button>
+          <span style="color:var(--ink3)">▼</span>
+        </div>
       </div>
-      <div id="hc-${rec.id}" style="display:none;padding:4px 16px 14px">
-        ${(panel||[]).map(lab => {
-          const val  = rec.values?.[lab.key];
-          const flag = rec.flags?.[lab.key];
-          if (val === null || val === undefined) return '';
-          const color = flag==='high'?'var(--danger)':flag==='low'?'#4338CA':'var(--good)';
+      <div class="hist-body" id="hb-${rec.id}">
+        ${Object.entries(rec.values||{}).map(([key,val])=>{
+          const p    = panel[key];
+          if(!p) return '';
+          const flag = rec.flags?.[key];
+          const color= flag==='high'?'var(--danger)':flag==='low'?'#4338CA':'var(--good)';
           return `<div class="lab-row">
-            <div class="lab-name">${lab.name}</div>
-            <div class="lab-ref">${[lab.refLow,lab.refHigh].filter(Boolean).join('–')}</div>
-            <div class="lab-unit">${lab.unit}</div>
-            <div class="lab-val" style="color:${color}">${val}</div>
-            ${flag?`<span class="lab-flag flag-${flag}">${flag.toUpperCase()}</span>`:''}
+            <div class="lab-name">${p.name}</div>
+            <div class="lab-ref">${[p.refLow,p.refHigh].filter(v=>v!==null).join('–') || '—'}</div>
+            <div class="lab-unit">${p.unit}</div>
+            <div class="lab-val" style="color:${color}">${typeof val==='number'?val.toFixed(p.decimals??1):val}</div>
+            ${flag?`<span class="lab-flag flag-${flag}">${flag.toUpperCase()}</span>`:`<span class="lab-flag flag-ok">OK</span>`}
           </div>`;
         }).join('')}
       </div>
@@ -682,9 +515,9 @@ function renderHistory() {
   }).join('');
 }
 
-function toggleHistCard(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display==='none'?'block':'none';
+function toggleHist(id) {
+  const el=document.getElementById(id);
+  if(el) el.style.display=el.style.display==='none'||!el.style.display?'block':'none';
 }
 
 function deleteRecord(id) {
@@ -696,151 +529,204 @@ function deleteRecord(id) {
 // ══════════════════════════════════════════════════
 //  TRENDS
 // ══════════════════════════════════════════════════
-let trendCharts = {};
-let activeTrendKey = null;
+let trendCharts={};
+let activeTrendKey=null;
 
 function renderTrends() {
   const records = getRecords();
   const panel   = getPanel();
   const el      = document.getElementById('trends-content');
   Object.values(trendCharts).forEach(c=>{try{c.destroy();}catch(e){}});
-  trendCharts = {};
+  trendCharts={};
 
-  if (!records.length || !panel) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">No data yet</div><div class="empty-sub">Log at least one set of results to see trends.</div></div>`;
+  if(!records.length||!Object.keys(panel).length) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">No data yet</div><div class="empty-sub">Upload lab results to see trends.</div></div>`;
     return;
   }
 
-  if (!activeTrendKey) activeTrendKey = panel[0]?.key;
+  const keys = Object.keys(panel);
+  if(!activeTrendKey||!panel[activeTrendKey]) activeTrendKey=keys[0];
 
-  const sorted  = [...records].sort((a,b)=>a.date.localeCompare(b.date));
-  const labels  = sorted.map(r=>formatDateShort(r.date));
+  // Group by category
+  const cats={};
+  keys.forEach(k=>{ const c=panel[k].category||'Other'; if(!cats[c]) cats[c]=[]; cats[c].push(k); });
 
-  el.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-      ${panel.map(lab=>`<button class="btn btn-sm ${lab.key===activeTrendKey?'btn-primary':'btn-ghost'}" onclick="setTrendKey('${lab.key}')">${lab.name}</button>`).join('')}
+  el.innerHTML=`
+    <div class="trend-pills">
+      ${Object.entries(cats).map(([cat,ks])=>
+        ks.map(k=>`<button class="trend-pill ${k===activeTrendKey?'active':''}" onclick="setTrend('${k}')">${panel[k].name}</button>`).join('')
+      ).join('')}
     </div>
     <div id="trend-chart-area"></div>`;
 
-  renderTrendChart(sorted, labels, activeTrendKey, panel);
+  renderTrendChart(records, panel, activeTrendKey);
 }
 
-function setTrendKey(key) {
-  activeTrendKey = key;
-  const records = getRecords();
-  const panel   = getPanel();
-  const sorted  = [...records].sort((a,b)=>a.date.localeCompare(b.date));
-  const labels  = sorted.map(r=>formatDateShort(r.date));
-  Object.values(trendCharts).forEach(c=>{try{c.destroy();}catch(e){}});
-  trendCharts = {};
-  document.querySelectorAll('#trends-content .btn').forEach(b=>{
-    b.className='btn btn-sm '+(b.textContent===getPanel()?.find(p=>p.key===key)?.name?'btn-primary':'btn-ghost');
-  });
+function setTrend(key) {
+  activeTrendKey=key;
   renderTrends();
 }
 
-function renderTrendChart(sorted, labels, key, panel) {
-  const area = document.getElementById('trend-chart-area');
-  if (!area) return;
-  const lab  = panel.find(p=>p.key===key);
-  if (!lab) return;
-  const vals = sorted.map(r=>r.values?.[key]??null);
-  const nonNull = vals.filter(v=>v!==null);
-  if (!nonNull.length) { area.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink3);font-size:13px">No data for this test yet.</div>'; return; }
+function renderTrendChart(records, panel, key) {
+  const area=document.getElementById('trend-chart-area');
+  if(!area) return;
+  const lab=panel[key];
+  if(!lab) return;
 
-  const refLines = [];
-  if (lab.refHigh) refLines.push({ type:'line', yMin:lab.refHigh, yMax:lab.refHigh, borderColor:'rgba(201,64,64,0.4)', borderWidth:1.5, borderDash:[4,4], label:{content:'High',enabled:true,position:'end'} });
-  if (lab.refLow)  refLines.push({ type:'line', yMin:lab.refLow,  yMax:lab.refLow,  borderColor:'rgba(59,130,196,0.4)', borderWidth:1.5, borderDash:[4,4] });
+  const sorted=records.filter(r=>r.values&&r.values[key]!==undefined&&r.values[key]!==null).sort((a,b)=>a.datetime.localeCompare(b.datetime));
+  if(!sorted.length){area.innerHTML=`<div class="empty" style="padding:20px"><div class="empty-sub">No data for ${lab.name} yet.</div></div>`;return;}
 
-  area.innerHTML = `
+  const labels=sorted.map(r=>formatDateShort(r.date)+(sorted.filter(x=>x.date===r.date).length>1?' '+r.time:''));
+  const vals  =sorted.map(r=>r.values[r.date+r.time]!==undefined?r.values[r.date+r.time]:r.values[key]);
+
+  const nonNull=vals.filter(v=>v!==null);
+  const avg=nonNull.length?nonNull.reduce((a,b)=>a+b,0)/nonNull.length:null;
+  const latest=nonNull[nonNull.length-1];
+  const flagCount=sorted.filter(r=>r.flags&&r.flags[key]).length;
+
+  area.innerHTML=`
     <div class="card">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:8px">${lab.name} (${lab.unit})</div>
-      <div class="chart-wrap"><canvas id="trend-canvas"></canvas></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink)">${lab.name}</div>
+          <div style="font-size:11px;color:var(--ink3)">${lab.unit}${lab.refLow!==null&&lab.refHigh!==null?' · Range: '+lab.refLow+'–'+lab.refHigh:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${latest>lab.refHigh?'var(--danger)':latest<lab.refLow?'#4338CA':'var(--good)'}">${latest?.toFixed(lab.decimals??1)??'—'}</div>
+          <div style="font-size:11px;color:var(--ink3)">Latest · ${flagCount} flag${flagCount!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="tc-main"></canvas></div>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Average</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--ink)">${avg!==null?avg.toFixed(lab.decimals??1):'—'}</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Readings</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--ink)">${sorted.length}</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
+          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Out of Range</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;color:${flagCount?'var(--danger)':'var(--good)'}">${flagCount}</div>
+        </div>
+      </div>
     </div>`;
 
-  setTimeout(() => {
-    const ctx = document.getElementById('trend-canvas');
-    if (!ctx) return;
-    trendCharts.main = new Chart(ctx, {
+  setTimeout(()=>{
+    const ctx=document.getElementById('tc-main');
+    if(!ctx) return;
+    trendCharts.main=new Chart(ctx,{
       type:'line',
-      data:{ labels, datasets:[{
-        label:lab.name, data:vals,
-        borderColor:'#0E7490', backgroundColor:'rgba(14,116,144,.08)',
-        borderWidth:2.5, pointBackgroundColor:vals.map(v=>{
+      data:{labels,datasets:[{
+        label:lab.name,data:vals,
+        borderColor:'#0E7490',backgroundColor:'rgba(14,116,144,.08)',
+        borderWidth:2.5,
+        pointBackgroundColor:vals.map(v=>{
           if(v===null) return 'transparent';
-          if(lab.refHigh&&v>lab.refHigh) return 'var(--danger)';
-          if(lab.refLow&&v<lab.refLow) return '#4338CA';
+          if(lab.refHigh!==null&&v>lab.refHigh) return 'var(--danger)';
+          if(lab.refLow!==null&&v<lab.refLow) return '#4338CA';
           return 'var(--good)';
         }),
-        pointRadius:5, fill:true, tension:0.3, spanGaps:false
+        pointRadius:5,fill:true,tension:0.3,spanGaps:false
       }]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>`${ctx.parsed.y} ${lab.unit}`}}},
         scales:{
           x:{grid:{color:'#E8EFF5'},ticks:{font:{family:'DM Mono',size:9},color:'#8A9EAF',maxTicksLimit:10}},
-          y:{grid:{color:'#E8EFF5'},ticks:{font:{family:'DM Mono',size:10},color:'#8A9EAF'}}
+          y:{grid:{color:'#E8EFF5'},ticks:{font:{family:'DM Mono',size:10},color:'#8A9EAF'},
+             ...(lab.refLow!==null&&lab.refHigh!==null?{suggestedMin:lab.refLow*0.8,suggestedMax:lab.refHigh*1.2}:{})}
         }
       }
     });
-  }, 60);
+  },60);
 }
 
 // ══════════════════════════════════════════════════
-//  MY PANEL
+//  PANEL VIEW
 // ══════════════════════════════════════════════════
 function renderPanel() {
-  const panel = getPanel();
-  const el    = document.getElementById('panel-content');
-  if (!panel || !panel.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🧪</div><div class="empty-title">No panel set up</div><div class="empty-sub">Go to Log Results and upload a lab document to build your panel.</div></div>`;
+  const panel   = getPanel();
+  const records = getRecords();
+  const el      = document.getElementById('panel-content');
+  const keys    = Object.keys(panel);
+
+  if(!keys.length) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🧪</div><div class="empty-title">No panel yet</div><div class="empty-sub">Upload a lab result to build your panel automatically.</div></div>`;
     return;
   }
-  el.innerHTML = `
-    <div class="card">
-      <div class="card-title">Your Lab Panel (${panel.length} tests)</div>
-      ${panel.map((lab,i) => `
-        <div class="lab-row">
-          <div class="lab-name">${lab.name}</div>
-          <div class="lab-ref" style="color:var(--ink3)">${[lab.refLow,lab.refHigh].filter(Boolean).join('–')}</div>
-          <div class="lab-unit">${lab.unit}</div>
-          <button onclick="removeFromPanel(${i})" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px">✕</button>
-        </div>`).join('')}
+
+  // Group by category
+  const cats={};
+  keys.forEach(k=>{ const c=panel[k].category||'Other'; if(!cats[c]) cats[c]=[]; cats[c].push(k); });
+
+  el.innerHTML=`
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:14px">${keys.length} tests tracked across ${Object.keys(cats).length} panel${Object.keys(cats).length!==1?'s':''}.</div>
+    ${Object.entries(cats).map(([cat,ks])=>`
+      <div class="panel-group">
+        <div class="panel-group-title">${cat}</div>
+        ${ks.map(k=>{
+          const lab=panel[k];
+          // Find latest value
+          const recs=[...records].reverse();
+          const latest=recs.find(r=>r.values&&r.values[k]!==undefined);
+          const latestVal=latest?latest.values[k]:null;
+          const flag=latest?.flags?.[k];
+          const color=flag==='high'?'var(--danger)':flag==='low'?'#4338CA':latestVal!==null?'var(--good)':'var(--ink3)';
+          return `<div class="lab-row">
+            <div class="lab-name">${lab.name}</div>
+            <div class="lab-ref">${[lab.refLow,lab.refHigh].filter(v=>v!==null).join('–')||'—'}</div>
+            <div class="lab-unit">${lab.unit}</div>
+            <div class="lab-val" style="color:${color}">${latestVal!==null?latestVal.toFixed(lab.decimals??1):'—'}</div>
+            ${flag?`<span class="lab-flag flag-${flag}">${flag.toUpperCase()}</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>`).join('')}
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('Clear all panel data?')){localStorage.removeItem('${PANEL_KEY}');localStorage.removeItem('${RECORDS_KEY}');renderPanel();showToast('Panel cleared');}">🗑 Clear All Data</button>
     </div>`;
 }
 
-function removeFromPanel(i) {
-  const panel = getPanel();
-  panel.splice(i, 1);
-  savePanel(panel);
-  renderPanel();
-  showToast('Test removed from panel');
+// ══════════════════════════════════════════════════
+//  CLIPBOARD
+// ══════════════════════════════════════════════════
+async function pasteFromClipboard() {
+  try {
+    if(!navigator.clipboard||!navigator.clipboard.read){showToast('Use upload button instead');return;}
+    const items=await navigator.clipboard.read();
+    let found=null;
+    for(const item of items){const t=item.types.find(x=>x.startsWith('image/'));if(t){found={item,type:t};break;}}
+    if(!found){showToast('No image in clipboard — copy a screenshot first');return;}
+    const blob=await found.item.getType(found.type);
+    const file=new File([blob],'clipboard.png',{type:found.type});
+    showToast('Image pasted ✓','success');
+    processFile(file);
+  } catch(err) {
+    showToast(err.name==='NotAllowedError'?'Allow clipboard access in browser settings':'Could not paste: '+err.message);
+  }
 }
+
+document.addEventListener('paste',async(e)=>{
+  if(!document.getElementById('page-upload').classList.contains('active')) return;
+  const items=e.clipboardData?.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type.startsWith('image/')){
+      e.preventDefault();
+      const file=item.getAsFile();
+      if(file){showToast('Image pasted ✓','success');processFile(file);}
+      return;
+    }
+  }
+});
 
 // ══════════════════════════════════════════════════
-//  SETTINGS ACTIONS
+//  EXPORT
 // ══════════════════════════════════════════════════
-function resetPanel() {
-  if (!confirm('Reset your lab panel? This will not delete recorded results.')) return;
-  localStorage.removeItem(PANEL_KEY);
-  showSetupScreen();
-  showToast('Panel reset');
-}
-
-function clearAllData() {
-  if (!confirm('Delete ALL lab data? This cannot be undone.')) return;
-  localStorage.removeItem(PANEL_KEY);
-  localStorage.removeItem(RECORDS_KEY);
-  showSetupScreen();
-  showToast('All data cleared');
-}
-
 function exportData() {
-  const data = { panel:getPanel(), records:getRecords(), exportDate:new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a    = document.createElement('a');
-  a.href     = URL.createObjectURL(blob);
-  a.download = `lab_results_${toDateStr(new Date())}.json`;
-  a.click();
+  const data={panel:getPanel(),records:getRecords(),exportDate:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`lab_results_${toDateStr(new Date())}.json`;a.click();
 }
 
 // ══════════════════════════════════════════════════
@@ -851,23 +737,18 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  if (name==='history')  renderHistory();
-  if (name==='trends')   renderTrends();
-  if (name==='panel')    renderPanel();
+  if(name==='history') renderHistory();
+  if(name==='trends')  renderTrends();
+  if(name==='panel')   renderPanel();
 }
 
 // ══════════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════════
-function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function formatDate(d){ if(!d) return '—'; const[y,m,day]=d.split('-'); return `${m}/${day}/${y}`; }
-function formatDateShort(d){ if(!d) return ''; const[y,m,day]=d.split('-'); return `${m}/${day}`; }
-function showToast(msg,type=''){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); setTimeout(()=>el.className='toast',2800); }
-
-// ══════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════
-init();
+function toDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${m}/${day}/${y}`;}
+function formatDateShort(d){if(!d)return'';const[y,m,day]=d.split('-');return`${m}/${day}`;}
+function showToast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
 </script>
 </body>
 </html>
