@@ -393,10 +393,10 @@
   <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
     <button class="btn btn-med btn-sm" onclick="toggleAddMedForm('manual')">✏️ Add Manually</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-input').click()">📄 Import CSV</button>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('img-med-input').click()">📷 Import from Image</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('img-med-input').click()">📷 Image / PDF</button>
     <button class="btn btn-ghost btn-sm" onclick="pasteMedFromClipboard()">📋 Paste Image</button>
     <input type="file" id="csv-input"     accept=".csv,.txt" style="display:none" onchange="importMedsCSV(this)">
-    <input type="file" id="img-med-input" accept="image/*"   style="display:none" onchange="importMedsImage(this)">
+    <input type="file" id="img-med-input" accept="image/*,.pdf,application/pdf" style="display:none" onchange="importMedsImage(this)">
   </div>
 
   <!-- Analyzing bar for image import -->
@@ -1203,6 +1203,12 @@ Example: [{"name":"Tacrolimus","dose":"2mg","freq":"twice daily","notes":"take w
 
 If no medications are found, return an empty array: []`;
 
+    const mimeType = (file.type === 'application/pdf' || file.name?.endsWith('.pdf'))
+      ? 'application/pdf' : (file.type || 'image/jpeg');
+    const fileBlock = mimeType === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
+      : { type: 'image',    source: { type: 'base64', media_type: mimeType, data: b64 } };
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1210,7 +1216,7 @@ If no medications are found, return an empty array: []`;
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: file.type || 'image/jpeg', data: b64 } },
+          fileBlock,
           { type: 'text', text: prompt }
         ]}]
       })
