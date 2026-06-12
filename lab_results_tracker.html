@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<m
+  try {
+eta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lab Results Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -503,7 +505,9 @@ async function runSetupExtraction(file) {
   document.getElementById('upload-zone-setup').style.display = 'none';
 
   const b64 = await fileToB64(file);
-  const mimeType = getFileMimeType(file);
+  const mimeType = getFileMimeTyp
+  try {
+e(file);
 
   const prompt = `You are analyzing a lab results document from the UF Health Shands patient portal.
 
@@ -520,19 +524,13 @@ Return ONLY a valid JSON array. No markdown, no explanation, no backticks.
 Example: [{"key":"wbc","name":"WBC","value":5.4,"unit":"K/µL","refLow":4.0,"refHigh":11.0,"decimals":1}]`;
 
   try {
-    const data = await callClaude(b64, mimeType, prompt);
-    bar.classList.remove('show');
-    const text = data.content.map(c=>c.text||'').join('').trim();
-    // Robust JSON extraction - find the JSON block even if surrounded by other text
-    let clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
-      const s = clean.search(/[\[{]/);
+      let clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const s = clean.indexOf('[') !== -1 ? clean.indexOf('[') : clean.indexOf('{');
       const e = Math.max(clean.lastIndexOf(']'), clean.lastIndexOf('}'));
-      if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
+      if (s !== -1 && e !== -1 && e > s) clean = clean.substring(s, e + 1);
       extracted = JSON.parse(clean);
     } catch(parseErr) {
-      // Try more aggressive cleanup
-      clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
-      extracted = JSON.parse(clean);
+      throw new Error('Could not parse lab data: ' + parseErr.message);
     }
 
     if (!Array.isArray(extracted) || !extracted.length) throw new Error('No lab values found');
@@ -700,9 +698,7 @@ Use null for any not found. Numbers only, no units.`;
       if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
       extracted = JSON.parse(clean);
     } catch(parseErr) {
-      // Try more aggressive cleanup
-      clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
-      extracted = JSON.parse(clean);
+      throw new Error('Parse error: ' + parseErr.message);
     }
 
     currentVals = {};
