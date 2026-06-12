@@ -714,13 +714,10 @@ const legalState = { age:false, terms:false, disclaimer:false };
 let disclaimerRead = false;
 
 function toggleLegalCheck(key) {
-  if (key==='disclaimer' && !disclaimerRead) return;
+  if (key === 'disclaimer' && !disclaimerRead) return;
   legalState[key] = !legalState[key];
-  document.getElementById('check-'+key).classList.toggle('checked', legalState[key]);
-  const allChecked = legalState.age && legalState.terms && legalState.disclaimer;
-  const btn = document.getElementById('signup-btn');
-  btn.disabled = !allChecked; btn.style.opacity = allChecked?'1':'0.5'; btn.style.cursor = allChecked?'pointer':'not-allowed';
-  document.getElementById('acceptance-record').classList.toggle('show', allChecked);
+  document.getElementById('check-' + key).classList.toggle('checked', legalState[key]);
+  updateSignupButton();
 }
 
 function openDisclaimerModal() {
@@ -742,17 +739,27 @@ function onDisclaimerScroll() {
 function acceptDisclaimer() {
   disclaimerRead = true;
   const el = document.getElementById('check-disclaimer');
-  el.classList.remove('disabled'); el.classList.add('checked');
-  document.getElementById('disclaimer-hint').style.display = 'none';
+  el.classList.remove('disabled');
+  el.classList.add('checked');
+  const hint = document.getElementById('disclaimer-hint');
+  if (hint) hint.style.display = 'none';
   legalState.disclaimer = true;
   document.getElementById('disclaimer-modal').classList.remove('open');
-  const allChecked = legalState.age && legalState.terms;
-  if (allChecked) {
-    const btn = document.getElementById('signup-btn');
-    btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
-    document.getElementById('acceptance-record').classList.add('show');
-  }
+  // Always re-evaluate button state after disclaimer accepted
+  updateSignupButton();
   showToast('Medical disclaimer accepted ✓', 'success');
+}
+
+function updateSignupButton() {
+  const allChecked = legalState.age && legalState.terms && legalState.disclaimer;
+  const btn = document.getElementById('signup-btn');
+  if (btn) {
+    btn.disabled = !allChecked;
+    btn.style.opacity = allChecked ? '1' : '0.5';
+    btn.style.cursor  = allChecked ? 'pointer' : 'not-allowed';
+  }
+  const record = document.getElementById('acceptance-record');
+  if (record) record.classList.toggle('show', allChecked);
 }
 
 // ══════════════════════════════════════════════════
