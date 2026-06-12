@@ -391,6 +391,14 @@ function renderLog() {
           <div class="upload-hint">Screenshot from UF Health Shands portal</div>
         </label>
       </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:4px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:var(--ink3)">or</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button type="button" onclick="pasteFromClipboard('setup')" style="width:100%;padding:11px;background:var(--lab-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--lab);cursor:pointer;transition:all 0.15s">
+        📋 Paste from Clipboard (Ctrl+V)
+      </button>
       <div class="analyzing-bar" id="setup-analyzing">
         <div class="spinner"></div>
         <span id="setup-analyzing-text">Claude is reading your lab results…</span>
@@ -1214,6 +1222,66 @@ function confirmTP(){
   const td=document.getElementById('log-td-text');if(td)td.textContent=ds;
   closeTP();
 }
+
+
+// ══════════════════════════════════════════════════
+//  CLIPBOARD PASTE
+// ══════════════════════════════════════════════════
+async function pasteFromClipboard(target) {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showToast('Clipboard not supported — use upload instead', '');
+      return;
+    }
+    const items = await navigator.clipboard.read();
+    let imageItem = null;
+    for (const item of items) {
+      const imageType = item.types.find(t => t.startsWith('image/'));
+      if (imageType) { imageItem = { item, type: imageType }; break; }
+    }
+    if (!imageItem) {
+      showToast('No image found in clipboard — copy a screenshot first', '');
+      return;
+    }
+    const blob = await imageItem.item.getType(imageItem.type);
+    const file = new File([blob], 'clipboard.png', { type: imageItem.type });
+    showToast('Image pasted from clipboard ✓', 'success');
+    if (target === 'setup') {
+      await runSetupExtraction(file);
+    } else {
+      await runLogExtraction(file);
+    }
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Clipboard permission denied — allow clipboard access in browser settings', '');
+    } else {
+      showToast('Could not paste: ' + err.message, '');
+    }
+  }
+}
+
+// Global Ctrl+V listener
+document.addEventListener('paste', async (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (!file) return;
+      showToast('Image pasted ✓', 'success');
+      // Determine which mode we're in
+      const setupZone = document.getElementById('upload-zone-setup');
+      const isSetup = setupZone && setupZone.style.display !== 'none';
+      if (isSetup) {
+        await runSetupExtraction(file);
+      } else {
+        await runLogExtraction(file);
+      }
+      return;
+    }
+  }
+});
 
 // ═══════════════════════════════════════════
 //  TABS

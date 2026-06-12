@@ -394,6 +394,7 @@
     <button class="btn btn-med btn-sm" onclick="toggleAddMedForm('manual')">✏️ Add Manually</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-input').click()">📄 Import CSV</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('img-med-input').click()">📷 Import from Image</button>
+    <button class="btn btn-ghost btn-sm" onclick="pasteMedFromClipboard()">📋 Paste Image</button>
     <input type="file" id="csv-input"     accept=".csv,.txt" style="display:none" onchange="importMedsCSV(this)">
     <input type="file" id="img-med-input" accept="image/*"   style="display:none" onchange="importMedsImage(this)">
   </div>
@@ -1166,7 +1167,7 @@ function importMedsCSV(input) {
 
 // ── Image Import via Claude ──
 async function importMedsImage(input) {
-  const file = input.files[0]; if (!file) return;
+  const file = input.files ? input.files[0] : input; if (!file) return;
 
   // Show preview
   const previewWrap = document.getElementById('med-img-preview-wrap');
@@ -1416,6 +1417,58 @@ function renderCurrentMeds() {
 
   el.innerHTML = html;
 }
+
+
+// ══════════════════════════════════════════════════
+//  CLIPBOARD PASTE — MEDICATIONS
+// ══════════════════════════════════════════════════
+async function pasteMedFromClipboard() {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showToast('Clipboard not supported — use upload instead', '');
+      return;
+    }
+    const items = await navigator.clipboard.read();
+    let imageItem = null;
+    for (const item of items) {
+      const imageType = item.types.find(t => t.startsWith('image/'));
+      if (imageType) { imageItem = { item, type: imageType }; break; }
+    }
+    if (!imageItem) {
+      showToast('No image found in clipboard — copy a screenshot first', '');
+      return;
+    }
+    const blob = await imageItem.item.getType(imageItem.type);
+    const file = new File([blob], 'clipboard.png', { type: imageItem.type });
+    showToast('Image pasted ✓', 'success');
+    await importMedsImage({ files: [file], value: '' });
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Clipboard permission denied — allow in browser settings', '');
+    } else {
+      showToast('Could not paste: ' + err.message, '');
+    }
+  }
+}
+
+// Global Ctrl+V on meds-list page
+document.addEventListener('paste', async (e) => {
+  // Only trigger if meds-list tab is active
+  const medsPage = document.getElementById('page-meds-list');
+  if (!medsPage || !medsPage.classList.contains('active')) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (!file) return;
+      showToast('Image pasted ✓', 'success');
+      await importMedsImage({ files: [file], value: '' });
+      return;
+    }
+  }
+});
 
 // ══════════════════════════════════════════════════
 //  TABS
