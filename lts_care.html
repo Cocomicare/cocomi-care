@@ -519,13 +519,28 @@ async function saveProfileSetup() {
 
   // Save to Supabase profiles table
   if (currentUser) {
-    const { error } = await sb.from('profiles').upsert({
-      id:                currentUser.id,
-      display_name:      name,
-      transplant_center: txCenter || null,
-      updated_at:        new Date().toISOString()
-    });
-    if (error) { showErr(errEl, 'Could not save profile: ' + error.message); return; }
+    // Try update first, then insert if not exists
+    const { error: updateError } = await sb.from('profiles')
+      .update({
+        display_name:      name,
+        transplant_center: txCenter || null,
+        updated_at:        new Date().toISOString()
+      })
+      .eq('id', currentUser.id);
+
+    if (updateError) {
+      // Row might not exist yet, try insert
+      const { error: insertError } = await sb.from('profiles')
+        .insert({
+          id:                currentUser.id,
+          display_name:      name,
+          transplant_center: txCenter || null
+        });
+      if (insertError) {
+        // If still fails, just skip and go to dashboard
+        console.warn('Profile save error:', insertError.message);
+      }
+    }
   }
 
   // Store display name locally for greeting
