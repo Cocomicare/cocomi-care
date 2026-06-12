@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTS Care — Legal & Policies</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --teal:      #0D5C6B;
+  --teal-mid:  #1A7A8A;
+  --teal-light:#E0F2F5;
+  --teal-pale: #F0F9FB;
+  --bg:        #F8FAFB;
+  --surface:   #FFFFFF;
+  --surface2:  #EDF2F5;
+  --border:    #D4E0E8;
+  --ink:       #1A2533;
+  --ink2:      #4A5E72;
+  --ink3:      #8A9EAF;
+  --warn:      #E07B39;
+  --warn-bg:   #FDF5EE;
+  --radius:    14px;
+  --radius-sm: 9px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--teal);
+  padding: 24px 24px 28px;
+  color: #fff;
+}
+.header-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.header-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* ── NAV ── */
+.doc-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.doc-nav::-webkit-scrollbar { display: none; }
+.nav-item {
+  padding: 14px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.nav-item:hover { color: var(--teal); }
+.nav-item.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+/* ── CONTENT ── */
+.doc-body {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.doc-section { display: none; }
+.doc-section.active { display: block; }
+
+/* ── CRITICAL NOTICE ── */
+.critical-notice {
+  background: var(--warn-bg);
+  border: 2px solid #F0D0A8;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 28px;
+}
+.critical-notice-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px;
+  color: var(--warn);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.critical-notice p {
+  font-size: 14px;
+  color: #7A4A1E;
+  line-height: 1.6;
+}
+
+/* ── TYPOGRAPHY ── */
+.doc-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.doc-updated {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-bottom: 28px;
+  font-family: 'DM Mono', monospace;
+}
+h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--teal);
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--teal-light);
+}
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 18px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+p {
+  font-size: 14px;
+  color: var(--ink2);
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+ul, ol {
+  margin: 8px 0 14px 20px;
+}
+li {
+  font-size: 14px;
+  color: var(--ink2);
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+strong { color: var(--ink); font-weight: 600; }
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box {
+  background: var(--teal-pale);
+  border: 1px solid var(--teal-light);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+.highlight-box p { color: var(--teal); font-size: 13px; margin: 0; }
+
+/* ── CONTACT ── */
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-top: 20px;
+}
+.contact-card h3 { margin-top: 0; }
+
+/* ── ACCEPTANCE FOOTER ── */
+.acceptance-footer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px 28px;
+  display: flex;
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.btn-accept {
+  flex: 2;
+  padding: 13px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-accept:hover { background: var(--teal-mid); }
+.btn-decline {
+  flex: 1;
+  padding: 13px;
+  background: none;
+  color: var(--ink3);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--ink);
+  color: #fff;
+  padding: 11px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #2D9E6B; }
+
+@media (max-width: 480px) {
+  .doc-body { padding: 20px 16px 80px; }
+}
+
+  /* ── CONTACT & SUGGESTION ── */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 480px) { .contact-grid { grid-template-columns: 1fr; } }
+  .contact-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .contact-tile-icon { font-size: 24px; }
+  .contact-tile-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); }
+  .contact-tile-sub { font-size: 12px; color: var(--ink3); line-height: 1.5; }
+  .contact-tile-val { font-size: 13px; color: var(--teal); font-weight: 500; margin-top: 4px; word-break: break-all; }
+
+  .suggestion-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .char-count { font-size: 11px; color: var(--ink3); text-align: right; margin-top: 4px; }
+
+  .category-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+  .cat-chip {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1.5px solid var(--border); background: var(--bg); color: var(--ink2);
+    cursor: pointer; transition: all 0.15s; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cat-chip:hover { border-color: var(--teal); color: var(--teal); }
+  .cat-chip.selected { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+  .submitted-card {
+    background: var(--teal-pale);
+    border: 1px solid var(--teal-light);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    display: none;
+  }
+  .submitted-card.show { display: block; }
+  .submitted-icon { font-size: 32px; margin-bottom: 8px; }
+  .submitted-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--teal); margin-bottom: 6px; }
+  .submitted-sub { font-size: 13px; color: var(--ink3); }
+
+  /* ── WHAT'S NEW ── */
+  .version-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .version-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--teal-pale);
+  }
+  .version-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px; font-weight: 500; color: var(--teal);
+  }
+  .version-date { font-size: 12px; color: var(--ink3); font-family: 'DM Mono', monospace; }
+  .version-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .badge-latest { background: var(--teal); color: #fff; }
+  .badge-update { background: var(--teal-light); color: var(--teal); }
+  .version-body { padding: 14px 18px; }
+  .change-item {
+    display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start;
+  }
+  .change-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 6px;
+  }
+  .dot-new { background: var(--teal); }
+  .dot-fix { background: var(--warn); }
+  .dot-improve { background: #2D9E6B; }
+  .change-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+  .change-tag {
+    display: inline-block; padding: 1px 6px; border-radius: 8px;
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.3px; margin-right: 5px; vertical-align: middle;
+  }
+  .tag-new     { background: var(--teal-light); color: var(--teal); }
+  .tag-fix     { background: var(--warn-bg); color: var(--warn); }
+  .tag-improve { background: var(--good-bg); color: #2D9E6B; }
+
+  /* ── BANNER (shown in main app on new version) ── */
+  .update-banner {
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-mid) 100%);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    cursor: pointer;
+    position: relative;
+  }
+  .update-banner-icon { font-size: 18px; flex-shrink: 0; }
+  .update-banner-text { flex: 1; }
+  .update-banner-sub { font-size: 11px; opacity: 0.8; font-weight: 400; display: block; margin-top: 2px; }
+  .update-banner-close {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🫁 LTS Care</div>
+  <div class="header-sub">Lung Transplant Surveillance — Legal & Policies</div>
+</div>
+
+<div class="doc-nav">
+  <div class="nav-item active" onclick="showDoc('terms')">Terms of Use</div>
+  <div class="nav-item" onclick="showDoc('disclaimer')">Medical Disclaimer</div>
+  <div class="nav-item" onclick="showDoc('privacy')">Privacy Policy</div>
+  <div class="nav-item" onclick="showDoc('research')">Research Consent</div>
+  <div class="nav-item" onclick="showDoc('contact')">Contact & Feedback</div>
+  <div class="nav-item" onclick="showDoc('whatsnew')">What's New</div>
+</div>
+
+<!-- ══════════════════════
+     TERMS OF USE
+══════════════════════ -->
+<div class="doc-body">
+<div class="doc-section active" id="doc-terms">
+
+  <div class="critical-notice">
+    <div class="critical-notice-title">⚠️ Please read before using this app</div>
+    <p>LTS Care is a personal wellness tracking tool. It is <strong>not a medical device</strong>, <strong>not a clinical system</strong>, and <strong>not a substitute for professional medical care</strong>. Nothing in this app replaces the advice of your transplant team.</p>
+  </div>
+
+  <div class="doc-title">Terms of Use</div>
+  <div class="doc-updated">Last updated: June 2026 · Version 1.0</div>
+
+  <h2>1. Acceptance of Terms</h2>
+  <p>By creating an account or using LTS Care ("the App"), you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the App.</p>
+  <p>These terms constitute a legally binding agreement between you and the creators of LTS Care. We reserve the right to update these terms at any time. Continued use of the App after any changes constitutes acceptance of the revised terms.</p>
+
+  <h2>2. Nature of the App</h2>
+  <p>LTS Care is a <strong>personal wellness tracking application</strong> designed to help lung transplant recipients voluntarily monitor and record health-related measurements and observations for their own personal use.</p>
+  <ul>
+    <li>The App is <strong>not a medical device</strong> as defined by the U.S. Food and Drug Administration (FDA) or any equivalent regulatory body.</li>
+    <li>The App is <strong>not intended to diagnose, treat, cure, prevent, or monitor any medical condition</strong>.</li>
+    <li>The App does <strong>not provide medical advice</strong> of any kind.</li>
+    <li>Data recorded in the App is <strong>for personal reference only</strong> and should not be used as the basis for any medical decision without consulting a qualified healthcare provider.</li>
+    <li>The App is <strong>not a replacement</strong> for your transplant team, pulmonologist, or any other healthcare provider.</li>
+  </ul>
+
+  <h2>3. Eligibility</h2>
+  <p>The App is intended for use by adults aged 18 years or older. By creating an account, you confirm that you are at least 18 years of age. Use by minors is not permitted without parental or guardian consent and direct supervision.</p>
+
+  <h2>4. User Responsibilities</h2>
+  <p>By using the App, you agree to:</p>
+  <ul>
+    <li>Use the App solely for personal wellness tracking purposes</li>
+    <li>Provide accurate information to the best of your ability</li>
+    <li>Not share your account credentials with others</li>
+    <li>Contact your healthcare provider — not the App — in any medical emergency or if you experience concerning symptoms</li>
+    <li>Understand that data entered into the App does not automatically reach your care team unless you explicitly share it</li>
+    <li>Not rely on App data as the sole basis for any health or medication decision</li>
+    <li>Keep your login credentials secure and notify us immediately of any unauthorized access</li>
+  </ul>
+
+  <h2>5. Limitation of Liability</h2>
+  <p>To the fullest extent permitted by applicable law, LTS Care, its creators, contributors, and affiliated parties:</p>
+  <ul>
+    <li>Shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the App</li>
+    <li>Shall not be liable for any harm, injury, death, or adverse health outcome resulting from reliance on information displayed in or generated by the App</li>
+    <li>Shall not be liable for any data loss, service interruption, or technical failure</li>
+    <li>Make no warranty that the App will be uninterrupted, error-free, or free of harmful components</li>
+    <li>Make no warranty as to the accuracy, completeness, or reliability of any information provided by the App</li>
+  </ul>
+
+  <div class="highlight-box">
+    <p><strong>Hold Harmless:</strong> By using LTS Care, you expressly agree to hold harmless and release the creators, developers, contributors, and any affiliated individuals or organizations from any and all claims, liability, damages, losses, costs, or expenses of any kind arising from your use of the App, including but not limited to any health outcomes, medical decisions, or data-related issues.</p>
+  </div>
+
+  <h2>6. No Emergency Services</h2>
+  <p><strong>LTS Care is not an emergency service.</strong> If you are experiencing a medical emergency, call 911 (or your local emergency number) immediately. Do not rely on this App in an emergency situation. The App does not monitor users in real time and cannot detect or respond to medical emergencies.</p>
+
+  <h2>7. Third-Party Services</h2>
+  <p>The App may use third-party services including but not limited to Supabase (database and authentication), GitHub Pages (hosting), and Google APIs. Use of these services is subject to their respective terms and privacy policies. We are not responsible for the practices of any third-party services.</p>
+
+  <h2>8. Intellectual Property</h2>
+  <p>The App and all of its original content, features, and functionality are the property of the App's creators. You may not copy, modify, distribute, or reproduce any part of the App without express written permission.</p>
+
+  <h2>9. Termination</h2>
+  <p>We reserve the right to suspend or terminate access to the App at any time, for any reason, without notice. You may delete your account and data at any time through the account settings.</p>
+
+  <h2>10. Governing Law</h2>
+  <p>These Terms shall be governed by and construed in accordance with the laws of the State of Florida, United States, without regard to its conflict of law provisions.</p>
+
+  <h2>11. Contact</h2>
+  <div class="contact-card">
+    <h3>Questions about these terms?</h3>
+    <p>If you have questions about these Terms of Use, please contact us through the App's feedback feature or reach out to the development team directly.</p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════
+     MEDICAL DISCLAIMER
+══════════════════════ -->
+<div class="doc-section" id="doc-disclaimer">
+
+  <div class="critical-notice">
+    <div class="critical-notice-title">⚠️ Important — Read carefully</div>
+    <p>This disclaimer governs all health-related information, data displays, alerts, and suggestions within LTS Care.</p>
+  </div>
+
+  <div class="doc-title">Medical Disclaimer</div>
+  <div class="doc-updated">Last updated: June 2026 · Version 1.0</div>
+
+  <h2>Not Medical Advice</h2>
+  <p>The information provided by LTS Care, including but not limited to health tracking data, trend charts, threshold alerts, correlation displays, and any other outputs, <strong>does not constitute medical advice</strong>. It is provided for informational and personal tracking purposes only.</p>
+  <p>Always seek the advice of your physician, transplant team, pulmonologist, or other qualified health provider with any questions you may have regarding your medical condition. <strong>Never disregard professional medical advice or delay seeking it because of something you have read or seen in this App.</strong></p>
+
+  <h2>Not a Diagnostic Tool</h2>
+  <p>LTS Care does not diagnose any medical condition. Alerts, flags, and color-coded indicators within the App are based on general reference ranges and user-defined thresholds for personal awareness only. They are <strong>not clinical diagnoses</strong>. An alert in this App does not mean you have a medical problem — and the absence of an alert does not mean you are medically clear.</p>
+
+  <h2>Accuracy of Data</h2>
+  <p>The App relies entirely on data entered by the user. The accuracy of any trend, chart, correlation, or alert is therefore entirely dependent on the accuracy and consistency of user-entered data. The App:</p>
+  <ul>
+    <li>Cannot verify the accuracy of data you enter</li>
+    <li>Cannot calibrate or validate the accuracy of home monitoring devices you use</li>
+    <li>May display misleading trends if data is entered inconsistently or incorrectly</li>
+    <li>Should not be used as a substitute for laboratory testing, clinical examination, or professional measurement</li>
+  </ul>
+
+  <h2>Medication Information</h2>
+  <p>Any medication-related features in this App — including medication lists, dose tracking, and correlation displays — are for personal record-keeping only. <strong>Never adjust, start, stop, or change any medication based on information displayed in this App</strong> without first consulting your healthcare provider. Immunosuppressant medications in particular require precise clinical management and should never be self-adjusted.</p>
+
+  <h2>Lab Results</h2>
+  <p>Lab result values entered or extracted in this App are for personal tracking and trend awareness only. Clinical interpretation of laboratory values requires a qualified healthcare provider with full knowledge of your medical history and current clinical context. Do not make medical decisions based solely on lab values displayed in this App.</p>
+
+  <h2>Correlation ≠ Causation</h2>
+  <p>The medication and symptom correlation features in this App identify statistical patterns in your personal data. <strong>A pattern or correlation displayed in the App does not establish a causal relationship.</strong> Any apparent association between a medication change and a symptom must be evaluated by your healthcare team before any conclusions are drawn or actions taken.</p>
+
+  <h2>Emergency Situations</h2>
+  <p>This App is not designed for emergency use. If you experience any of the following, seek emergency care immediately and do not rely on this App:</p>
+  <ul>
+    <li>Sudden severe shortness of breath or respiratory distress</li>
+    <li>Chest pain or pressure</li>
+    <li>High fever with difficulty breathing</li>
+    <li>Sudden confusion, disorientation, or loss of consciousness</li>
+    <li>Any symptom you believe may be life-threatening</li>
+  </ul>
+  <p><strong>Call 911 or your local emergency number immediately in a medical emergency.</strong></p>
+
+  <h2>Post-Transplant Specific Caution</h2>
+  <p>Lung transplant recipients are medically complex patients on life-sustaining immunosuppression therapy. Health changes in this population can be serious and can progress rapidly. Any concerning changes in your readings — declining lung function measurements, new or worsening symptoms, fever, unusual weight gain, or changes in lab values — should be reported to your transplant team promptly. Do not wait for this App to alert you if you feel something is wrong.</p>
+
+  <div class="highlight-box">
+    <p><strong>When in doubt, call your transplant team.</strong> This App is a personal tracking tool. Your transplant team is your medical safety net.</p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════
+     PRIVACY POLICY
+══════════════════════ -->
+<div class="doc-section" id="doc-privacy">
+
+  <div class="doc-title">Privacy Policy</div>
+  <div class="doc-updated">Last updated: June 2026 · Version 1.0</div>
+
+  <p>Your privacy matters to us. This policy explains what data LTS Care collects, how it is used, and how it is protected.</p>
+
+  <h2>What We Collect</h2>
+
+  <h3>Required account data</h3>
+  <ul>
+    <li><strong>Email address</strong> — used for account authentication and password reset only</li>
+    <li><strong>Encrypted password</strong> — never stored in plain text; handled by Supabase authentication</li>
+  </ul>
+
+  <h3>Health tracking data (you control this)</h3>
+  <p>All health measurements you log — peak flow readings, spirometer values, vital signs, lab results, medication changes, symptoms, and related notes — are stored in your personal account. This data:</p>
+  <ul>
+    <li>Is stored securely in an encrypted database</li>
+    <li>Is accessible only to you unless you explicitly consent to share it</li>
+    <li>Is never sold to third parties</li>
+    <li>Is never shared with insurance companies, employers, or pharmaceutical companies</li>
+    <li>Is never used for advertising purposes</li>
+  </ul>
+
+  <h3>Optional profile data</h3>
+  <p>If you choose to complete the optional research profile, additional information such as demographics, medical history, and lifestyle data may be collected. This is entirely voluntary. Providing or withholding this information does not affect your ability to use the App.</p>
+
+  <h3>Technical data</h3>
+  <ul>
+    <li>Basic usage analytics (pages visited, features used) — anonymized</li>
+    <li>Device type and browser (for app compatibility purposes)</li>
+    <li>No precise location data is collected without explicit permission</li>
+  </ul>
+
+  <h2>How We Use Your Data</h2>
+  <ul>
+    <li><strong>To provide the App:</strong> Your health data powers your personal dashboards, charts, and trend analysis</li>
+    <li><strong>To maintain your account:</strong> Email is used for authentication and critical account communications only</li>
+    <li><strong>For research (only with your consent):</strong> Anonymized, de-identified data may be included in aggregate research if you have explicitly consented. Your name, email, and identifying information are never included in research datasets.</li>
+    <li><strong>To improve the App:</strong> Anonymized usage patterns help us understand how to make the App more useful</li>
+  </ul>
+
+  <h2>Data Storage & Security</h2>
+  <p>Your data is stored using Supabase, a secure cloud database platform with:</p>
+  <ul>
+    <li>Encryption at rest and in transit (TLS/SSL)</li>
+    <li>Row-level security — your data is accessible only to your account</li>
+    <li>Servers located in the United States</li>
+    <li>No data is stored on your device beyond what is cached for performance</li>
+  </ul>
+
+  <h2>Data Retention</h2>
+  <p>Your data is retained for as long as your account is active. If you delete your account, all personally identifiable data is deleted within 30 days. Anonymized, aggregated research data (if you consented) may be retained in de-identified form.</p>
+
+  <h2>Your Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li><strong>Access</strong> all data associated with your account at any time</li>
+    <li><strong>Export</strong> your health data in JSON format at any time</li>
+    <li><strong>Correct</strong> any inaccurate information in your profile</li>
+    <li><strong>Delete</strong> your account and all associated data at any time</li>
+    <li><strong>Withdraw research consent</strong> at any time from account settings</li>
+    <li><strong>Opt out</strong> of any non-essential communications</li>
+  </ul>
+
+  <h2>Third-Party Services</h2>
+  <p>LTS Care uses the following third-party services:</p>
+  <ul>
+    <li><strong>Supabase</strong> — database, authentication, and storage. Subject to <a href="https://supabase.com/privacy" style="color:var(--teal)">Supabase Privacy Policy</a></li>
+    <li><strong>GitHub Pages</strong> — app hosting. Subject to <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" style="color:var(--teal)">GitHub Privacy Statement</a></li>
+    <li><strong>Anthropic Claude API</strong> — used for lab result image analysis only. Images sent for analysis are not stored by Anthropic beyond the immediate API call. Subject to <a href="https://www.anthropic.com/privacy" style="color:var(--teal)">Anthropic Privacy Policy</a></li>
+  </ul>
+  <p>We do not sell, rent, or trade your personal information to any third party for marketing purposes.</p>
+
+  <h2>Children's Privacy</h2>
+  <p>LTS Care is not directed at children under 18. We do not knowingly collect personal information from anyone under 18. If you believe a minor has provided us with personal information, please contact us immediately.</p>
+
+  <h2>International Users</h2>
+  <p>LTS Care is operated from the United States. If you access the App from outside the United States, your data will be transferred to and processed in the United States. By using the App, you consent to this transfer.</p>
+
+  <h2>Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting a notice within the App. Continued use after changes constitutes acceptance of the revised policy.</p>
+
+</div>
+
+<!-- ══════════════════════
+     RESEARCH CONSENT
+══════════════════════ -->
+<div class="doc-section" id="doc-research">
+
+  <div class="doc-title">Research Data Use Policy</div>
+  <div class="doc-updated">Last updated: June 2026 · Version 1.0</div>
+
+  <p>LTS Care offers users the opportunity to voluntarily contribute anonymized health data to support lung transplant research. This page explains exactly how that works.</p>
+
+  <h2>This is Entirely Optional</h2>
+  <p>Contributing data to research is <strong>completely voluntary</strong>. You can use every feature of LTS Care without contributing any research data. Your care, access, and experience in the App are identical whether you consent or not. You can change your research consent preference at any time in your account settings.</p>
+
+  <h2>What "Anonymized" Means</h2>
+  <p>Before any data is included in a research dataset, the following identifying information is <strong>permanently removed</strong>:</p>
+  <ul>
+    <li>Name</li>
+    <li>Email address</li>
+    <li>Phone number</li>
+    <li>Exact address (city, state, and ZIP code may be retained for geographic analysis)</li>
+    <li>Any free-text notes that might contain identifying information</li>
+    <li>Transplant center name (may be retained as a general category)</li>
+    <li>Physician names</li>
+  </ul>
+  <p>What remains is your health measurements, demographic categories, clinical history categories, and outcomes data — with no way to trace it back to you individually.</p>
+
+  <h2>What Research Data May Be Used For</h2>
+  <p>Anonymized data contributed through LTS Care may be used to:</p>
+  <ul>
+    <li>Identify patterns in post-transplant lung function decline and recovery</li>
+    <li>Understand correlations between medication changes and patient-reported outcomes</li>
+    <li>Analyze the impact of comorbidities, geographic factors, and lifestyle on long-term transplant survival</li>
+    <li>Support academic publications, conference presentations, and grant applications focused on improving lung transplant outcomes</li>
+    <li>Inform clinical practice guidelines for post-transplant monitoring</li>
+  </ul>
+
+  <h2>What It Will Never Be Used For</h2>
+  <ul>
+    <li><strong>It will never be sold</strong> to any commercial entity</li>
+    <li><strong>It will never be shared</strong> with insurance companies, pharmaceutical companies, employers, or advertisers</li>
+    <li><strong>It will never be used</strong> to make decisions about your individual care</li>
+    <li><strong>It will never be used</strong> to identify you individually</li>
+    <li><strong>It will never be shared</strong> with any party in a form that could identify you</li>
+  </ul>
+
+  <h2>Institutional Review</h2>
+  <p>Any use of aggregated LTS Care data in formal academic research will be subject to appropriate Institutional Review Board (IRB) oversight as required. The voluntary, anonymized, and wellness-focused nature of data collection does not replace IRB review for formal research applications.</p>
+
+  <h2>Your Rights as a Research Participant</h2>
+  <ul>
+    <li><strong>Withdraw at any time:</strong> You can withdraw research consent from your account settings at any time. Data collected prior to withdrawal may remain in existing anonymized datasets but no new data will be included.</li>
+    <li><strong>Access your contribution:</strong> You can export all your personal data at any time.</li>
+    <li><strong>Ask questions:</strong> You can contact us at any time with questions about how your data is being used.</li>
+    <li><strong>Receive findings:</strong> If you opt in, we will send you summaries of significant research findings derived from this dataset.</li>
+  </ul>
+
+  <h2>Not a Clinical Trial</h2>
+  <p>Voluntary data contribution through LTS Care is <strong>not a clinical trial, observational study, or formal research protocol</strong>. It is a community wellness initiative. Participants are not research subjects in the formal sense, and no experimental interventions are involved. You are simply a person tracking your own health who has chosen to share that anonymized data for the benefit of the broader lung transplant community.</p>
+
+  <div class="highlight-box">
+    <p>Every data point contributed helps build a clearer picture of what long-term lung transplant survival looks like — and brings the community one step closer to better outcomes for future patients.</p>
+  </div>
+
+</div>
+
+<!-- ══════════════════════
+     CONTACT & FEEDBACK
+══════════════════════ -->
+<div class="doc-section" id="doc-contact">
+
+  <div class="doc-title">Contact & Feedback</div>
+  <div class="doc-updated">We read every message. Response within 3–5 business days.</div>
+
+  <div class="contact-grid">
+    <div class="contact-tile">
+      <div class="contact-tile-icon">📧</div>
+      <div class="contact-tile-title">General enquiries</div>
+      <div class="contact-tile-sub">Questions about the app, your account, or data</div>
+      <div class="contact-tile-val">hello@ltscare.app<br><span style="color:var(--ink3);font-size:11px">(placeholder — update before launch)</span></div>
+    </div>
+    <div class="contact-tile">
+      <div class="contact-tile-icon">🔒</div>
+      <div class="contact-tile-title">Privacy & data</div>
+      <div class="contact-tile-sub">Data deletion requests, privacy concerns, research opt-out</div>
+      <div class="contact-tile-val">privacy@ltscare.app<br><span style="color:var(--ink3);font-size:11px">(placeholder — update before launch)</span></div>
+    </div>
+    <div class="contact-tile">
+      <div class="contact-tile-icon">🐛</div>
+      <div class="contact-tile-title">Report a bug</div>
+      <div class="contact-tile-sub">Something broken or not working as expected</div>
+      <div class="contact-tile-val">Use the suggestion box below<br>and select "Bug report"</div>
+    </div>
+    <div class="contact-tile">
+      <div class="contact-tile-icon">🏥</div>
+      <div class="contact-tile-title">Clinical partnerships</div>
+      <div class="contact-tile-sub">Transplant centers interested in offering this tool to patients</div>
+      <div class="contact-tile-val">partners@ltscare.app<br><span style="color:var(--ink3);font-size:11px">(placeholder — update before launch)</span></div>
+    </div>
+  </div>
+
+  <div style="background:var(--warn-bg);border:1px solid #F0D0A8;border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;font-size:13px;color:#7A4A1E;line-height:1.5">
+    <strong>⚠️ Medical emergencies:</strong> Do not contact us for medical emergencies. Call 911 or your transplant team directly.
+  </div>
+
+  <!-- SUGGESTION BOX -->
+  <h2>Suggestion Box</h2>
+  <p>Have an idea to make LTS Care better? We want to hear it. Suggestions are reviewed by the development team and the most requested features are prioritized in upcoming releases.</p>
+
+  <div class="suggestion-form" id="suggestion-form">
+    <div style="margin-bottom:14px">
+      <div class="field-label" style="font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:8px">Category</div>
+      <div class="category-chips">
+        <div class="cat-chip" onclick="selectCat(this)">💡 New feature</div>
+        <div class="cat-chip" onclick="selectCat(this)">🔧 Improvement</div>
+        <div class="cat-chip" onclick="selectCat(this)">🐛 Bug report</div>
+        <div class="cat-chip" onclick="selectCat(this)">📊 New module</div>
+        <div class="cat-chip" onclick="selectCat(this)">🎨 Design</div>
+        <div class="cat-chip" onclick="selectCat(this)">🌍 Other</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div class="field-label" style="font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:6px">Your suggestion</div>
+      <textarea id="suggestion-text" class="field-textarea" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);width:100%;resize:vertical;min-height:100px"
+        placeholder="Describe your idea or issue as clearly as possible. The more detail you provide, the better we can understand and act on it…"
+        maxlength="1000" oninput="updateCharCount(this)"></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 1000</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="field-label" style="font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:6px">Priority (how important is this to you?)</div>
+      <div style="display:flex;gap:8px">
+        <div class="cat-chip" onclick="selectPriority(this)" data-val="nice">Nice to have</div>
+        <div class="cat-chip selected" onclick="selectPriority(this)" data-val="important">Important</div>
+        <div class="cat-chip" onclick="selectPriority(this)" data-val="critical">Critical</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:16px" onclick="toggleFollowUp(this)">
+      <div id="followup-box" style="width:18px;height:18px;border:2px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;transition:all 0.15s"></div>
+      <div>
+        <div style="font-size:13px;color:var(--ink);font-weight:500">Notify me when this is addressed</div>
+        <div style="font-size:11px;color:var(--ink3)">We'll send you a brief email when your suggestion is implemented or responded to</div>
+      </div>
+    </div>
+
+    <button onclick="submitSuggestion()" style="width:100%;padding:13px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s">
+      Submit Suggestion
+    </button>
+  </div>
+
+  <div class="submitted-card" id="submitted-card">
+    <div class="submitted-icon">🙏</div>
+    <div class="submitted-title">Thank you!</div>
+    <div class="submitted-sub">Your suggestion has been received. We review every submission and the most requested improvements are prioritized in upcoming releases.<br><br>You're helping make this app better for the entire lung transplant community.</div>
+    <button onclick="resetSuggestion()" style="margin-top:16px;padding:10px 24px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer">Submit another</button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════
+     WHAT'S NEW
+══════════════════════ -->
+<div class="doc-section" id="doc-whatsnew">
+
+  <div class="doc-title">What's New</div>
+  <div class="doc-updated">Release history and upcoming features</div>
+
+  <!-- UPDATE BANNER PREVIEW -->
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3);margin-bottom:8px">Preview — In-app update banner</div>
+    <div class="update-banner">
+      <div class="update-banner-icon">🆕</div>
+      <div class="update-banner-text">
+        Version 1.1 is here
+        <span class="update-banner-sub">New: Suggestion box · Lab panel improvements · Bug fixes</span>
+      </div>
+      <button class="update-banner-close" onclick="this.parentElement.style.display='none'">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink3)">This banner appears at the top of the home dashboard when a new version is released. Users can dismiss it or tap to see full details.</div>
+  </div>
+
+  <!-- VERSION 1.0 -->
+  <div class="version-card">
+    <div class="version-header">
+      <div>
+        <div class="version-num">Version 1.0</div>
+        <div class="version-date">June 2026</div>
+      </div>
+      <span class="version-badge badge-latest">Latest</span>
+    </div>
+    <div class="version-body">
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Initial release of LTS Care — Lung Transplant Surveillance Suite</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Peak Flow Surveillance — 3-blow average tracking with trend charts and accumulated average comparison</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Vital Signs Surveillance — SpO₂, heart rate, blood pressure, weight, and temperature with custom discharge thresholds</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Spirometer Surveillance — daily inspiratory volume tracking with discharge target progress bar</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Lab Results Tracker — AI-powered extraction from UF Health Shands portal screenshots, dynamic custom panel</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Med & Symptom Correlation Tracker — timeline view, symptom severity 1–10, correlation heatmap, current medication list with CSV and image import</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Immunosuppression Balance Dashboard — interactive dial showing rejection vs infection risk balance</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Unified home dashboard with color-coded module tiles, alert indicators, and days-since-logged nudges</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot dot-new"></div>
+        <div class="change-text"><span class="change-tag tag-new">New</span>Patient onboarding with optional research profile — demographics, transplant history, comorbidities, lifestyle, and research consent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMING SOON -->
+  <div class="version-card" style="border-color:var(--border);opacity:0.85">
+    <div class="version-header" style="background:var(--surface2)">
+      <div>
+        <div class="version-num" style="color:var(--ink3)">Version 1.1</div>
+        <div class="version-date">Coming soon</div>
+      </div>
+      <span class="version-badge" style="background:var(--surface2);color:var(--ink3)">Planned</span>
+    </div>
+    <div class="version-body">
+      <div class="change-item">
+        <div class="change-dot" style="background:var(--ink3)"></div>
+        <div class="change-text" style="color:var(--ink3)"><span class="change-tag" style="background:var(--surface2);color:var(--ink3)">Planned</span>Supabase cloud sync — permanent data storage with email/password accounts</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot" style="background:var(--ink3)"></div>
+        <div class="change-text" style="color:var(--ink3)"><span class="change-tag" style="background:var(--surface2);color:var(--ink3)">Planned</span>Multi-language support — Spanish translation</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot" style="background:var(--ink3)"></div>
+        <div class="change-text" style="color:var(--ink3)"><span class="change-tag" style="background:var(--surface2);color:var(--ink3)">Planned</span>Exportable PDF health summary — shareable with transplant team</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot" style="background:var(--ink3)"></div>
+        <div class="change-text" style="color:var(--ink3)"><span class="change-tag" style="background:var(--surface2);color:var(--ink3)">Planned</span>Symptom trend alerts — notification when symptom severity increases over 3 consecutive days</div>
+      </div>
+      <div class="change-item">
+        <div class="change-dot" style="background:var(--ink3)"></div>
+        <div class="change-text" style="color:var(--ink3)"><span class="change-tag" style="background:var(--surface2);color:var(--ink3)">Planned</span>Optional reminder notifications for daily and weekly readings</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:16px 0;font-size:13px;color:var(--ink3)">
+    Have a feature request? Use the <span style="color:var(--teal);cursor:pointer;font-weight:500" onclick="showDoc('contact');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.nav-item')[4].classList.add('active')">Suggestion Box →</span>
+  </div>
+
+</div>
+
+</div><!-- end doc-body -->
+
+<!-- ── ACCEPTANCE FOOTER (shown on first visit) ── -->
+<div class="acceptance-footer" id="acceptance-footer">
+  <button class="btn-decline" onclick="declineTerms()">Decline</button>
+  <button class="btn-accept" onclick="acceptTerms()">I Agree — Continue to App</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showDoc(id) {
+  document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('doc-' + id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function acceptTerms() {
+  localStorage.setItem('lts_terms_accepted', 'true');
+  document.getElementById('acceptance-footer').style.display = 'none';
+  showToast('Terms accepted — welcome to LTS Care ✓', 'success');
+  // → Navigate to signup / login
+}
+
+function declineTerms() {
+  showToast('You must accept the terms to use LTS Care');
+}
+
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => el.className = 'toast', 3000);
+}
+
+// Hide footer if already accepted
+if (localStorage.getItem('lts_terms_accepted') === 'true') {
+  document.getElementById('acceptance-footer').style.display = 'none';
+}
+
+// ── SUGGESTION BOX ──
+let selectedCategory = '';
+let selectedPriority = 'important';
+let followUpEnabled  = false;
+
+function selectCat(el) {
+  document.querySelectorAll('.cat-chip').forEach(c => {
+    if (c.parentElement.className === 'category-chips') c.classList.remove('selected');
+  });
+  el.classList.add('selected');
+  selectedCategory = el.textContent.trim();
+}
+
+function selectPriority(el) {
+  el.parentElement.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPriority = el.dataset.val;
+}
+
+function toggleFollowUp(el) {
+  followUpEnabled = !followUpEnabled;
+  const box = document.getElementById('followup-box');
+  box.style.background = followUpEnabled ? 'var(--teal)' : '#fff';
+  box.style.borderColor = followUpEnabled ? 'var(--teal)' : 'var(--border)';
+  box.innerHTML = followUpEnabled ? '<span style="color:#fff;font-size:11px">✓</span>' : '';
+}
+
+function updateCharCount(el) {
+  document.getElementById('char-count').textContent = el.value.length;
+}
+
+function submitSuggestion() {
+  const text = document.getElementById('suggestion-text').value.trim();
+  if (!text) { showToast('Please describe your suggestion first', ''); return; }
+  if (!selectedCategory) { showToast('Please select a category', ''); return; }
+  // → Supabase insert goes here: { category, text, priority, followUp, userId, timestamp }
+  document.getElementById('suggestion-form').style.display = 'none';
+  document.getElementById('submitted-card').classList.add('show');
+  showToast('Suggestion submitted ✓', 'success');
+}
+
+function resetSuggestion() {
+  document.getElementById('suggestion-text').value = '';
+  document.getElementById('char-count').textContent = '0';
+  document.getElementById('suggestion-form').style.display = 'block';
+  document.getElementById('submitted-card').classList.remove('show');
+  selectedCategory = '';
+  document.querySelectorAll('.category-chips .cat-chip').forEach(c => c.classList.remove('selected'));
+}
+
+// ── UPDATE BANNER (called from main app shell) ──
+const CURRENT_VERSION = '1.0.0';
+function checkForUpdates() {
+  const lastSeen = localStorage.getItem('lts_last_seen_version');
+  if (lastSeen !== CURRENT_VERSION) {
+    // Show banner in main app
+    const banner = document.getElementById('update-banner-main');
+    if (banner) banner.style.display = 'flex';
+  }
+}
+function dismissUpdateBanner() {
+  localStorage.setItem('lts_last_seen_version', CURRENT_VERSION);
+  const banner = document.getElementById('update-banner-main');
+  if (banner) banner.style.display = 'none';
+}
+
+</script>
+</body>
+</html>

@@ -5,189 +5,174 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cocomi Care</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-  :root {
-    --bg:      #F0F4F8;
-    --surface: #FFFFFF;
-    --surface2:#E8EFF5;
-    --border:  #D0DCE8;
-    --ink:     #1A2533;
-    --ink2:    #4A5E72;
-    --ink3:    #8A9EAF;
-    --good:    #2D9E6B;
-    --good-bg: #E8F7F1;
-    --warn:    #E07B39;
-    --warn-bg: #FDF0E8;
-    --danger:  #C94040;
-    --danger-bg:#FAEAEA;
-    --radius:  14px;
-    --radius-sm:8px;
-  }
+:root {
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #E8EFF5;
+  --border:    #D0DCE8;
+  --ink:       #1A2533;
+  --ink2:      #4A5E72;
+  --ink3:      #8A9EAF;
+  --good:      #2D9E6B;
+  --good-bg:   #E8F7F1;
+  --warn:      #E07B39;
+  --warn-bg:   #FDF0E8;
+  --danger:    #C94040;
+  --danger-bg: #FAEAEA;
+  --radius:    14px;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
 
-  /* ── SHELL VIEWS ── */
-  #view-home    { display: block; }
-  #view-module  { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
-  #view-module.active { display: flex; }
+/* ── HEADER ── */
+.home-header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 16px 20px 14px; position: sticky; top: 0; z-index: 50;
+}
+.home-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.app-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); letter-spacing: -0.5px; }
+.app-sub  { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.6px; }
+.greeting { font-size: 13px; color: var(--ink2); margin-top: 6px; }
+.greeting strong { color: var(--ink); font-weight: 600; }
 
-  /* ── HOME HEADER ── */
-  .home-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px 14px;
-    position: sticky; top: 0; z-index: 50;
-  }
-  .home-header-top {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;
-  }
-  .app-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 22px; color: var(--ink); letter-spacing: -0.5px;
-  }
-  .app-sub { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.6px; }
-  .greeting {
-    font-size: 13px; color: var(--ink2); margin-top: 6px;
-  }
-  .greeting strong { color: var(--ink); font-weight: 600; }
+/* ── GLOBAL ALERT ── */
+.global-alert {
+  margin: 12px 16px 0; display: none;
+  background: var(--danger-bg); border: 1px solid #f0c0c0;
+  border-radius: 9px; padding: 10px 14px;
+  font-size: 13px; color: var(--danger); font-weight: 500;
+}
+.global-alert.show { display: block; }
 
-  /* ── ALERT BANNER ── */
-  .global-alert {
-    margin: 12px 20px 0;
-    display: none;
-    background: var(--danger-bg);
-    border: 1px solid #f0c0c0;
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
-    font-size: 13px;
-    color: var(--danger);
-    font-weight: 500;
-  }
-  .global-alert.show { display: block; }
+/* ── DASHBOARD ── */
+.dashboard { padding: 16px 16px 40px; max-width: 600px; margin: 0 auto; }
 
-  /* ── DASHBOARD ── */
-  .dashboard { padding: 16px 16px 32px; max-width: 600px; margin: 0 auto; }
-  .dash-section-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 10px; margin-top: 4px;
-  }
+/* ── IMMUNOSUPPRESSION BANNER ── */
+.immuno-banner {
+  background: linear-gradient(135deg, #7B5EA7 0%, #5a3f90 100%);
+  border-radius: var(--radius); padding: 18px 20px;
+  margin-bottom: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 18px rgba(107,79,168,0.22);
+}
+.immuno-banner:active { transform: scale(0.98); }
+.immuno-banner::after {
+  content: ''; position: absolute; right: -16px; top: -16px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.immuno-banner-icon  { font-size: 30px; flex-shrink: 0; }
+.immuno-banner-text  { flex: 1; }
+.immuno-banner-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #fff; margin-bottom: 3px; }
+.immuno-banner-sub   { font-size: 11px; color: rgba(255,255,255,0.72); line-height: 1.4; }
+.immuno-banner-arrow { font-size: 22px; color: rgba(255,255,255,0.55); flex-shrink: 0; }
 
-  /* ── MODULE TILES ── */
-  .tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .tile {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 14px 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .tile:active { transform: scale(0.97); }
-  .tile::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0;
-    width: 4px; border-radius: 4px 0 0 4px;
-  }
+/* ── HEALTH INDEX BANNER ── */
+.health-banner {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  margin-bottom: 20px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  border-left: 5px solid #2D9E6B;
+}
+.health-banner:active { transform: scale(0.98); }
+.health-banner.alert-warn   { border-left-color: var(--warn);   background: var(--warn-bg); }
+.health-banner.alert-danger { border-left-color: var(--danger); background: var(--danger-bg); }
+.health-banner-icon  { font-size: 28px; flex-shrink: 0; }
+.health-banner-text  { flex: 1; }
+.health-banner-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 3px; }
+.health-banner-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); }
+.health-banner-sub   { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.health-banner-score {
+  font-family: 'DM Mono', monospace; font-size: 44px; font-weight: 500;
+  line-height: 1; flex-shrink: 0; color: #2D9E6B;
+}
+.health-banner-score.warn   { color: var(--warn); }
+.health-banner-score.danger { color: var(--danger); }
+.health-banner-score.none   { font-size: 22px; color: var(--ink3); }
 
-  /* Module accent colors */
-  .tile.immuno::before  { background: #7B5EA7; }
-  .tile.flutter::before { background: #2D9E6B; }
-  .tile.peakflow::before{ background: #3B82C4; }
-  .tile.vitals::before  { background: #C94040; }
-  .tile.spiro::before   { background: #6B4FA8; }
-  .tile.medlog::before  { background: #C4663B; }
-  .tile.labs::before    { background: #0E7490; }
+/* ── SECTION LABELS ── */
+.section-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--ink3);
+  margin: 18px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  .tile-icon   { font-size: 22px; margin-bottom: 8px; display: block; }
-  .tile-name   { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-  .tile-val    { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1; margin-bottom: 3px; }
-  .tile-sub    { font-size: 11px; color: var(--ink3); }
-  .tile-since  { font-size: 10px; color: var(--ink3); margin-top: 5px; }
+/* ── TILES GRID ── */
+.tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* Alert states */
-  .tile.alert-warn  { border-color: #f0d0b0; background: var(--warn-bg); }
-  .tile.alert-danger{ border-color: #f0c0c0; background: var(--danger-bg); }
-  .tile-alert-dot {
-    position: absolute; top: 10px; right: 10px;
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--danger);
-    display: none;
-  }
-  .tile.alert-danger .tile-alert-dot,
-  .tile.alert-warn .tile-alert-dot { display: block; }
-  .tile.alert-warn .tile-alert-dot { background: var(--warn); }
+.tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 14px 14px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.tile:active { transform: scale(0.97); }
+.tile::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; border-radius: 4px 0 0 4px;
+}
+.tile.checkin::before { background: #9B7ABF; }
+.tile.peakflow::before{ background: #3B82C4; }
+.tile.spiro::before   { background: #6B4FA8; }
+.tile.vitals::before  { background: #C94040; }
+.tile.medlog::before  { background: #C4663B; }
+.tile.labs::before    { background: #0E7490; }
 
-  /* Overdue nudge */
-  .tile.overdue { border-color: #f0d0b0; }
-  .tile-since.overdue { color: var(--warn); font-weight: 500; }
+.tile-icon  { font-size: 22px; margin-bottom: 8px; display: block; }
+.tile-name  { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.tile-val   { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1; margin-bottom: 3px; }
+.tile-sub   { font-size: 11px; color: var(--ink3); }
+.tile-since { font-size: 10px; color: var(--ink3); margin-top: 5px; }
+.tile-since.overdue { color: var(--warn); font-weight: 500; }
+.tile-empty { color: var(--ink3); font-size: 13px; font-style: italic; }
+.tile-alert-dot {
+  position: absolute; top: 10px; right: 10px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--danger); display: none;
+}
+.tile.alert-danger .tile-alert-dot { display: block; }
+.tile.alert-warn   .tile-alert-dot { display: block; background: var(--warn); }
+.tile.alert-danger { border-color: #f0c0c0; background: var(--danger-bg); }
+.tile.alert-warn   { border-color: #f0d0b0; background: var(--warn-bg); }
 
-  /* ── LAST UPDATED ── */
-  .last-updated { text-align: center; font-size: 11px; color: var(--ink3); margin-top: 8px; }
+/* ── MODULE FRAME ── */
+#view-home   { display: block; }
+#view-module { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+#view-module.active { display: flex; }
+.module-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 16px; display: flex; align-items: center; gap: 12px;
+  height: 52px; flex-shrink: 0;
+}
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; color: var(--ink2);
+  cursor: pointer; background: none; border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.module-bar-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); flex: 1; }
+.module-iframe { flex: 1; border: none; width: 100%; height: 100%; background: var(--bg); }
 
-  /* ── MODULE FRAME ── */
-  .module-bar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    display: flex; align-items: center; gap: 12px;
-    height: 52px; flex-shrink: 0;
-  }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 500; color: var(--ink2);
-    cursor: pointer; background: none; border: none;
-    padding: 6px 0; -webkit-tap-highlight-color: transparent;
-  }
-  .back-btn:active { opacity: 0.6; }
-  .back-arrow { font-size: 18px; }
-  .module-bar-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 16px; color: var(--ink); flex: 1;
-  }
-  .module-iframe {
-    flex: 1; border: none; width: 100%; height: 100%;
-    background: var(--bg);
-  }
+/* ── FOOTER ── */
+.home-footer { text-align: center; padding: 24px 20px 40px; font-size: 11px; color: var(--ink3); line-height: 1.6; }
+.home-footer strong { color: var(--ink2); }
+.last-updated { text-align: center; font-size: 11px; color: var(--ink3); margin-top: 14px; }
 
-  /* ── EMPTY STATE ── */
-  .tile-empty { color: var(--ink3); font-size: 13px; font-style: italic; }
-
-  /* ── FOOTER ── */
-  .home-footer {
-    text-align: center; padding: 20px 20px 32px;
-    font-size: 11px; color: var(--ink3); line-height: 1.6;
-  }
-  .home-footer strong { color: var(--ink2); }
-
-  /* ── LOADING ── */
-  .module-loading {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    height: 200px; color: var(--ink3); gap: 12px;
-  }
-  .loading-spinner {
-    width: 24px; height: 24px;
-    border: 2px solid var(--border);
-    border-top-color: var(--ink3);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 380px) {
-    .tiles-grid { grid-template-columns: 1fr; }
-  }
+@media (max-width: 380px) { .tiles-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     HOME VIEW
-══════════════════════════════════ -->
 <div id="view-home">
 
   <div class="home-header">
@@ -196,296 +181,237 @@
         <div class="app-name">Cocomi Care</div>
         <div class="app-sub">Lung Transplant Surveillance</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button id="gdrive-btn" onclick="gdriveSignIn()" style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:500">☁️ Connect Drive</button>
-        <div style="font-size:28px">🫁</div>
-      </div>
+      <div style="font-size:32px">🫁</div>
     </div>
     <div class="greeting" id="greeting"></div>
   </div>
 
-  <div id="gdrive-home-status" style="text-align:center;font-size:11px;padding:4px 20px 0;color:var(--ink3)"></div>
   <div class="global-alert" id="global-alert"></div>
 
   <div class="dashboard">
-    <div class="dash-section-label">Pulmonary</div>
-    <div class="tiles-grid" id="tiles-pulmonary"></div>
 
-    <div class="dash-section-label">Vitals & Labs</div>
-    <div class="tiles-grid" id="tiles-vitals"></div>
+    <!-- ── 1. IMMUNOSUPPRESSION — the why ── -->
+    <div class="immuno-banner" onclick="openModule('immuno')">
+      <div class="immuno-banner-icon">💊</div>
+      <div class="immuno-banner-text">
+        <div class="immuno-banner-title">Immunosuppression Balance</div>
+        <div class="immuno-banner-sub">Rejection risk · Infection risk · Drug toxicity — the balance that drives all surveillance</div>
+      </div>
+      <div class="immuno-banner-arrow">›</div>
+    </div>
 
-    <div class="dash-section-label">Medications & Symptoms</div>
-    <div class="tiles-grid" id="tiles-meds"></div>
+    <!-- ── 2. HEALTH INDEX — the answer ── -->
+    <div class="health-banner" id="health-banner" onclick="openModule('health')">
+      <div class="health-banner-icon">📈</div>
+      <div class="health-banner-text">
+        <div class="health-banner-label">Composite Health Index</div>
+        <div class="health-banner-title" id="health-banner-title">How are you doing overall?</div>
+        <div class="health-banner-sub" id="health-banner-sub">8 weighted parameters · Tap to view breakdown</div>
+      </div>
+      <div>
+        <div class="health-banner-score" id="health-banner-score">—</div>
+        <div style="font-size:10px;color:var(--ink3);text-align:right;margin-top:2px">out of 100</div>
+      </div>
+    </div>
+
+    <!-- ── 3. SYMPTOMS & MEASUREMENTS ── -->
+    <div class="section-label">Symptoms & Measurements</div>
+    <div class="tiles-grid" id="tiles-measurements"></div>
+
+    <!-- ── 4. MEDICATIONS & LABS ── -->
+    <div class="section-label">Medications & Labs</div>
+    <div class="tiles-grid" id="tiles-medlabs"></div>
 
     <div class="last-updated" id="last-updated"></div>
+
   </div>
 
   <div class="home-footer">
     <strong>Cocomi Care</strong> · Lung Transplant Surveillance Suite<br>
-    Data stored locally on this device · Export from each module
+    Data stored locally on this device · For personal wellness tracking only
   </div>
 
 </div>
 
-<!-- ══════════════════════════════════
-     MODULE VIEW (iframe container)
-══════════════════════════════════ -->
+<!-- MODULE FRAME -->
 <div id="view-module">
   <div class="module-bar">
-    <button class="back-btn" onclick="goHome()">
-      <span class="back-arrow">←</span>
-      <span>Home</span>
-    </button>
+    <button class="back-btn" onclick="goHome()">← Home</button>
     <div class="module-bar-title" id="module-bar-title"></div>
   </div>
   <iframe class="module-iframe" id="module-iframe" src="about:blank"></iframe>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  MODULE DEFINITIONS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 const MODULES = [
+  { id:'immuno', name:'Immunosuppression Balance', file:'cocomi_medication_balance.html' },
+  { id:'health', name:'Health Index',              file:'health_index.html' },
   {
-    id:       'immuno',
-    name:     'Immunosuppression',
-    icon:     '💊',
-    color:    '#7B5EA7',
-    file:     'cocomi_medication_balance.html',
-    group:    'pulmonary',
-    cadence:  null,
+    id:'checkin', name:'Symptom Check-in', icon:'🧠',
+    file:'symptom_checkin.html', group:'measurements', cadence:1,
     getSummary() {
-      // Immunosuppression dashboard uses its own storage
-      return { val: null, sub: 'Rejection / Infection balance', since: null };
+      try {
+        const r=JSON.parse(localStorage.getItem('symptom_checkins_v1')||'[]');
+        if(!r.length) return{val:null,sub:'Daily symptom check-in',since:null};
+        const l=r[r.length-1];
+        const s=l.wellnessScore;
+        return{val:s,unit:'',sub:s>=85?'Near baseline':s>=70?'Minor deviation':s>=50?'Notable deviation':'Significant deviation',since:daysSince(l.date),alert:s&&s<50?'danger':s&&s<70?'warn':null};
+      } catch(e){return{val:null,sub:'Daily symptom check-in',since:null};}
     }
   },
   {
-    id:       'flutter',
-    name:     'Flutter Tracker',
-    icon:     '🫁',
-    color:    '#2D9E6B',
-    file:     'flutter_tracker.html',
-    group:    'pulmonary',
-    cadence:  1,
+    id:'peakflow', name:'Peak Flow', icon:'📊',
+    file:'peak_flow_tracker.html', group:'measurements', cadence:3,
     getSummary() {
       try {
-        const sessions = JSON.parse(localStorage.getItem('flutter_sessions_v1')||'[]');
-        if (!sessions.length) return { val: null, sub: 'UP clicks per session', since: null };
-        const last = sessions[sessions.length-1];
-        const days = daysSince(last.date);
-        return {
-          val:   last.totals.totalClicks,
-          unit:  'clicks',
-          sub:   `${last.totals.setCount} set${last.totals.setCount>1?'s':''}`,
-          since: days,
-          alert: null
-        };
-      } catch(e) { return { val: null, sub: 'UP clicks per session', since: null }; }
+        const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]');
+        if(!r.length) return{val:null,sub:'FEV1 max value',since:null};
+        const l=r[r.length-1];
+        return{val:l.best,unit:'mL',sub:'FEV1 max value',since:daysSince(l.date)};
+      } catch(e){return{val:null,sub:'FEV1 max value',since:null};}
     }
   },
   {
-    id:       'peakflow',
-    name:     'Peak Flow',
-    icon:     '📊',
-    color:    '#3B82C4',
-    file:     'peak_flow_tracker.html',
-    group:    'pulmonary',
-    cadence:  3,
+    id:'spiro', name:'Spirometer', icon:'🌬️',
+    file:'spirometer_surveillance.html', group:'measurements', cadence:1,
     getSummary() {
       try {
-        const sessions = JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]');
-        if (!sessions.length) return { val: null, sub: 'Average of 3 blows', since: null };
-        const last = sessions[sessions.length-1];
-        const days = daysSince(last.date);
-        return { val: last.avg, unit: '', sub: 'avg peak flow', since: days };
-      } catch(e) { return { val: null, sub: 'Average of 3 blows', since: null }; }
+        const r=JSON.parse(localStorage.getItem('spiro_records_v1')||'[]');
+        const s=JSON.parse(localStorage.getItem('spiro_settings_v1')||'{}');
+        if(!r.length) return{val:null,sub:'Inspiratory volume',since:null};
+        const l=r[r.length-1];
+        const pct=s.target?Math.round((l.val/s.target)*100):null;
+        const alert=s.target&&l.val<s.target*((s.warnPct||80)/100)?'warn':null;
+        return{val:l.val,unit:'mL',sub:pct?`${pct}% of target`:'inspiratory vol',since:daysSince(l.date),alert};
+      } catch(e){return{val:null,sub:'Inspiratory volume',since:null};}
     }
   },
   {
-    id:       'spiro',
-    name:     'Spirometer',
-    icon:     '🌬️',
-    color:    '#6B4FA8',
-    file:     'spirometer_surveillance.html',
-    group:    'pulmonary',
-    cadence:  1,
+    id:'vitals', name:'Vital Signs', icon:'❤️',
+    file:'vital_signs_surveillance.html', group:'measurements', cadence:7,
     getSummary() {
       try {
-        const recs = JSON.parse(localStorage.getItem('spiro_records_v1')||'[]');
-        const sets = JSON.parse(localStorage.getItem('spiro_settings_v1')||'{}');
-        if (!recs.length) return { val: null, sub: 'Inspiratory volume', since: null };
-        const last = recs[recs.length-1];
-        const days = daysSince(last.date);
-        const pct  = sets.target ? Math.round((last.val/sets.target)*100) : null;
-        const alert= sets.target && last.val < sets.target*(sets.warnPct||80)/100 ? 'warn' : null;
-        return {
-          val:   last.val,
-          unit:  'mL',
-          sub:   pct !== null ? `${pct}% of target` : 'inspiratory vol',
-          since: days,
-          alert
-        };
-      } catch(e) { return { val: null, sub: 'Inspiratory volume', since: null }; }
-    }
-  },
-  {
-    id:       'vitals',
-    name:     'Vital Signs',
-    icon:     '❤️',
-    color:    '#C94040',
-    file:     'vital_signs_surveillance.html',
-    group:    'vitals',
-    cadence:  7,
-    getSummary() {
-      try {
-        const vitals = ['spo2','hr','bp','wt','temp'];
-        const settings = JSON.parse(localStorage.getItem('vss_settings_v1')||'{}');
-        let alerts = [];
-        let latestDate = null;
-        vitals.forEach(v => {
-          const recs = JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]');
-          if (!recs.length) return;
-          const last = recs[recs.length-1];
-          if (!latestDate || last.date > latestDate) latestDate = last.date;
-          // Check thresholds
-          if (v==='spo2'  && last.val < (settings.spo2?.low||92))         alerts.push('SpO₂ low');
-          if (v==='hr'    && last.val > (settings.hr?.high||100))          alerts.push('HR high');
-          if (v==='temp'  && last.val >= (settings.temp?.high||99.5))      alerts.push('Temp high');
-          if (v==='bp'    && last.sys > (settings.bp?.sysHigh||130))       alerts.push('BP high');
+        const s=JSON.parse(localStorage.getItem('vss_settings_v1')||'{}');
+        let alerts=[],latestDate=null;
+        ['spo2','hr','bp','wt','temp'].forEach(v=>{
+          const r=JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]');
+          if(!r.length) return;
+          const l=r[r.length-1];
+          if(!latestDate||l.date>latestDate) latestDate=l.date;
+          if(v==='spo2'&&l.val<(s.spo2?.low||92))    alerts.push('SpO₂ low');
+          if(v==='hr'  &&l.val>(s.hr?.high||100))     alerts.push('HR high');
+          if(v==='temp'&&l.val>=(s.temp?.high||99.5)) alerts.push('Temp elevated');
+          if(v==='bp'  &&l.sys>(s.bp?.sysHigh||130))  alerts.push('BP high');
         });
-        const days = latestDate ? daysSince(latestDate) : null;
-        return {
-          val:   alerts.length ? `${alerts.length} alert${alerts.length>1?'s':''}` : '✓ Normal',
-          unit:  '',
-          sub:   alerts.length ? alerts.slice(0,2).join(', ') : '5 vitals tracked',
-          since: days,
-          alert: alerts.length ? 'danger' : null
-        };
-      } catch(e) { return { val: null, sub: '5 vitals tracked', since: null }; }
+        return{val:alerts.length?`${alerts.length} alert${alerts.length>1?'s':''}`:'✓ Normal',unit:'',sub:alerts.length?alerts.slice(0,2).join(', '):'5 vitals tracked',since:latestDate?daysSince(latestDate):null,alert:alerts.length?'danger':null};
+      } catch(e){return{val:null,sub:'5 vitals tracked',since:null};}
     }
   },
   {
-    id:       'labs',
-    name:     'Lab Results',
-    icon:     '🧪',
-    color:    '#0E7490',
-    file:     'lab_results_tracker.html',
-    group:    'vitals',
-    cadence:  null,
+    id:'medlog', name:'Medications', icon:'🔬',
+    file:'med_symptom_tracker.html', group:'medlabs',
     getSummary() {
       try {
-        const recs  = JSON.parse(localStorage.getItem('lab_records_v2')||'[]');
-        if (!recs.length) return { val: null, sub: 'Auto-extracted from portal', since: null };
-        const last  = recs[recs.length-1];
-        const flags = Object.keys(last.flags||{});
-        const days  = daysSince(last.date);
-        return {
-          val:   flags.length ? `${flags.length} flag${flags.length>1?'s':''}` : '✓ All normal',
-          unit:  '',
-          sub:   flags.length ? flags.slice(0,2).join(', ') : `${Object.values(last.values).filter(v=>v!==null).length} values`,
-          since: days,
-          alert: flags.some(k=>(last.flags[k]==='critical'||last.flags[k]==='high')) ? 'danger' : flags.length ? 'warn' : null
-        };
-      } catch(e) { return { val: null, sub: 'Lab panel not set up', since: null }; }
+        const meds=JSON.parse(localStorage.getItem('msc_meds_v1')||'[]');
+        const cur =JSON.parse(localStorage.getItem('msc_cur_meds_v1')||'[]').filter(m=>m.active);
+        const all =meds.sort((a,b)=>b.date.localeCompare(a.date));
+        return{val:cur.length||null,unit:cur.length?' active':'',sub:cur.length?`${meds.length} change${meds.length!==1?'s':''} logged`:'No medications added',since:all.length?daysSince(all[0].date):null};
+      } catch(e){return{val:null,sub:'Med changes & correlation',since:null};}
     }
   },
   {
-    id:       'medlog',
-    name:     'Med & Symptom',
-    icon:     '🔬',
-    color:    '#C4663B',
-    file:     'med_symptom_tracker.html',
-    group:    'meds',
-    cadence:  null,
+    id:'labs', name:'Lab Results', icon:'🧪',
+    file:'lab_results_tracker.html', group:'medlabs',
     getSummary() {
       try {
-        const meds = JSON.parse(localStorage.getItem('msc_meds_v1')||'[]');
-        const syms = JSON.parse(localStorage.getItem('msc_syms_v1')||'[]');
-        const curMeds = JSON.parse(localStorage.getItem('msc_cur_meds_v1')||'[]').filter(m=>m.active);
-        const allEntries = [...meds, ...syms].sort((a,b)=>b.date.localeCompare(a.date));
-        const last = allEntries[0];
-        const days = last ? daysSince(last.date) : null;
-        const highSyms = syms.flatMap(s=>Object.entries(s.symptoms||{}).filter(([,v])=>v>=7));
-        return {
-          val:   curMeds.length ? curMeds.length : (meds.length + syms.length) || null,
-          unit:  curMeds.length ? ' active meds' : curMeds.length === 0 ? '' : '',
-          sub:   curMeds.length ? `${meds.length} changes, ${syms.length} symptom logs` : 'No entries yet',
-          since: days,
-          alert: highSyms.length ? 'warn' : null
-        };
-      } catch(e) { return { val: null, sub: 'Med changes & symptoms', since: null }; }
+        const r=JSON.parse(localStorage.getItem('lab_records_v2')||'[]');
+        if(!r.length) return{val:null,sub:'AI-extracted from portal',since:null};
+        const l=r[r.length-1];
+        const flags=Object.keys(l.flags||{});
+        const count=Object.values(l.values).filter(v=>v!==null).length;
+        return{val:flags.length?`${flags.length} flag${flags.length>1?'s':''}`:'✓ Normal',unit:'',sub:flags.length?flags.slice(0,2).join(', '):`${count} values`,since:daysSince(l.date),alert:flags.some(k=>l.flags[k]==='critical'||l.flags[k]==='high')?'danger':flags.length?'warn':null};
+      } catch(e){return{val:null,sub:'Lab panel not set up',since:null};}
     }
   }
 ];
 
-// ══════════════════════════════════════════════
-//  GREETING
-// ══════════════════════════════════════════════
-function setGreeting() {
-  const h = new Date().getHours();
-  const time = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('greeting').innerHTML = `${time}, <strong>Cocomi</strong> 👋`;
+// ══════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════
+function daysSince(d) {
+  if (!d) return null;
+  return Math.floor((new Date() - new Date(d)) / 86400000);
 }
-
-// ══════════════════════════════════════════════
-//  DAYS SINCE HELPER
-// ══════════════════════════════════════════════
-function daysSince(dateStr) {
-  if (!dateStr) return null;
-  const diff = new Date() - new Date(dateStr);
-  return Math.floor(diff / 86400000);
-}
-
-function sinceText(days, cadence) {
+function sinceText(days) {
   if (days === null) return 'Never logged';
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
+  if (days === 0)    return 'Today';
+  if (days === 1)    return 'Yesterday';
   return `${days} days ago`;
 }
 
-function isOverdue(days, cadence) {
-  if (!cadence || days === null) return false;
-  return days >= cadence;
-}
-
-// ══════════════════════════════════════════════
-//  RENDER DASHBOARD
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════
 function renderDashboard() {
-  setGreeting();
+  // Greeting
+  const h = new Date().getHours();
+  const time = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('greeting').innerHTML = `${time}, <strong>Cocomi</strong> 👋`;
 
-  const groups = { pulmonary: [], vitals: [], meds: [] };
+  // Health Index banner
+  try {
+    const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
+    const banner = document.getElementById('health-banner');
+    const scoreEl = document.getElementById('health-banner-score');
+    const titleEl = document.getElementById('health-banner-title');
+    const subEl   = document.getElementById('health-banner-sub');
+    if (hist.length) {
+      const l = hist[hist.length-1];
+      const s = l.score;
+      scoreEl.textContent = s;
+      scoreEl.className = 'health-banner-score' + (s<50?' danger':s<70?' warn':'');
+      titleEl.textContent = s>=85?'All parameters near baseline':s>=70?'Minor deviation detected':s>=50?'Notable deviation — watch closely':'Significant deviation';
+      subEl.textContent   = `Last updated ${sinceText(daysSince(l.date))} · Tap to view breakdown`;
+      banner.className    = 'health-banner' + (s<50?' alert-danger':s<70?' alert-warn':'');
+    } else {
+      scoreEl.className   = 'health-banner-score none';
+      scoreEl.textContent = '—';
+      titleEl.textContent = 'No data yet — log readings to calculate';
+      subEl.textContent   = '8 weighted parameters · Tap to open';
+    }
+  } catch(e) {}
+
+  // Module tiles
+  const groups = { measurements:[], medlabs:[] };
   let globalAlerts = [];
 
-  MODULES.forEach(mod => {
-    const summary = mod.getSummary();
-    const days    = summary.since;
-    const overdue = isOverdue(days, mod.cadence);
-    const sinceStr = sinceText(days, mod.cadence);
-    const alertCls = summary.alert === 'danger' ? 'alert-danger' : summary.alert === 'warn' ? 'alert-warn' : overdue ? 'overdue' : '';
+  MODULES.filter(m => m.group).forEach(mod => {
+    const s = mod.getSummary();
+    const days = s.since;
+    const overdue = mod.cadence && days !== null && days >= mod.cadence;
+    const alertCls = s.alert==='danger'?'alert-danger':s.alert==='warn'?'alert-warn':'';
+    if (s.alert==='danger') globalAlerts.push(`${mod.icon} ${mod.name}: ${s.sub}`);
 
-    if (summary.alert === 'danger') globalAlerts.push(`${mod.icon} ${mod.name}: ${summary.sub}`);
-
-    const valHtml = summary.val !== null
-      ? `<div class="tile-val">${summary.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${summary.unit||''}</span></div>`
+    const valHtml = s.val !== null
+      ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>`
       : `<div class="tile-empty">No data yet</div>`;
 
-    const tile = `
+    groups[mod.group].push(`
       <div class="tile ${mod.id} ${alertCls}" onclick="openModule('${mod.id}')">
         <div class="tile-alert-dot"></div>
         <span class="tile-icon">${mod.icon}</span>
         <div class="tile-name">${mod.name}</div>
         ${valHtml}
-        <div class="tile-sub">${summary.sub}</div>
-        <div class="tile-since ${overdue?'overdue':''}">${overdue ? '⏰ ' : ''}${sinceStr}</div>
-      </div>`;
-
-    groups[mod.group].push(tile);
+        <div class="tile-sub">${s.sub}</div>
+        <div class="tile-since ${overdue?'overdue':''}">${overdue?'⏰ ':''}${sinceText(days)}</div>
+      </div>`);
   });
 
-  document.getElementById('tiles-pulmonary').innerHTML = groups.pulmonary.join('');
-  document.getElementById('tiles-vitals').innerHTML    = groups.vitals.join('');
-  document.getElementById('tiles-meds').innerHTML      = groups.meds.join('');
+  document.getElementById('tiles-measurements').innerHTML = groups.measurements.join('');
+  document.getElementById('tiles-medlabs').innerHTML      = groups.medlabs.join('');
 
   // Global alert banner
   const alertEl = document.getElementById('global-alert');
@@ -496,272 +422,32 @@ function renderDashboard() {
     alertEl.classList.remove('show');
   }
 
-  // Last updated
   document.getElementById('last-updated').textContent =
-    'Last refreshed ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    'Refreshed ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
-// ══════════════════════════════════════════════
-//  MODULE NAVIGATION
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════
 function openModule(id) {
-  const mod = MODULES.find(m => m.id === id);
-  if (!mod) return;
-
+  const mod = MODULES.find(m=>m.id===id); if(!mod) return;
   document.getElementById('view-home').style.display = 'none';
   document.getElementById('view-module').classList.add('active');
   document.getElementById('module-bar-title').textContent = mod.name;
-
-  const iframe = document.getElementById('module-iframe');
-  iframe.src = mod.file;
+  document.getElementById('module-iframe').src = mod.file;
 }
-
 function goHome() {
   document.getElementById('view-module').classList.remove('active');
   document.getElementById('view-home').style.display = 'block';
   document.getElementById('module-iframe').src = 'about:blank';
-  renderDashboard(); // refresh data on return
+  renderDashboard();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  INIT
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 renderDashboard();
-
-// Auto-refresh dashboard every 60 seconds
 setInterval(renderDashboard, 60000);
-
-// ══════════════════════════════════════════════════════════
-//  GOOGLE DRIVE SYNC — Cocomi Care
-//  Injected into all modules
-// ══════════════════════════════════════════════════════════
-
-const GDRIVE_CLIENT_ID = '685596805396-ll3aopssndr5p32p4adktb2d2s4lmdt4.apps.googleusercontent.com';
-const GDRIVE_API_KEY   = 'AIzaSyDhfOrxkCduHMLVz6NoyD0nPeJnNad83VQ';
-const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.appdata';
-const GDRIVE_FOLDER    = 'appDataFolder';
-
-let gdriveToken    = null;
-let gdriveReady    = false;
-let gdriveSyncing  = false;
-let gdriveFileIds  = {}; // { filename: fileId }
-
-// ── Load Google Identity Services ──
-function gdriveLoadGIS() {
-  if (document.getElementById('gis-script')) return;
-  const s = document.createElement('script');
-  s.id  = 'gis-script';
-  s.src = 'https://accounts.google.com/gsi/client';
-  s.onload = () => { gdriveReady = true; };
-  document.head.appendChild(s);
-
-  const s2 = document.createElement('script');
-  s2.src = 'https://apis.google.com/js/api.js';
-  s2.onload = () => {
-    gapi.load('client', async () => {
-      await gapi.client.init({ apiKey: GDRIVE_API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-    });
-  };
-  document.head.appendChild(s2);
-}
-
-// ── Sign In ──
-function gdriveSignIn(callback) {
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GDRIVE_CLIENT_ID,
-    scope: GDRIVE_SCOPE,
-    callback: (resp) => {
-      if (resp.error) { showGDriveStatus('Sign in failed: ' + resp.error, 'error'); return; }
-      gdriveToken = resp.access_token;
-      gapi.client.setToken({ access_token: gdriveToken });
-      localStorage.setItem('gdrive_token', gdriveToken);
-      showGDriveStatus('Connected to Google Drive ✓', 'success');
-      updateGDriveUI(true);
-      if (callback) callback();
-    }
-  });
-  client.requestAccessToken();
-}
-
-// ── Sign Out ──
-function gdriveSignOut() {
-  if (gdriveToken) google.accounts.oauth2.revoke(gdriveToken);
-  gdriveToken = null;
-  localStorage.removeItem('gdrive_token');
-  updateGDriveUI(false);
-  showGDriveStatus('Disconnected from Google Drive', '');
-}
-
-// ── Save data to Drive ──
-async function gdriveSave(filename, data) {
-  if (!gdriveToken) return false;
-  try {
-    gdriveSyncing = true;
-    const content  = JSON.stringify(data, null, 2);
-    const existing = gdriveFileIds[filename];
-
-    if (existing) {
-      // Update existing file
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existing}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
-        body: content
-      });
-    } else {
-      // Create new file in appDataFolder
-      const meta = { name: filename, parents: [GDRIVE_FOLDER] };
-      const form  = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
-      form.append('file',     new Blob([content],              { type: 'application/json' }));
-      const res  = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + gdriveToken },
-        body: form
-      });
-      const json = await res.json();
-      gdriveFileIds[filename] = json.id;
-    }
-    gdriveSyncing = false;
-    return true;
-  } catch(e) {
-    gdriveSyncing = false;
-    console.warn('Drive save failed:', e);
-    return false;
-  }
-}
-
-// ── Load data from Drive ──
-async function gdriveLoad(filename) {
-  if (!gdriveToken) return null;
-  try {
-    // Find the file
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files?spaces=${GDRIVE_FOLDER}&q=name='${filename}'&fields=files(id,name)`,
-      { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
-    );
-    const list = await res.json();
-    if (!list.files || !list.files.length) return null;
-    const fileId = list.files[0].id;
-    gdriveFileIds[filename] = fileId;
-
-    // Download content
-    const dl = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { 'Authorization': 'Bearer ' + gdriveToken }
-    });
-    return await dl.json();
-  } catch(e) {
-    console.warn('Drive load failed:', e);
-    return null;
-  }
-}
-
-// ── Sync all localStorage keys to Drive ──
-async function gdriveSyncAll(storageKeys) {
-  if (!gdriveToken) return;
-  showGDriveStatus('Syncing to Drive…', '');
-  let saved = 0;
-  for (const key of storageKeys) {
-    const val = localStorage.getItem(key);
-    if (val) {
-      const ok = await gdriveSave(key + '.json', JSON.parse(val));
-      if (ok) saved++;
-    }
-  }
-  showGDriveStatus(`Synced ${saved} files to Drive ✓`, 'success');
-}
-
-// ── Restore all from Drive ──
-async function gdriveRestoreAll(storageKeys) {
-  if (!gdriveToken) return;
-  showGDriveStatus('Restoring from Drive…', '');
-  let restored = 0;
-  for (const key of storageKeys) {
-    const data = await gdriveLoad(key + '.json');
-    if (data !== null) {
-      localStorage.setItem(key, JSON.stringify(data));
-      restored++;
-    }
-  }
-  showGDriveStatus(`Restored ${restored} files from Drive ✓`, 'success');
-  return restored;
-}
-
-function showGDriveStatus(msg, type) {
-  const el = document.getElementById('gdrive-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = type === 'success' ? 'var(--good)' : type === 'error' ? 'var(--danger)' : 'var(--ink3)';
-}
-
-function updateGDriveUI(connected) {
-  const btn  = document.getElementById('gdrive-btn');
-  const stat = document.getElementById('gdrive-status');
-  if (!btn) return;
-  if (connected) {
-    btn.textContent = '☁️ Drive Connected';
-    btn.style.background = 'var(--good)';
-    btn.onclick = gdriveSignOut;
-  } else {
-    btn.textContent = '☁️ Connect Drive';
-    btn.style.background = '';
-    btn.onclick = () => gdriveSignIn();
-  }
-}
-
-// ── Auto-save hook: wrap localStorage.setItem ──
-function gdriveEnableAutoSave(storageKeys) {
-  const orig = localStorage.setItem.bind(localStorage);
-  localStorage.setItem = function(key, value) {
-    orig(key, value);
-    if (gdriveToken && storageKeys.includes(key)) {
-      try { gdriveSave(key + '.json', JSON.parse(value)); } catch(e) {}
-    }
-  };
-}
-
-// ── Init ──
-function gdriveInit(storageKeys) {
-  gdriveLoadGIS();
-  gdriveEnableAutoSave(storageKeys);
-  // Restore token if exists
-  const saved = localStorage.getItem('gdrive_token');
-  if (saved) {
-    gdriveToken = saved;
-    gapi?.client?.setToken?.({ access_token: saved });
-    updateGDriveUI(true);
-  }
-}
-
-// ── Drive status shown on home ──
-const _origShowGDriveStatus = showGDriveStatus;
-function showGDriveStatus(msg, type) {
-  const el = document.getElementById('gdrive-home-status');
-  if (el) {
-    el.textContent = msg;
-    el.style.color = type==='success'?'var(--good)':type==='error'?'var(--danger)':'var(--ink3)';
-  }
-}
-
-function updateGDriveUI(connected) {
-  const btn = document.getElementById('gdrive-btn');
-  if (!btn) return;
-  if (connected) {
-    btn.textContent = '☁️ Drive Connected';
-    btn.style.background = 'var(--good-bg)';
-    btn.style.color = 'var(--good)';
-    btn.style.borderColor = '#a8dfc5';
-    btn.onclick = gdriveSignOut;
-  } else {
-    btn.textContent = '☁️ Connect Drive';
-    btn.style.background = 'var(--surface)';
-    btn.style.color = 'var(--ink2)';
-    btn.onclick = () => gdriveSignIn(() => gdriveSyncAll(['flutter_sessions_v1', 'peak_flow_sessions_v1', 'vss_spo2_v1', 'vss_hr_v1', 'vss_bp_v1', 'vss_wt_v1', 'vss_temp_v1', 'vss_settings_v1', 'spiro_records_v1', 'spiro_settings_v1', 'msc_meds_v1', 'msc_syms_v1', 'msc_cur_meds_v1', 'lab_panel_v2', 'lab_records_v2', 'lab_settings_v2']));
-  }
-}
-
-// Init Drive on home shell
-gdriveInit(['flutter_sessions_v1', 'peak_flow_sessions_v1', 'vss_spo2_v1', 'vss_hr_v1', 'vss_bp_v1', 'vss_wt_v1', 'vss_temp_v1', 'vss_settings_v1', 'spiro_records_v1', 'spiro_settings_v1', 'msc_meds_v1', 'msc_syms_v1', 'msc_cur_meds_v1', 'lab_panel_v2', 'lab_records_v2', 'lab_settings_v2']);
-
 </script>
 </body>
 </html>

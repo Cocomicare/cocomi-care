@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symptom Check-in</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #E8EFF5;
+  --border:    #D0DCE8;
+  --ink:       #1A2533;
+  --ink2:      #4A5E72;
+  --ink3:      #8A9EAF;
+  --accent:    #3B82C4;
+  --accent2:   #E8F1FA;
+  --good:      #2D9E6B;
+  --good-bg:   #E8F7F1;
+  --warn:      #E07B39;
+  --warn-bg:   #FDF0E8;
+  --danger:    #C94040;
+  --danger-bg: #FAEAEA;
+  --sym:       #6B4FA8;
+  --sym-bg:    #F0EAFA;
+  --sym-mid:   #9B7ABF;
+  --radius:    12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; font-size: 15px; }
+
+/* ── HEADER ── */
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: baseline; gap: 8px; }
+.logo-title { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--ink); }
+.logo-sub { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── TABS ── */
+.tabs { display: flex; background: var(--surface2); border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 11px 14px; font-size: 12px; font-weight: 500; color: var(--ink2); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; }
+.tab:hover { color: var(--sym); }
+.tab.active { color: var(--sym); border-bottom-color: var(--sym); }
+
+/* ── PAGES ── */
+.page { display: none; padding: 20px 16px 40px; max-width: 600px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── LAST LOGGED NUDGE ── */
+.nudge { border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; font-weight: 500; text-align: center; }
+.nudge.ok      { background: var(--good-bg); color: var(--good); }
+.nudge.due     { background: var(--warn-bg); color: var(--warn); }
+.nudge.none    { background: var(--surface2); color: var(--ink3); }
+
+/* ── SYMPTOM CARDS ── */
+.checkin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; border-left: 4px solid var(--sym); }
+.card-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
+.card-date-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.card-date { font-size: 13px; color: var(--ink3); font-family: 'DM Mono', monospace; }
+
+/* ── SYMPTOM SLIDER ── */
+.symptom-group { margin-bottom: 22px; }
+.symptom-group:last-of-type { margin-bottom: 4px; }
+.symptom-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.symptom-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.symptom-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px; font-weight: 500;
+  min-width: 32px; text-align: right;
+  transition: color 0.2s;
+}
+.symptom-desc { font-size: 12px; color: var(--ink3); margin-bottom: 8px; line-height: 1.4; font-style: italic; }
+.symptom-question { font-size: 13px; color: var(--ink2); margin-bottom: 10px; font-weight: 500; }
+
+/* Custom styled range input */
+.sym-slider {
+  -webkit-appearance: none;
+  width: 100%; height: 8px;
+  border-radius: 4px; outline: none;
+  cursor: pointer; transition: all 0.2s;
+  background: linear-gradient(to right, var(--sym) 0%, var(--sym) 50%, var(--surface2) 50%, var(--surface2) 100%);
+}
+.sym-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--sym);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(107,79,168,0.3);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.sym-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+.sym-slider::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%; background: var(--sym);
+  border: 3px solid #fff; cursor: pointer;
+}
+.sym-slider.higher-better { background: linear-gradient(to right, var(--surface2) 0%, var(--surface2) 50%, var(--good) 50%, var(--good) 100%); }
+.sym-slider.higher-better::-webkit-slider-thumb { background: var(--good); box-shadow: 0 2px 8px rgba(45,158,107,0.3); }
+
+.scale-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink3); margin-top: 4px; }
+
+/* ── BASELINE INDICATOR ── */
+.baseline-indicator { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; color: var(--ink3); }
+.baseline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
+.baseline-arrow { font-size: 13px; }
+.change-up   { color: var(--danger); }
+.change-down { color: var(--good); }
+.change-neutral { color: var(--ink3); }
+/* For higher-is-better symptoms, up is good */
+.hib.change-up   { color: var(--good); }
+.hib.change-down { color: var(--danger); }
+
+/* ── COMPOSITE WELLNESS SCORE ── */
+.wellness-score-wrap {
+  background: linear-gradient(135deg, var(--sym-bg) 0%, #fff 100%);
+  border: 1px solid #C8B0E8;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.wellness-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sym); margin-bottom: 4px; }
+.wellness-desc { font-size: 12px; color: var(--ink3); max-width: 200px; line-height: 1.4; }
+.wellness-number { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 500; color: var(--sym); line-height: 1; text-align: right; }
+.wellness-number.good   { color: var(--good); }
+.wellness-number.warn   { color: var(--warn); }
+.wellness-number.danger { color: var(--danger); }
+.wellness-sub { font-size: 11px; color: var(--ink3); text-align: right; margin-top: 3px; }
+
+/* ── ACUTE ALERT ── */
+.acute-alert { display: none; background: var(--danger-bg); border: 1px solid #f0c0c0; border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: var(--danger); font-weight: 500; line-height: 1.5; }
+.acute-alert.show { display: block; }
+
+/* ── BASELINE PERIOD ── */
+.baseline-notice { background: var(--accent2); border: 1px solid #BDD5EE; border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 14px; font-size: 13px; color: var(--accent); line-height: 1.5; }
+
+/* ── HISTORY ── */
+.hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+.hist-top { display: flex; align-items: center; padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border); }
+.hist-date-block { flex: 1; }
+.hist-date { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--ink); }
+.hist-time { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.hist-wellness { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--sym); flex-shrink: 0; }
+.hist-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; padding: 10px 16px 14px; }
+.hist-sym { text-align: center; }
+.hist-sym-name { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--ink3); }
+.hist-sym-val { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; }
+.hist-note { padding: 6px 16px 10px; font-size: 12px; color: var(--ink3); font-style: italic; border-top: 1px solid var(--border); }
+.hist-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.del-confirm { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--danger-bg); border-top: 1px solid #f0c0c0; flex-wrap: wrap; }
+
+/* ── TREND CHARTS ── */
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+.chart-title { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.chart-wrap { position: relative; height: 180px; }
+.trend-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.trend-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1.5px solid var(--border); background: var(--bg); color: var(--ink2); cursor: pointer; transition: all 0.15s; }
+.trend-chip.active { background: var(--sym); color: #fff; border-color: var(--sym); }
+.stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.stat-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 3px; }
+.stat-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--ink); line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--sym); color: #fff; }
+.btn-primary:hover { background: #5a3f90; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--ink2); }
+.btn-ghost:hover { border-color: var(--sym); color: var(--sym); background: var(--sym-bg); }
+.btn-danger-soft { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0c0c0; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-icon { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ── TIME PICKER ── */
+.tp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
+.tp-modal.open { display: flex; }
+.tp-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 22px 22px 34px; width: 100%; max-width: 480px; }
+.tp-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--ink); margin-bottom: 18px; text-align: center; }
+.tp-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.tp-scroll { display: flex; flex-direction: column; align-items: center; }
+.tp-scroll-label { font-size: 10px; text-transform: uppercase; color: var(--ink3); margin-bottom: 5px; }
+.tp-scroll button { background: none; border: none; font-size: 20px; color: var(--ink3); cursor: pointer; padding: 4px 12px; border-radius: 6px; }
+.tp-val { font-family: 'DM Mono', monospace; font-size: 38px; font-weight: 500; color: var(--ink); min-width: 60px; text-align: center; background: var(--bg); border-radius: 10px; padding: 7px 10px; line-height: 1; }
+.tp-sep { font-family: 'DM Mono', monospace; font-size: 32px; color: var(--ink2); margin-bottom: 18px; }
+.ampm-toggle { display: flex; flex-direction: column; gap: 6px; margin-left: 8px; margin-top: 18px; }
+.ampm-btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink2); }
+.ampm-btn.active { background: var(--sym); color: #fff; border-color: var(--sym); }
+.tp-actions { display: flex; gap: 10px; }
+
+/* ── MISC ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--ink3); }
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink2); margin-bottom: 5px; }
+.empty-sub { font-size: 13px; line-height: 1.5; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: #fff; padding: 11px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--good); }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+@media (max-width: 480px) { .page { padding: 14px 12px 40px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-title">Symptom Check-in</span>
+    <span class="logo-sub">Daily Wellness Tracking</span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="showTab('history')">History</button>
+    <button class="btn btn-primary btn-sm" onclick="showTab('checkin')">+ Check-in</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('checkin')"  id="tab-checkin">Today</button>
+  <button class="tab"        onclick="showTab('history')"  id="tab-history">History</button>
+  <button class="tab"        onclick="showTab('trends')"   id="tab-trends">Trends</button>
+</div>
+
+<!-- ═══════════════════
+     CHECK-IN
+═══════════════════ -->
+<div class="page active" id="page-checkin">
+
+  <div id="checkin-nudge" class="nudge none"></div>
+  <div id="acute-alert" class="acute-alert"></div>
+  <div id="baseline-notice" class="baseline-notice" style="display:none">
+    📊 <strong>Establishing your baseline</strong> — The first 14 daily check-ins build your personal symptom baseline. Your Subjective Wellness Score will be fully calibrated after that period. Keep logging daily for the most accurate results.
+  </div>
+
+  <!-- WELLNESS SCORE -->
+  <div class="wellness-score-wrap" id="wellness-score-wrap">
+    <div>
+      <div class="wellness-label">Subjective Wellness</div>
+      <div class="wellness-desc">Composite of all 6 symptoms — feeds into your Health Index</div>
+    </div>
+    <div>
+      <div class="wellness-number" id="wellness-number">—</div>
+      <div class="wellness-sub" id="wellness-sub">Score out of 100</div>
+    </div>
+  </div>
+
+  <div class="checkin-card">
+    <div class="card-date-row">
+      <div class="card-title">How are you feeling today?</div>
+      <div class="card-date" id="checkin-date-display"></div>
+    </div>
+
+    <!-- SYMPTOM 1: Shortness of Breath -->
+    <div class="symptom-group" id="sg-sob">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">😮‍💨 Shortness of Breath</div>
+          <div class="symptom-desc">How difficult is it to breathe right now, at rest or with light movement?</div>
+          <div class="symptom-question">"Is it harder to breathe than usual for me?"</div>
+        </div>
+        <div class="symptom-score" id="val-sob">5</div>
+      </div>
+      <input type="range" class="sym-slider" id="sl-sob" min="1" max="10" value="5"
+        oninput="onSlider('sob', this.value, false)">
+      <div class="scale-labels"><span>1 — Breathing easily</span><span>10 — Severe difficulty</span></div>
+      <div class="baseline-indicator" id="bi-sob"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SYMPTOM 2: Fatigue -->
+    <div class="symptom-group" id="sg-fatigue">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">😴 Fatigue</div>
+          <div class="symptom-desc">Whole-body tiredness that rest doesn't fix — how you feel right now before any activity.</div>
+          <div class="symptom-question">"How exhausted do I feel just sitting here?"</div>
+        </div>
+        <div class="symptom-score" id="val-fatigue">5</div>
+      </div>
+      <input type="range" class="sym-slider" id="sl-fatigue" min="1" max="10" value="5"
+        oninput="onSlider('fatigue', this.value, false)">
+      <div class="scale-labels"><span>1 — Full of energy</span><span>10 — Completely exhausted</span></div>
+      <div class="baseline-indicator" id="bi-fatigue"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SYMPTOM 3: Stamina -->
+    <div class="symptom-group" id="sg-stamina">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">🏃 Exercise Stamina</div>
+          <div class="symptom-desc">Your capacity for activity today — how far or how long could you walk or do tasks before needing to stop?</div>
+          <div class="symptom-question">"How much could I do today before I had to stop?"</div>
+        </div>
+        <div class="symptom-score" id="val-stamina">5</div>
+      </div>
+      <input type="range" class="sym-slider higher-better" id="sl-stamina" min="1" max="10" value="5"
+        oninput="onSlider('stamina', this.value, true)">
+      <div class="scale-labels"><span>1 — Very limited</span><span>10 — Full normal activity</span></div>
+      <div class="baseline-indicator" id="bi-stamina"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SYMPTOM 4: Cough -->
+    <div class="symptom-group" id="sg-cough">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">🫁 Cough</div>
+          <div class="symptom-desc">Rate your cough relative to YOUR normal — even if you have a baseline cough, rate 1 if it's at your usual level.</div>
+          <div class="symptom-question">"Is my cough worse than my personal normal today?"</div>
+        </div>
+        <div class="symptom-score" id="val-cough">1</div>
+      </div>
+      <input type="range" class="sym-slider" id="sl-cough" min="1" max="10" value="1"
+        oninput="onSlider('cough', this.value, false)">
+      <div class="scale-labels"><span>1 — At my normal baseline</span><span>10 — Severe / constant</span></div>
+      <div class="baseline-indicator" id="bi-cough"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SYMPTOM 5: Chest Tightness -->
+    <div class="symptom-group" id="sg-chest">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">💜 Chest Tightness</div>
+          <div class="symptom-desc">Any pressure, tightness, or unusual sensation in the chest — not necessarily pain.</div>
+          <div class="symptom-question">"Does my chest feel tight or different from usual?"</div>
+        </div>
+        <div class="symptom-score" id="val-chest">1</div>
+      </div>
+      <input type="range" class="sym-slider" id="sl-chest" min="1" max="10" value="1"
+        oninput="onSlider('chest', this.value, false)">
+      <div class="scale-labels"><span>1 — No tightness</span><span>10 — Constant / uncomfortable</span></div>
+      <div class="baseline-indicator" id="bi-chest"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- SYMPTOM 6: General Wellbeing -->
+    <div class="symptom-group" id="sg-wellbeing">
+      <div class="symptom-header">
+        <div>
+          <div class="symptom-title">✨ General Wellbeing</div>
+          <div class="symptom-desc">Overall gut-check — how do you feel today as a whole person?</div>
+          <div class="symptom-question">"How would I describe how I feel overall today?"</div>
+        </div>
+        <div class="symptom-score" id="val-wellbeing">7</div>
+      </div>
+      <input type="range" class="sym-slider higher-better" id="sl-wellbeing" min="1" max="10" value="7"
+        oninput="onSlider('wellbeing', this.value, true)">
+      <div class="scale-labels"><span>1 — Feeling very unwell</span><span>10 — Feeling excellent</span></div>
+      <div class="baseline-indicator" id="bi-wellbeing"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- NOTES -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;color:var(--ink2);display:block;margin-bottom:6px">Notes (optional)</label>
+      <textarea id="checkin-notes" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);width:100%;resize:vertical;min-height:68px;transition:border-color 0.15s" placeholder="Any other symptoms, observations, or context worth noting…" onfocus="this.style.borderColor='var(--sym)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="resetCheckin()">Reset</button>
+      <button class="btn btn-primary" onclick="saveCheckin()">Save Check-in</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════
+     HISTORY
+═══════════════════ -->
+<div class="page" id="page-history">
+  <div id="history-content"></div>
+</div>
+
+<!-- ═══════════════════
+     TRENDS
+═══════════════════ -->
+<div class="page" id="page-trends">
+  <div id="trends-content"></div>
+</div>
+
+<!-- Time Picker -->
+<div class="tp-modal" id="tp-modal" onclick="if(event.target===this)closeTP()">
+  <div class="tp-sheet">
+    <div class="tp-title">Set Time</div>
+    <div class="tp-row">
+      <div class="tp-scroll">
+        <div class="tp-scroll-label">Hour</div>
+        <button ontouchstart="startR('h',1)" onmousedown="startR('h',1)" ontouchend="stopR()" onmouseup="stopR()">▲</button>
+        <div class="tp-val" id="tp-h">12</div>
+        <button ontouchstart="startR('h',-1)" onmousedown="startR('h',-1)" ontouchend="stopR()" onmouseup="stopR()">▼</button>
+      </div>
+      <div class="tp-sep">:</div>
+      <div class="tp-scroll">
+        <div class="tp-scroll-label">Min</div>
+        <button ontouchstart="startR('m',1)" onmousedown="startR('m',1)" ontouchend="stopR()" onmouseup="stopR()">▲</button>
+        <div class="tp-val" id="tp-m">00</div>
+        <button ontouchstart="startR('m',-1)" onmousedown="startR('m',-1)" ontouchend="stopR()" onmouseup="stopR()">▼</button>
+      </div>
+      <div class="ampm-toggle">
+        <button class="ampm-btn active" id="tp-am" onclick="setAP('AM')">AM</button>
+        <button class="ampm-btn" id="tp-pm" onclick="setAP('PM')">PM</button>
+      </div>
+    </div>
+    <div class="tp-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeTP()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="confirmTP()">OK — Set Time</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  SYMPTOM DEFINITIONS
+// ══════════════════════════════════════════════════
+const SYMPTOMS = [
+  { key:'sob',       name:'Shortness of Breath', icon:'😮‍💨', higherBetter:false, defaultVal:5 },
+  { key:'fatigue',   name:'Fatigue',             icon:'😴',   higherBetter:false, defaultVal:5 },
+  { key:'stamina',   name:'Stamina',             icon:'🏃',   higherBetter:true,  defaultVal:5 },
+  { key:'cough',     name:'Cough',               icon:'🫁',   higherBetter:false, defaultVal:1 },
+  { key:'chest',     name:'Chest Tightness',     icon:'💜',   higherBetter:false, defaultVal:1 },
+  { key:'wellbeing', name:'General Wellbeing',   icon:'✨',   higherBetter:true,  defaultVal:7 },
+];
+
+// Symptom weights within the wellness score
+const SYM_WEIGHTS = {
+  sob:       30,  // Highest — most direct rejection/infection signal
+  fatigue:   20,
+  stamina:   20,
+  cough:     12,
+  chest:     10,
+  wellbeing:  8,
+};
+
+// ══════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════
+const REC_KEY = 'symptom_checkins_v1';
+function getRecords() { try { return JSON.parse(localStorage.getItem(REC_KEY)||'[]'); } catch(e) { return []; } }
+function saveRecords(r) { localStorage.setItem(REC_KEY, JSON.stringify(r)); }
+
+// ══════════════════════════════════════════════════
+//  BASELINE CALCULATION
+// ══════════════════════════════════════════════════
+const BASELINE_DAYS = 14;
+
+function getBaseline() {
+  const recs = getRecords();
+  if (!recs.length) return null;
+  const baseline = {};
+  SYMPTOMS.forEach(s => {
+    const vals = recs.map(r => r.symptoms[s.key]).filter(v => v != null);
+    baseline[s.key] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  });
+  return baseline;
+}
+
+function isBaselineEstablished() {
+  return getRecords().length >= BASELINE_DAYS;
+}
+
+// ══════════════════════════════════════════════════
+//  WELLNESS SCORE FORMULA
+// ══════════════════════════════════════════════════
+function computeWellnessScore(symptoms, baseline) {
+  if (!baseline) return null;
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  SYMPTOMS.forEach(s => {
+    const val  = symptoms[s.key];
+    const base = baseline[s.key];
+    const w    = SYM_WEIGHTS[s.key];
+    if (val == null || base == null) return;
+
+    let score;
+    if (s.higherBetter) {
+      // Stamina, Wellbeing: higher is better
+      // ratio to baseline, capped at 100
+      const ratio = val / base;
+      if (ratio >= 1.0)  score = 100;
+      else if (ratio >= 0.9) score = Math.round(100 - (1-ratio)*200);
+      else if (ratio >= 0.7) score = Math.round(80  - (0.9-ratio)*300);
+      else score = Math.max(0, Math.round((ratio/0.7)*20));
+    } else {
+      // SOB, Fatigue, Cough, Chest: lower is better
+      // deviation above baseline is bad
+      const deviation = val - base;
+      if (deviation <= 0)   score = 100; // at or below baseline = perfect
+      else if (deviation <= 1) score = Math.round(100 - deviation*20);
+      else if (deviation <= 2) score = Math.round(80  - (deviation-1)*30);
+      else if (deviation <= 3) score = Math.round(50  - (deviation-2)*20);
+      else score = Math.max(0, Math.round(30 - (deviation-3)*10));
+    }
+    weightedSum += score * (w/100);
+    totalWeight += w;
+  });
+
+  if (totalWeight === 0) return null;
+  return Math.min(100, Math.max(0, Math.round(weightedSum / (totalWeight/100))));
+}
+
+// Acute change detection: any single symptom jumped 3+ points vs last reading
+function checkAcuteChange(currentSymptoms) {
+  const recs = getRecords();
+  if (recs.length < 2) return [];
+  const prev = recs[recs.length-1].symptoms;
+  const alerts = [];
+  SYMPTOMS.forEach(s => {
+    const curr = currentSymptoms[s.key];
+    const last = prev[s.key];
+    if (curr == null || last == null) return;
+    const change = s.higherBetter ? last - curr : curr - last;
+    if (change >= 3) alerts.push({ sym: s, change: Math.abs(change) });
+  });
+  return alerts;
+}
+
+// ══════════════════════════════════════════════════
+//  SLIDER INTERACTION
+// ══════════════════════════════════════════════════
+function onSlider(key, val, higherBetter) {
+  const v = parseInt(val);
+  const scoreEl = document.getElementById('val-' + key);
+  scoreEl.textContent = v;
+
+  // Color the score number
+  const isGood = higherBetter ? v >= 7 : v <= 3;
+  const isBad  = higherBetter ? v <= 3 : v >= 7;
+  scoreEl.style.color = isGood ? 'var(--good)' : isBad ? 'var(--danger)' : 'var(--warn)';
+
+  // Update slider gradient
+  const slider = document.getElementById('sl-' + key);
+  const pct = ((v - 1) / 9) * 100;
+  if (higherBetter) {
+    slider.style.background = `linear-gradient(to right, var(--surface2) 0%, var(--surface2) ${pct}%, var(--good) ${pct}%, var(--good) 100%)`;
+  } else {
+    const color = v <= 3 ? 'var(--good)' : v <= 6 ? 'var(--warn)' : 'var(--danger)';
+    slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, var(--surface2) ${pct}%, var(--surface2) 100%)`;
+  }
+
+  updateBaselineIndicator(key, v, higherBetter);
+  updateWellnessPreview();
+}
+
+function updateBaselineIndicator(key, currentVal, higherBetter) {
+  const baseline = getBaseline();
+  const el = document.getElementById('bi-' + key);
+  if (!baseline || baseline[key] == null) { el.innerHTML = ''; return; }
+
+  const base = baseline[key];
+  const diff = currentVal - base;
+  const absDiff = Math.abs(diff).toFixed(1);
+  const isWorsen = higherBetter ? diff < 0 : diff > 0;
+  const isImprove = higherBetter ? diff > 0 : diff < 0;
+
+  const arrow = isWorsen ? '↑' : isImprove ? '↓' : '→';
+  const cls   = isWorsen ? (higherBetter?'hib ':'')+' change-down' : isImprove ? (higherBetter?'hib ':'')+' change-up' : 'change-neutral';
+  const label = isWorsen ? `+${absDiff} above your baseline` : isImprove ? `${absDiff} below your baseline` : 'At your baseline';
+
+  el.innerHTML = `<div class="baseline-dot"></div><span class="baseline-arrow ${cls}">${arrow}</span><span style="font-size:11px;color:var(--ink3)">Baseline: ${base.toFixed(1)} &nbsp;·&nbsp; ${label}</span>`;
+}
+
+function updateWellnessPreview() {
+  const baseline = getBaseline();
+  const current  = getCurrentValues();
+  const score    = baseline ? computeWellnessScore(current, baseline) : null;
+
+  const numEl = document.getElementById('wellness-number');
+  const subEl = document.getElementById('wellness-sub');
+
+  if (score === null) {
+    numEl.textContent = '—';
+    numEl.className = 'wellness-number';
+    subEl.textContent = isBaselineEstablished() ? 'Score out of 100' : 'Baseline establishing…';
+    return;
+  }
+
+  numEl.textContent = score;
+  numEl.className   = 'wellness-number ' + (score>=85?'good':score>=70?'':'warn'+(score<50?' danger':''));
+  subEl.textContent = score>=85?'Near your baseline':score>=70?'Minor deviation':score>=50?'Notable deviation':'Significant deviation';
+
+  // Check for acute alerts
+  const alerts = checkAcuteChange(current);
+  const alertEl = document.getElementById('acute-alert');
+  if (alerts.length > 0) {
+    const names = alerts.map(a=>`${a.sym.icon} ${a.sym.name} (↑${a.change} pts)`).join(', ');
+    alertEl.innerHTML = `⚠️ <strong>Acute change detected:</strong> ${names} — this represents a significant shift from your last reading. If you feel unwell, contact your transplant team.`;
+    alertEl.classList.add('show');
+  } else {
+    alertEl.classList.remove('show');
+  }
+}
+
+function getCurrentValues() {
+  const vals = {};
+  SYMPTOMS.forEach(s => {
+    vals[s.key] = parseInt(document.getElementById('sl-'+s.key).value);
+  });
+  return vals;
+}
+
+// ══════════════════════════════════════════════════
+//  SAVE CHECK-IN
+// ══════════════════════════════════════════════════
+function saveCheckin() {
+  const symptoms  = getCurrentValues();
+  const baseline  = getBaseline();
+  const score     = computeWellnessScore(symptoms, baseline);
+  const notes     = document.getElementById('checkin-notes').value.trim();
+  const today     = toDateStr(new Date());
+
+  const recs = getRecords();
+  // Replace today's entry if exists
+  const idx = recs.findIndex(r => r.date === today);
+  const entry = { id: Date.now(), date: today, symptoms, wellnessScore: score, notes };
+
+  if (idx >= 0) recs[idx] = entry;
+  else recs.push(entry);
+  recs.sort((a,b) => a.date.localeCompare(b.date));
+  saveRecords(recs);
+
+  showToast('Check-in saved ✓', 'success');
+  updateNudge();
+  updateBaselineNotice();
+
+  // Write wellness score to a shared storage key for Health Index to read
+  if (score !== null) {
+    localStorage.setItem('symptom_wellness_latest', JSON.stringify({ date: today, score, symptoms }));
+  }
+}
+
+function resetCheckin() {
+  SYMPTOMS.forEach(s => {
+    document.getElementById('sl-'+s.key).value = s.defaultVal;
+    onSlider(s.key, s.defaultVal, s.higherBetter);
+  });
+  document.getElementById('checkin-notes').value = '';
+  updateWellnessPreview();
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════════
+function renderHistory() {
+  const el   = document.getElementById('history-content');
+  const recs = getRecords();
+  if (!recs.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No check-ins yet</div><div class="empty-sub">Complete your first daily check-in to start building your symptom history.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = [...recs].reverse().map(r => {
+    const scoreColor = r.wellnessScore>=85?'var(--good)':r.wellnessScore>=70?'var(--warn)':r.wellnessScore!=null?'var(--danger)':'var(--ink3)';
+    const symsHtml = SYMPTOMS.map(s => {
+      const v = r.symptoms[s.key];
+      const isGood = s.higherBetter ? v>=7 : v<=3;
+      const isBad  = s.higherBetter ? v<=3 : v>=7;
+      const color  = isGood?'var(--good)':isBad?'var(--danger)':'var(--ink2)';
+      return `<div class="hist-sym">
+        <div class="hist-sym-name">${s.icon} ${s.name.split(' ')[0]}</div>
+        <div class="hist-sym-val" style="color:${color}">${v??'—'}</div>
+      </div>`;
+    }).join('');
+    return `
+    <div class="hist-card" id="hcard-${r.id}">
+      <div class="hist-top">
+        <div class="hist-date-block">
+          <div class="hist-date">${formatDate(r.date)}</div>
+          <div class="hist-time">${r.date === toDateStr(new Date()) ? 'Today' : ''}</div>
+        </div>
+        <div class="hist-wellness" style="color:${scoreColor}">${r.wellnessScore??'—'}</div>
+        <div class="hist-actions">
+          <button class="btn-icon" onclick="confirmDelete(${r.id})">🗑️</button>
+        </div>
+      </div>
+      <div class="hist-grid">${symsHtml}</div>
+      ${r.notes?`<div class="hist-note">${r.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function confirmDelete(id) {
+  const card = document.getElementById('hcard-'+id);
+  const ex = card.querySelector('.del-confirm'); if(ex){ex.remove();return;}
+  const bar = document.createElement('div'); bar.className='del-confirm';
+  bar.innerHTML=`<span style="font-size:13px;color:var(--danger)">Delete this check-in?</span>
+    <button class="btn btn-danger-soft btn-sm" onclick="deleteRecord(${id})">Yes</button>
+    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">Cancel</button>`;
+  card.appendChild(bar);
+}
+function deleteRecord(id) {
+  saveRecords(getRecords().filter(r=>r.id!==id));
+  renderHistory(); renderTrends();
+  showToast('Deleted');
+}
+
+// ══════════════════════════════════════════════════
+//  TRENDS
+// ══════════════════════════════════════════════════
+let trendCharts = {};
+let activeTrendSym = 'wellness';
+
+function renderTrends() {
+  const el   = document.getElementById('trends-content');
+  const recs = getRecords();
+  Object.values(trendCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+  trendCharts = {};
+
+  if (recs.length < 3) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">Not enough data yet</div><div class="empty-sub">Log at least 3 check-ins to see symptom trends.</div></div>`;
+    return;
+  }
+
+  const sorted  = [...recs].sort((a,b)=>a.date.localeCompare(b.date));
+  const labels  = sorted.map(r=>formatDateShort(r.date));
+  const scores  = sorted.map(r=>r.wellnessScore);
+  const nonNull = scores.filter(v=>v!=null);
+  const avg     = nonNull.length ? nonNull.reduce((a,b)=>a+b,0)/nonNull.length : null;
+  const latest  = nonNull[nonNull.length-1];
+
+  el.innerHTML = `
+    <div class="trend-filter">
+      <button class="trend-chip active" id="tc-wellness" onclick="setTrendSym('wellness')">Overall</button>
+      ${SYMPTOMS.map(s=>`<button class="trend-chip" id="tc-${s.key}" onclick="setTrendSym('${s.key}')">${s.icon} ${s.name.split(' ')[0]}</button>`).join('')}
+    </div>
+    <div id="trend-chart-area"></div>
+  `;
+  renderTrendChart(sorted, labels);
+}
+
+function setTrendSym(key) {
+  activeTrendSym = key;
+  document.querySelectorAll('.trend-chip').forEach(c => {
+    c.classList.toggle('active', c.id === 'tc-' + key);
+  });
+  const recs   = getRecords();
+  const sorted = [...recs].sort((a,b)=>a.date.localeCompare(b.date));
+  const labels = sorted.map(r=>formatDateShort(r.date));
+  Object.values(trendCharts).forEach(c=>{try{c.destroy();}catch(e){}});
+  trendCharts = {};
+  renderTrendChart(sorted, labels);
+}
+
+function renderTrendChart(sorted, labels) {
+  const area = document.getElementById('trend-chart-area');
+  if (!area) return;
+
+  const isWellness = activeTrendSym === 'wellness';
+  const sym = SYMPTOMS.find(s=>s.key===activeTrendSym);
+  const vals = isWellness
+    ? sorted.map(r=>r.wellnessScore)
+    : sorted.map(r=>r.symptoms[activeTrendSym]);
+
+  const nonNull = vals.filter(v=>v!=null);
+  if (!nonNull.length) { area.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink3);font-size:13px">No data for this symptom yet.</div>'; return; }
+
+  const avg    = nonNull.reduce((a,b)=>a+b,0)/nonNull.length;
+  const latest = nonNull[nonNull.length-1];
+  const runAvg = [];
+  let sum=0,cnt=0;
+  vals.forEach(v=>{if(v!=null){sum+=v;cnt++;runAvg.push(parseFloat((sum/cnt).toFixed(1)));}else runAvg.push(null);});
+
+  const colorMain = isWellness ? '#6B4FA8' : '#3B82C4';
+  const yMax = isWellness ? 100 : 10;
+  const yMin = 0;
+
+  area.innerHTML = `
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-eyebrow">Latest</div><div class="stat-val" style="color:var(--sym)">${latest}</div><div class="stat-sub">${isWellness?'out of 100':'out of 10'}</div></div>
+      <div class="stat-card"><div class="stat-eyebrow">Running Avg</div><div class="stat-val">${avg.toFixed(1)}</div></div>
+      <div class="stat-card"><div class="stat-eyebrow">Check-ins</div><div class="stat-val">${sorted.length}</div><div class="stat-sub">${isBaselineEstablished()?'Baseline established':'Establishing…'}</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">${isWellness?'Overall Wellness Score':sym.icon+' '+sym.name} over time</div>
+      <div class="chart-wrap"><canvas id="chart-sym"></canvas></div>
+    </div>`;
+
+  setTimeout(() => {
+    trendCharts.main = new Chart(document.getElementById('chart-sym'), {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: isWellness?'Wellness Score':sym.name, data: vals,
+          borderColor: colorMain, backgroundColor: colorMain+'18',
+          borderWidth: 2.5, pointBackgroundColor: colorMain,
+          pointRadius: 4, fill: true, tension: 0.3, spanGaps: false },
+        { label: 'Running Avg', data: runAvg,
+          borderColor: '#8A9EAF', borderDash:[6,4],
+          borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3, spanGaps: false }
+      ]},
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+          legend:{ display:true, labels:{font:{family:'DM Sans',size:11},color:'#4A5E72',usePointStyle:true,pointStyle:'line',boxWidth:28,padding:12} },
+          tooltip:{ mode:'index', intersect:false }
+        },
+        scales: {
+          x:{ grid:{color:'#E8EFF5'}, ticks:{font:{family:'DM Mono',size:9},color:'#8A9EAF',maxTicksLimit:12} },
+          y:{ grid:{color:'#E8EFF5'}, ticks:{font:{family:'DM Mono',size:10},color:'#8A9EAF'}, min:yMin, max:yMax }
+        }
+      }
+    });
+  }, 60);
+}
+
+// ══════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════
+function updateNudge() {
+  const recs = getRecords();
+  const el   = document.getElementById('checkin-nudge');
+  const today = toDateStr(new Date());
+  if (recs.some(r=>r.date===today)) {
+    el.textContent = '✓ Check-in complete for today';
+    el.className = 'nudge ok';
+  } else if (recs.length > 0) {
+    const last = recs[recs.length-1];
+    const days = Math.floor((new Date()-new Date(last.date))/86400000);
+    el.textContent = `⏰ Last check-in ${days===1?'yesterday':`${days} days ago`} — daily check-in recommended`;
+    el.className = 'nudge due';
+  } else {
+    el.textContent = 'Complete your first symptom check-in to start tracking';
+    el.className = 'nudge none';
+  }
+}
+
+function updateBaselineNotice() {
+  const notice = document.getElementById('baseline-notice');
+  notice.style.display = isBaselineEstablished() ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════
+//  TIME PICKER
+// ══════════════════════════════════════════════════
+let tpH=12,tpM=0,tpAP='AM',tpRepeat=null;
+function openTP(){const now=new Date();tpH=now.getHours()%12||12;tpM=now.getMinutes();tpAP=now.getHours()>=12?'PM':'AM';renderTP();document.getElementById('tp-modal').classList.add('open');}
+function closeTP(){document.getElementById('tp-modal').classList.remove('open');}
+function renderTP(){document.getElementById('tp-h').textContent=String(tpH).padStart(2,'0');document.getElementById('tp-m').textContent=String(tpM).padStart(2,'0');document.getElementById('tp-am').classList.toggle('active',tpAP==='AM');document.getElementById('tp-pm').classList.toggle('active',tpAP==='PM');}
+function nudgeTP(f,d){if(f==='h')tpH=(tpH-1+d+12)%12+1;if(f==='m')tpM=(tpM+d+60)%60;renderTP();}
+function startR(f,d){nudgeTP(f,d);stopR();tpRepeat=setInterval(()=>nudgeTP(f,d),130);}
+function stopR(){if(tpRepeat){clearInterval(tpRepeat);tpRepeat=null;}}
+function setAP(v){tpAP=v;renderTP();}
+function confirmTP(){closeTP();}
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='history') renderHistory();
+  if (name==='trends')  renderTrends();
+}
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function toDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function formatDate(d){const[y,m,day]=d.split('-');return`${m}/${day}/${y}`;}
+function formatDateShort(d){const[y,m,day]=d.split('-');return`${m}/${day}`;}
+function showToast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+(function init() {
+  // Set date display
+  document.getElementById('checkin-date-display').textContent =
+    new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+
+  // Init all sliders
+  SYMPTOMS.forEach(s => onSlider(s.key, s.defaultVal, s.higherBetter));
+
+  updateNudge();
+  updateBaselineNotice();
+  updateWellnessPreview();
+})();
+</script>
+</body>
+</html>

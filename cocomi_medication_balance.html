@@ -3,32 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transplant Medication Balance Dashboard</title>
+<title>Immunosuppression Balance — LTS Care</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f7f5f0;
-  --surface: #ffffff;
-  --surface2: #f0ede8;
-  --border: #ddd8d0;
-  --text: #1a1612;
-  --muted: #7a7570;
-  --green: #1a9e4f;
-  --yellow: #c47d00;
-  --orange: #c05c00;
-  --red: #c0392b;
-  --blue: #2471a3;
-  --teal: #148a74;
-  --gold: #9a6f00;
+  --bg:      #F0F4F8;
+  --surface: #FFFFFF;
+  --surface2:#E8EFF5;
+  --border:  #D0DCE8;
+  --text:    #1A2533;
+  --muted:   #8A9EAF;
+  --green:   #2D9E6B;
+  --yellow:  #E0A030;
+  --orange:  #E07B39;
+  --red:     #C94040;
+  --blue:    #3B82C4;
+  --teal:    #0E7490;
+  --gold:    #7B5EA7;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Libre Baskerville', Georgia, serif;
+  font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -42,8 +42,8 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(59,130,196,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,196,0.04) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
@@ -59,8 +59,9 @@ header {
 
 header h1 {
   font-size: clamp(1.3rem, 3.5vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  letter-spacing: -0.3px;
   color: var(--text);
   line-height: 1.2;
 }
@@ -71,7 +72,7 @@ header h1 em {
 }
 
 header p {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.75rem;
   color: var(--muted);
   margin-top: 8px;
@@ -89,7 +90,7 @@ header p {
 }
 
 .master-label {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -119,7 +120,7 @@ header p {
 }
 
 .dial-value .num {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 2.8rem;
   font-weight: 700;
   color: var(--text);
@@ -128,7 +129,7 @@ header p {
 }
 
 .dial-value .unit {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -145,7 +146,7 @@ header p {
 
 /* drag hint */
 .drag-hint {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.68rem;
   color: var(--muted);
   margin-top: 10px;
@@ -181,7 +182,7 @@ header p {
 }
 
 .gauge-card .g-title {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -197,7 +198,7 @@ header p {
 }
 
 .gauge-card .g-value {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 1.25rem;
   font-weight: 700;
   margin-top: 10px;
@@ -269,7 +270,7 @@ header p {
 }
 
 .ss-title {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -277,7 +278,7 @@ header p {
 }
 
 .ss-score {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.9rem;
   font-weight: 500;
   transition: color 0.3s;
@@ -327,7 +328,7 @@ header p {
   margin-top: 6px;
 }
 .ss-zone-labels span {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.6rem;
   color: var(--muted);
   letter-spacing: 0.06em;
@@ -362,7 +363,7 @@ header p {
 }
 
 .ref-title {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -377,7 +378,7 @@ header p {
 }
 
 .ref-tab {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   padding: 8px 14px;
@@ -415,7 +416,7 @@ header p {
 .ref-card.urgent { border-left-color: #e74c3c; }
 
 .ref-card-title {
-  font-family: 'Source Code Pro', monospace;
+  font-family: 'DM Mono', monospace;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -982,7 +983,7 @@ function drawMasterDial(dose) {
 
   // Sweet spot label
   const midSS = (ssLo+ssHi)/2;
-  ctx.font = '500 9px Source Code Pro, monospace';
+  ctx.font = '500 9px DM Mono, monospace';
   ctx.fillStyle = 'rgba(26,158,79,0.7)';
   ctx.textAlign = 'center';
   ctx.fillText('TARGET', cx+Math.cos(midSS)*(R+22), cy+Math.sin(midSS)*(R+22));

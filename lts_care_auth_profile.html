@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTS Care — Lung Transplant Surveillance</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --teal:      #0D5C6B;
+  --teal-mid:  #1A7A8A;
+  --teal-light:#E0F2F5;
+  --teal-pale: #F0F9FB;
+  --bg:        #F8FAFB;
+  --surface:   #FFFFFF;
+  --surface2:  #EDF2F5;
+  --border:    #D4E0E8;
+  --ink:       #1A2533;
+  --ink2:      #4A5E72;
+  --ink3:      #8A9EAF;
+  --good:      #2D9E6B;
+  --good-bg:   #E8F7F1;
+  --warn:      #E07B39;
+  --warn-bg:   #FDF5EE;
+  --danger:    #C94040;
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 2px 16px rgba(13,92,107,0.08);
+  --shadow-lg: 0 8px 40px rgba(13,92,107,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ── SCREEN SYSTEM ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════════════════
+   AUTH SCREENS (Login / Signup / Reset)
+══════════════════════════════════════ */
+.auth-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 48px;
+  background: linear-gradient(160deg, var(--teal-pale) 0%, var(--bg) 60%);
+}
+
+.auth-card {
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 36px 32px 32px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.auth-logo-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 10px;
+}
+.auth-logo-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: var(--teal);
+  letter-spacing: -0.5px;
+  display: block;
+}
+.auth-logo-sub {
+  font-size: 12px;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: block;
+  margin-top: 3px;
+}
+
+.auth-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.auth-subtitle {
+  font-size: 13px;
+  color: var(--ink3);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.form-input {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  transition: all 0.15s;
+  width: 100%;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--teal-mid);
+  background: var(--teal-pale);
+  box-shadow: 0 0 0 3px rgba(13,92,107,0.1);
+}
+.form-input::placeholder { color: var(--ink3); }
+.form-hint { font-size: 12px; color: var(--ink3); }
+
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 6px;
+  letter-spacing: 0.2px;
+}
+.btn-primary:hover { background: var(--teal-mid); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  color: var(--teal);
+  border: 1.5px solid var(--teal-light);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+.btn-secondary:hover { background: var(--teal-pale); border-color: var(--teal); }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--ink3);
+  font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-link {
+  color: var(--teal-mid);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.auth-link:hover { color: var(--teal); }
+
+.auth-footer {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink3);
+  margin-top: 20px;
+}
+
+.error-msg {
+  background: #FAEAEA;
+  border: 1px solid #f0c0c0;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: 14px;
+  display: none;
+}
+.error-msg.show { display: block; }
+
+.success-msg {
+  background: var(--good-bg);
+  border: 1px solid #a8dfc5;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--good);
+  margin-bottom: 14px;
+  display: none;
+}
+.success-msg.show { display: block; }
+
+/* ══════════════════════════════════════
+   PROFILE SCREEN
+══════════════════════════════════════ */
+.profile-screen {
+  background: var(--bg);
+}
+
+.profile-header {
+  background: var(--teal);
+  padding: 20px 20px 24px;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.profile-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.profile-header-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: #fff;
+}
+.profile-header-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.skip-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.skip-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* Progress indicator */
+.profile-progress {
+  padding: 14px 20px 0;
+  display: flex;
+  gap: 6px;
+}
+.progress-dot {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.25);
+  transition: background 0.3s;
+}
+.progress-dot.done { background: rgba(255,255,255,0.8); }
+.progress-dot.active { background: #fff; }
+
+/* ── SECTION CARDS ── */
+.profile-body {
+  padding: 20px 16px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.section-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.section-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.section-desc {
+  font-size: 12px;
+  color: var(--ink3);
+  line-height: 1.4;
+}
+
+.section-body {
+  padding: 16px 20px 20px;
+}
+
+/* ── RESEARCH SECTION (amber) ── */
+.section-card.research {
+  border-color: #F0D0A8;
+  background: linear-gradient(160deg, #FFFAF4 0%, #fff 100%);
+}
+.section-card.research .section-header {
+  border-bottom-color: #F0D0A8;
+  background: linear-gradient(90deg, #FDF5EE 0%, transparent 100%);
+}
+.section-card.research .section-title { color: var(--warn); }
+.research-badge {
+  display: inline-block;
+  background: var(--warn-bg);
+  border: 1px solid #F0D0A8;
+  color: var(--warn);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.research-note {
+  background: var(--warn-bg);
+  border: 1px solid #F0D0A8;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #8B5A2B;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+/* ── FORM ELEMENTS ── */
+.field-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 130px;
+}
+.field-group.full { flex: 100%; min-width: 100%; }
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.field-input, .field-select, .field-textarea {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  transition: all 0.15s;
+  width: 100%;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  outline: none;
+  border-color: var(--teal-mid);
+  background: var(--teal-pale);
+  box-shadow: 0 0 0 3px rgba(13,92,107,0.08);
+}
+.field-textarea { resize: vertical; min-height: 72px; }
+.field-hint { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+/* ── CHECKBOX / TOGGLE GROUP ── */
+.check-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-item:hover { border-color: var(--teal-mid); background: var(--teal-pale); }
+.check-item.checked { border-color: var(--teal); background: var(--teal-pale); }
+.check-item input[type="checkbox"] { display: none; }
+.check-box {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  background: #fff;
+}
+.check-item.checked .check-box {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+.check-box-tick { font-size: 11px; display: none; }
+.check-item.checked .check-box-tick { display: block; }
+.check-label { font-size: 14px; color: var(--ink); flex: 1; }
+.check-label-sub { font-size: 11px; color: var(--ink3); display: block; }
+
+/* ── CHIP GROUP (multi-select) ── */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:hover { border-color: var(--teal); color: var(--teal); }
+.chip.selected { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+/* ── SCALE SLIDER ── */
+.scale-group { margin-bottom: 14px; }
+.scale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.scale-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--teal);
+}
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--teal);
+  cursor: pointer;
+}
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 4px;
+}
+
+/* ── CONSENT SECTION ── */
+.consent-card {
+  background: var(--teal-pale);
+  border: 1.5px solid var(--teal-light);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.consent-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--teal);
+  margin-bottom: 8px;
+}
+.consent-text {
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+/* ── BOTTOM ACTION BAR ── */
+.profile-actions {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px 28px;
+  display: flex;
+  gap: 10px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.btn-save {
+  flex: 2;
+  padding: 14px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-save:hover { background: var(--teal-mid); }
+.btn-later {
+  flex: 1;
+  padding: 14px;
+  background: none;
+  color: var(--ink2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-later:hover { border-color: var(--teal); color: var(--teal); }
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+.subsection-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink3);
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--ink);
+  color: #fff;
+  padding: 11px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--good); }
+
+/* ── MISC ── */
+.optional-tag {
+  font-size: 10px;
+  background: var(--surface2);
+  color: var(--ink3);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.field-group .optional-tag { display: none; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 22px 24px; }
+  .profile-body { padding: 16px 14px 100px; }
+  .section-body { padding: 14px 16px 18px; }
+}
+
+  /* ── LEGAL ACCEPTANCE ── */
+  .legal-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0 6px;
+  }
+  .legal-check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 13px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .legal-check-item:hover { border-color: var(--teal-mid); }
+  .legal-check-item.checked { border-color: var(--teal); background: var(--teal-pale); }
+  .legal-check-item.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+  .legal-box {
+    width: 20px; height: 20px; min-width: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; transition: all 0.15s; margin-top: 1px;
+  }
+  .legal-check-item.checked .legal-box {
+    background: var(--teal); border-color: var(--teal); color: #fff;
+  }
+  .legal-tick { font-size: 12px; display: none; }
+  .legal-check-item.checked .legal-tick { display: block; }
+  .legal-label { font-size: 13px; color: var(--ink2); line-height: 1.5; flex: 1; }
+  .legal-label a { color: var(--teal-mid); font-weight: 500; text-decoration: none; }
+  .legal-label a:hover { color: var(--teal); text-decoration: underline; }
+  .legal-label .scroll-hint {
+    display: block; font-size: 11px; color: var(--warn);
+    margin-top: 2px; font-style: italic;
+  }
+  .legal-label .scroll-hint.hidden { display: none; }
+
+  /* ── MEDICAL DISCLAIMER MODAL ── */
+  .disclaimer-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 400;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .disclaimer-modal.open { display: flex; }
+  .disclaimer-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 520px;
+    height: 75vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .disclaimer-sheet-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .disclaimer-sheet-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px; color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .disclaimer-sheet-sub { font-size: 12px; color: var(--ink3); }
+  .disclaimer-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .disclaimer-scroll-area p { font-size: 13px; color: var(--ink2); margin-bottom: 12px; line-height: 1.6; }
+  .disclaimer-scroll-area h3 { font-size: 13px; font-weight: 700; color: var(--ink); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .disclaimer-sheet-footer {
+    padding: 14px 20px 28px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .disclaimer-progress {
+    height: 4px; background: var(--border); border-radius: 2px;
+    margin-bottom: 12px; overflow: hidden;
+  }
+  .disclaimer-progress-fill {
+    height: 100%; background: var(--teal);
+    border-radius: 2px; transition: width 0.2s;
+    width: 0%;
+  }
+  .disclaimer-scroll-notice {
+    text-align: center; font-size: 12px; color: var(--ink3);
+    margin-bottom: 10px; transition: all 0.3s;
+  }
+  .btn-accept-disclaimer {
+    width: 100%; padding: 13px;
+    background: var(--border); color: var(--ink3);
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: not-allowed; transition: all 0.3s;
+  }
+  .btn-accept-disclaimer.ready {
+    background: var(--teal); color: #fff; cursor: pointer;
+  }
+  .btn-accept-disclaimer.ready:hover { background: var(--teal-mid); }
+
+  /* ── ACCEPTANCE RECORD ── */
+  .acceptance-record {
+    background: var(--good-bg);
+    border: 1px solid #a8dfc5;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #1A6B45;
+    margin-top: 10px;
+    display: none;
+    line-height: 1.5;
+  }
+  .acceptance-record.show { display: block; }
+
+
+  /* ── PASSWORD TOGGLE ── */
+  .pw-wrap { position: relative; }
+  .pw-wrap .form-input { padding-right: 44px; }
+  .pw-toggle {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--ink3); cursor: pointer;
+    font-size: 18px; padding: 4px;
+    line-height: 1; -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s;
+  }
+  .pw-toggle:hover { color: var(--teal); }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SCREEN 1: LOGIN
+══════════════════════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="auth-logo-icon">🫁</span>
+        <span class="auth-logo-title">LTS Care</span>
+        <span class="auth-logo-sub">Lung Transplant Surveillance</span>
+      </div>
+
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-subtitle">Sign in to access your health dashboard</div>
+
+      <div class="error-msg" id="login-error">Incorrect email or password. Please try again.</div>
+
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" class="form-input" id="login-email" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap"><input type="password" class="form-input" id="login-password" placeholder="Your password" autocomplete="current-password"><button type="button" class="pw-toggle" onclick="togglePW('login-password', this)" tabindex="-1">👁</button></div>
+        <div style="text-align:right;margin-top:4px">
+          <a class="auth-link" style="font-size:12px" onclick="showScreen('screen-reset')">Forgot password?</a>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="handleLogin()">Sign In</button>
+      <button class="btn-secondary" onclick="showScreen('screen-signup')">Create an account</button>
+
+      <div class="auth-footer" style="margin-top:16px;font-size:11px;line-height:1.6;color:var(--ink3)">
+        By signing in you agree to use this app as a personal wellness tool.<br>
+        Data is not a substitute for medical advice.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 2: SIGN UP
+══════════════════════════════ -->
+<div class="screen" id="screen-signup">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="auth-logo-icon">🫁</span>
+        <span class="auth-logo-title">LTS Care</span>
+        <span class="auth-logo-sub">Lung Transplant Surveillance</span>
+      </div>
+
+      <div class="auth-title">Create your account</div>
+      <div class="auth-subtitle">Takes 30 seconds. No personal information required to get started.</div>
+
+      <div class="error-msg" id="signup-error"></div>
+
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" class="form-input" id="signup-email" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap"><input type="password" class="form-input" id="signup-password" placeholder="Create a password" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePW('signup-password', this)" tabindex="-1">👁</button></div>
+        <div class="form-hint">At least 8 characters</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm password</label>
+        <div class="pw-wrap"><input type="password" class="form-input" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePW('signup-confirm', this)" tabindex="-1">👁</button></div>
+      </div>
+
+      <div class="legal-checks" id="legal-checks">
+
+        <!-- Age confirmation -->
+        <div class="legal-check-item" id="check-age" onclick="toggleLegalCheck('age')">
+          <div class="legal-box"><span class="legal-tick">✓</span></div>
+          <div class="legal-label">
+            I confirm that I am <strong>18 years of age or older</strong>
+          </div>
+        </div>
+
+        <!-- Terms of Use -->
+        <div class="legal-check-item" id="check-terms" onclick="toggleLegalCheck('terms')">
+          <div class="legal-box"><span class="legal-tick">✓</span></div>
+          <div class="legal-label">
+            I have read and agree to the
+            <a href="lts_care_legal.html" target="_blank" onclick="event.stopPropagation()">Terms of Use</a>
+            and
+            <a href="lts_care_legal.html" target="_blank" onclick="event.stopPropagation()">Privacy Policy</a>
+          </div>
+        </div>
+
+        <!-- Medical Disclaimer — scroll-to-unlock -->
+        <div class="legal-check-item disabled" id="check-disclaimer" onclick="toggleLegalCheck('disclaimer')">
+          <div class="legal-box"><span class="legal-tick">✓</span></div>
+          <div class="legal-label">
+            I have read and understood the
+            <a href="#" onclick="event.preventDefault();event.stopPropagation();openDisclaimerModal()">Medical Disclaimer</a>
+            <span class="scroll-hint" id="disclaimer-hint">↑ Tap the link above to read before accepting</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="acceptance-record" id="acceptance-record">
+        ✓ Legal acceptance will be recorded with timestamp when you create your account.
+        This record is stored securely with your account.
+      </div>
+
+      <button class="btn-primary" id="signup-btn" onclick="handleSignup()" style="margin-top:10px;opacity:0.5;cursor:not-allowed" disabled>
+        Create Account
+      </button>
+      <button class="btn-secondary" onclick="showScreen('screen-login')">Already have an account? Sign in</button>
+
+      <div class="auth-footer" style="margin-top:16px;font-size:11px;line-height:1.6;color:var(--ink3)">
+        This app is a personal wellness tool. Your data is private and stored securely.<br>
+        Not a medical device. Not a substitute for clinical care.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 3: FORGOT PASSWORD
+══════════════════════════════ -->
+<div class="screen" id="screen-reset">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="auth-logo-icon">🔑</span>
+        <span class="auth-logo-title" style="font-size:22px">Reset Password</span>
+      </div>
+
+      <div class="auth-title">Forgot your password?</div>
+      <div class="auth-subtitle">Enter your email and we'll send you a link to reset your password.</div>
+
+      <div class="success-msg" id="reset-success">
+        ✓ Reset link sent! Check your email inbox (and spam folder just in case).
+      </div>
+      <div class="error-msg" id="reset-error">Email not found. Please check and try again.</div>
+
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input type="email" class="form-input" id="reset-email" placeholder="you@email.com">
+      </div>
+
+      <button class="btn-primary" onclick="handleReset()">Send Reset Link</button>
+      <button class="btn-secondary" onclick="showScreen('screen-login')">← Back to sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 4: PROFILE SETUP
+══════════════════════════════ -->
+<div class="screen" id="screen-profile">
+  <div class="profile-screen">
+
+    <div class="profile-header">
+      <div class="profile-header-top">
+        <div>
+          <div class="profile-header-title">Your Profile</div>
+          <div class="profile-header-sub">Lung Transplant Surveillance</div>
+        </div>
+        <button class="skip-btn" onclick="skipProfile()">Skip for now →</button>
+      </div>
+      <div class="profile-progress">
+        <div class="progress-dot active" id="prog-0"></div>
+        <div class="progress-dot" id="prog-1"></div>
+        <div class="progress-dot" id="prog-2"></div>
+        <div class="progress-dot" id="prog-3"></div>
+        <div class="progress-dot" id="prog-4"></div>
+        <div class="progress-dot" id="prog-5"></div>
+      </div>
+    </div>
+
+    <div class="profile-body">
+
+      <!-- ── REQUIRED: Basic ── -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">👤</div>
+          <div>
+            <div class="section-title">Account basics</div>
+            <div class="section-desc">Minimum required to personalize your experience</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Display name <span class="optional-tag">optional</span></label>
+              <input type="text" class="field-input" placeholder="e.g. Cocomi or Jane">
+              <div class="field-hint">How we'll greet you in the app</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Transplant date <span class="optional-tag">optional</span></label>
+              <input type="date" class="field-input" id="transplant-date">
+              <div class="field-hint">Used to calculate days post-transplant throughout the app</div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Transplant center</label>
+              <input type="text" class="field-input" placeholder="e.g. UF Health Shands">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL RESEARCH HEADER ── -->
+      <div style="margin: 8px 0 14px">
+        <div class="research-badge">Optional — Research Data</div>
+        <div style="font-size:14px;color:var(--ink2);line-height:1.6;margin-top:4px">
+          Everything below is <strong>completely optional</strong>. The more you share, the more useful the anonymized data becomes for understanding long-term lung transplant outcomes. You can fill this in now, later, or never.
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Demographics ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🌍</div>
+          <div>
+            <div class="section-title">Demographics & location</div>
+            <div class="section-desc">Helps identify climate, access, and population patterns</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Full name</label>
+              <input type="text" class="field-input" placeholder="First and last name">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Date of birth</label>
+              <input type="date" class="field-input">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Biological sex</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Intersex</option>
+                <option>Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Race / Ethnicity</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>White / Caucasian</option>
+                <option>Black / African American</option>
+                <option>Hispanic / Latino</option>
+                <option>Asian</option>
+                <option>Native American / Alaska Native</option>
+                <option>Pacific Islander</option>
+                <option>Mixed / Multiracial</option>
+                <option>Prefer not to say</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="subsection-label">Location</div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Country</label>
+              <select class="field-select" id="country-select" onchange="onCountryChange()">
+                <option value="">Select…</option>
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="GB">United Kingdom</option>
+                <option value="AU">Australia</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="ES">Spain</option>
+                <option value="IT">Italy</option>
+                <option value="BR">Brazil</option>
+                <option value="MX">Mexico</option>
+                <option value="JP">Japan</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div class="field-group" id="state-group">
+              <label class="field-label">State / Province</label>
+              <input type="text" class="field-input" placeholder="e.g. Florida">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">City</label>
+              <input type="text" class="field-input" placeholder="City name">
+            </div>
+            <div class="field-group">
+              <label class="field-label">ZIP / Postal code</label>
+              <input type="text" class="field-input" placeholder="ZIP or postal code">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Area type</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Urban</option>
+                <option>Suburban</option>
+                <option>Rural</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Phone (optional)</label>
+              <input type="tel" class="field-input" placeholder="+1 (555) 000-0000">
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="subsection-label">Lifestyle & household</div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Living situation</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Alone</option>
+                <option>With spouse / partner</option>
+                <option>With family / caregiver</option>
+                <option>Care facility</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Employment status</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Employed full-time</option>
+                <option>Employed part-time</option>
+                <option>On disability / medical leave</option>
+                <option>Retired</option>
+                <option>Unemployed</option>
+                <option>Student</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Occupation / Industry</label>
+              <input type="text" class="field-input" placeholder="e.g. Teacher, Construction, Healthcare">
+              <div class="field-hint">Some occupations carry higher infection or allergen exposure risk</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Pets at home</label>
+              <input type="text" class="field-input" placeholder="e.g. Dog, Cat, Bird, None">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Home mold or water damage</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>No known issues</option>
+                <option>Past history, remediated</option>
+                <option>Current issue</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Known air quality issues in area</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>None known</option>
+                <option>Wildfire smoke (seasonal)</option>
+                <option>Industrial / manufacturing nearby</option>
+                <option>High pollen area</option>
+                <option>High traffic / urban pollution</option>
+                <option>Multiple factors</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Transplant Details ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🫁</div>
+          <div>
+            <div class="section-title">Transplant details</div>
+            <div class="section-desc">Clinical context of your transplant journey</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Transplant type</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Single lung</option>
+                <option>Bilateral / Double lung</option>
+                <option>Heart-lung</option>
+                <option>Re-transplant</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Pre-transplant diagnosis</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>IPF (Idiopathic Pulmonary Fibrosis)</option>
+                <option>COPD / Emphysema</option>
+                <option>Cystic Fibrosis</option>
+                <option>Pulmonary Arterial Hypertension</option>
+                <option>Sarcoidosis</option>
+                <option>Bronchiectasis</option>
+                <option>LAM</option>
+                <option>Alpha-1 Antitrypsin Deficiency</option>
+                <option>COVID-19 related</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Time on waiting list</label>
+              <input type="text" class="field-input" placeholder="e.g. 8 months">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Donor age (if known)</label>
+              <input type="number" class="field-input" placeholder="Years" min="1" max="99">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Donor type</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Deceased donor</option>
+                <option>Living donor</option>
+                <option>Unknown</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="subsection-label" style="margin-top:8px">Pre-transplant support</div>
+          <div class="chip-group" id="pretx-support">
+            <div class="chip" onclick="toggleChip(this)">Mechanical ventilation</div>
+            <div class="chip" onclick="toggleChip(this)">ECMO</div>
+            <div class="chip" onclick="toggleChip(this)">Home oxygen</div>
+            <div class="chip" onclick="toggleChip(this)">Pulmonary rehab</div>
+            <div class="chip" onclick="toggleChip(this)">Cardiac support</div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="subsection-label">Post-transplant status</div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Acute rejection episodes</label>
+              <input type="number" class="field-input" placeholder="Number (0 if none)" min="0">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Rehospitalizations since Tx</label>
+              <input type="number" class="field-input" placeholder="Number (0 if none)" min="0">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">CLAD diagnosed</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>No</option>
+                <option>Yes — BOS (Bronchiolitis Obliterans Syndrome)</option>
+                <option>Yes — RAS (Restrictive Allograft Syndrome)</option>
+                <option>Suspected, not confirmed</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Latest FEV1 % predicted</label>
+              <input type="number" class="field-input" placeholder="e.g. 78" min="0" max="150">
+              <div class="field-hint">From most recent clinic visit</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Current transplant coordinator</label>
+              <input type="text" class="field-input" placeholder="Name (optional)">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Primary transplant pulmonologist</label>
+              <input type="text" class="field-input" placeholder="Name (optional)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Infections & Complications ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🦠</div>
+          <div>
+            <div class="section-title">Infections & complications</div>
+            <div class="section-desc">Post-transplant infectious history is highly research-relevant</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">CMV serology (donor / recipient)</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>D- / R- (both negative)</option>
+                <option>D+ / R- (high risk)</option>
+                <option>D+ / R+ </option>
+                <option>D- / R+</option>
+                <option>Unknown</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="subsection-label" style="margin-top:4px">Post-transplant infections (select all that apply)</div>
+          <div class="chip-group">
+            <div class="chip" onclick="toggleChip(this)">CMV infection</div>
+            <div class="chip" onclick="toggleChip(this)">EBV / PTLD</div>
+            <div class="chip" onclick="toggleChip(this)">Aspergillus</div>
+            <div class="chip" onclick="toggleChip(this)">Candida</div>
+            <div class="chip" onclick="toggleChip(this)">Other fungal</div>
+            <div class="chip" onclick="toggleChip(this)">PCP pneumonia</div>
+            <div class="chip" onclick="toggleChip(this)">Bacterial pneumonia</div>
+            <div class="chip" onclick="toggleChip(this)">COVID-19</div>
+            <div class="chip" onclick="toggleChip(this)">NTM (non-TB mycobacteria)</div>
+            <div class="chip" onclick="toggleChip(this)">Other</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">COVID-19 severity (if applicable)</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Mild / Outpatient</option>
+                <option>Moderate / Hospitalized</option>
+                <option>Severe / ICU</option>
+                <option>N/A — not infected</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="subsection-label">Post-transplant malignancy</div>
+          <div class="chip-group">
+            <div class="chip" onclick="toggleChip(this)">Skin cancer</div>
+            <div class="chip" onclick="toggleChip(this)">PTLD</div>
+            <div class="chip" onclick="toggleChip(this)">Other malignancy</div>
+            <div class="chip" onclick="toggleChip(this)">None</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Comorbidities ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🩺</div>
+          <div>
+            <div class="section-title">Comorbidities</div>
+            <div class="section-desc">Pre-existing or newly developed conditions</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="subsection-label">Select all that apply</div>
+          <div class="chip-group">
+            <div class="chip" onclick="toggleChip(this)">Chronic Kidney Disease</div>
+            <div class="chip" onclick="toggleChip(this)">Diabetes / Pre-diabetes</div>
+            <div class="chip" onclick="toggleChip(this)">Hypertension</div>
+            <div class="chip" onclick="toggleChip(this)">Coronary Artery Disease</div>
+            <div class="chip" onclick="toggleChip(this)">Heart failure</div>
+            <div class="chip" onclick="toggleChip(this)">Atrial fibrillation</div>
+            <div class="chip" onclick="toggleChip(this)">Stroke / TIA</div>
+            <div class="chip" onclick="toggleChip(this)">Osteoporosis</div>
+            <div class="chip" onclick="toggleChip(this)">GERD / Acid reflux</div>
+            <div class="chip" onclick="toggleChip(this)">Sleep apnea</div>
+            <div class="chip" onclick="toggleChip(this)">Anxiety / Depression</div>
+            <div class="chip" onclick="toggleChip(this)">Peripheral vascular disease</div>
+            <div class="chip" onclick="toggleChip(this)">Autoimmune condition</div>
+            <div class="chip" onclick="toggleChip(this)">Chronic pain</div>
+            <div class="chip" onclick="toggleChip(this)">Obesity</div>
+            <div class="chip" onclick="toggleChip(this)">None of the above</div>
+          </div>
+
+          <div class="field-row" style="margin-top:4px">
+            <div class="field-group">
+              <label class="field-label">CKD stage (if applicable)</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Stage 1</option><option>Stage 2</option>
+                <option>Stage 3a</option><option>Stage 3b</option>
+                <option>Stage 4</option><option>Stage 5 / Dialysis</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Current BMI</label>
+              <input type="number" class="field-input" placeholder="e.g. 24.5" step="0.1">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group full">
+              <label class="field-label">Other conditions not listed</label>
+              <input type="text" class="field-input" placeholder="Describe any other relevant conditions">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Lifestyle ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🏃</div>
+          <div>
+            <div class="section-title">Lifestyle & functional status</div>
+            <div class="section-desc">Activity, habits, and quality of life indicators</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Smoking history</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Never smoked</option>
+                <option>Former smoker</option>
+                <option>Current smoker</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Pack-years (if applicable)</label>
+              <input type="number" class="field-input" placeholder="e.g. 20" min="0">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Alcohol use</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>None</option>
+                <option>Occasional (social)</option>
+                <option>Moderate (weekly)</option>
+                <option>Heavy (daily)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Oxygen requirement</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>None</option>
+                <option>Nocturnal only</option>
+                <option>With exertion</option>
+                <option>Continuous</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Exercise frequency</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Sedentary</option>
+                <option>Light (1-2x / week)</option>
+                <option>Moderate (3-4x / week)</option>
+                <option>Active (5+ / week)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Pulmonary rehab</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Currently enrolled</option>
+                <option>Completed program</option>
+                <option>Not enrolled</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">6-minute walk distance</label>
+              <input type="text" class="field-input" placeholder="e.g. 400m or 1300ft">
+              <div class="field-hint">From most recent clinic test, if known</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="subsection-label">Quality of life — self assessment</div>
+
+          <div class="scale-group">
+            <div class="scale-header">
+              <div class="field-label">Overall quality of life</div>
+              <div class="scale-val" id="qol-val">5</div>
+            </div>
+            <input type="range" min="1" max="10" value="5" oninput="document.getElementById('qol-val').textContent=this.value">
+            <div class="scale-labels"><span>1 — Poor</span><span>5</span><span>10 — Excellent</span></div>
+          </div>
+
+          <div class="scale-group">
+            <div class="scale-header">
+              <div class="field-label">Social support level</div>
+              <div class="scale-val" id="support-val">5</div>
+            </div>
+            <input type="range" min="1" max="10" value="5" oninput="document.getElementById('support-val').textContent=this.value">
+            <div class="scale-labels"><span>1 — Isolated</span><span>5</span><span>10 — Strong support</span></div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="subsection-label">Home monitoring devices</div>
+          <div class="check-group">
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+              <div class="check-label">Pulse oximeter<span class="check-label-sub">Measures SpO₂ and pulse</span></div>
+            </div>
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+              <div class="check-label">Blood pressure cuff</div>
+            </div>
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+              <div class="check-label">Peak flow meter</div>
+            </div>
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+              <div class="check-label">Incentive spirometer</div>
+            </div>
+            <div class="check-item" onclick="toggleCheck(this)">
+              <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+              <div class="check-label">Home scale (weight)</div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Smartphone type</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Android</option>
+                <option>iPhone (iOS)</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">How did you hear about this app?</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Transplant team / coordinator</option>
+                <option>Another patient</option>
+                <option>Social media</option>
+                <option>Online search</option>
+                <option>Family member</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONAL: Family & Genetics ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🧬</div>
+          <div>
+            <div class="section-title">Family & genetic history</div>
+            <div class="section-desc">Hereditary factors relevant to lung disease and transplant outcomes</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Blood type</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+                <option>Unknown</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Family history of lung disease</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>None known</option>
+                <option>Yes — specify in notes</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Relevant genetic condition</label>
+              <input type="text" class="field-input" placeholder="e.g. CF genotype, Alpha-1 phenotype, None">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group full">
+              <label class="field-label">Known medication allergies</label>
+              <input type="text" class="field-input" placeholder="List any drug allergies, or None">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group full">
+              <label class="field-label">Previous organ transplants</label>
+              <input type="text" class="field-input" placeholder="e.g. Kidney 2015, or None">
+            </div>
+          </div>
+
+          <div class="subsection-label" style="margin-top:4px">Vaccination status (select received)</div>
+          <div class="chip-group">
+            <div class="chip" onclick="toggleChip(this)">Annual flu</div>
+            <div class="chip" onclick="toggleChip(this)">Pneumococcal</div>
+            <div class="chip" onclick="toggleChip(this)">COVID-19 primary</div>
+            <div class="chip" onclick="toggleChip(this)">COVID-19 boosters</div>
+            <div class="chip" onclick="toggleChip(this)">Shingles (Shingrix)</div>
+            <div class="chip" onclick="toggleChip(this)">RSV</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HEALTHCARE ACCESS ── -->
+      <div class="section-card research">
+        <div class="section-header">
+          <div class="section-icon">🏥</div>
+          <div>
+            <div class="section-title">Healthcare access</div>
+            <div class="section-desc">Access factors that influence long-term outcomes</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Distance from transplant center</label>
+              <input type="text" class="field-input" placeholder="e.g. 15 miles / 25 km">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Health insurance</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Private insurance</option>
+                <option>Medicare</option>
+                <option>Medicaid</option>
+                <option>National health system</option>
+                <option>Uninsured</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Primary care physician</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Yes</option><option>No</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Telemedicine access</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>Yes, use regularly</option>
+                <option>Available but rarely use</option>
+                <option>Not available</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Did you relocate for transplant?</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>No</option>
+                <option>Yes — temporarily</option>
+                <option>Yes — permanently</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Listed at multiple centers?</label>
+              <select class="field-select">
+                <option value="">Select…</option>
+                <option>No — one center only</option>
+                <option>Yes — dual listed</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group full">
+              <label class="field-label">Additional notes</label>
+              <textarea class="field-textarea" placeholder="Anything else you'd like to share that might be relevant to your health or transplant journey…"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONSENT ── -->
+      <div class="consent-card">
+        <div class="consent-title">🔬 Research consent</div>
+        <div class="consent-text">
+          Your anonymized data — with any identifying information removed — may be included in aggregate research aimed at understanding long-term lung transplant outcomes. You can withdraw consent at any time from your account settings.
+        </div>
+        <div class="check-group">
+          <div class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+            <div class="check-label">I consent to share my anonymized data for lung transplant research<span class="check-label-sub">You can withdraw this at any time</span></div>
+          </div>
+          <div class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+            <div class="check-label">I'd like to be contacted about future research opportunities<span class="check-label-sub">Occasional email only, never sold or shared</span></div>
+          </div>
+          <div class="check-item" onclick="toggleCheck(this)">
+            <input type="checkbox"><div class="check-box"><span class="check-box-tick">✓</span></div>
+            <div class="check-label">I'd like to receive a summary of research findings from this data<span class="check-label-sub">Periodic updates when findings are published</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end profile-body -->
+
+    <div class="profile-actions">
+      <button class="btn-later" onclick="skipProfile()">Save & finish later</button>
+      <button class="btn-save" onclick="saveProfile()">Save Profile →</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SCREEN NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── AUTH HANDLERS (UI demo) ──
+function handleLogin() {
+  const email = document.getElementById('login-email').value;
+  const pass  = document.getElementById('login-password').value;
+  if (!email || !pass) {
+    document.getElementById('login-error').textContent = 'Please enter your email and password.';
+    document.getElementById('login-error').classList.add('show');
+    return;
+  }
+  document.getElementById('login-error').classList.remove('show');
+  // → Supabase auth.signInWithPassword() goes here
+  showScreen('screen-profile'); // demo: go to profile
+}
+
+function handleSignup() {
+  const email   = document.getElementById('signup-email').value;
+  const pass    = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+  const errEl   = document.getElementById('signup-error');
+
+  if (!email || !pass) { errEl.textContent='Please fill in all fields.'; errEl.classList.add('show'); return; }
+  if (pass.length < 8)  { errEl.textContent='Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
+  if (pass !== confirm) { errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  // → Supabase auth.signUp() goes here
+  showScreen('screen-profile'); // demo: go to profile setup
+}
+
+function handleReset() {
+  const email = document.getElementById('reset-email').value;
+  if (!email) {
+    document.getElementById('reset-error').textContent = 'Please enter your email address.';
+    document.getElementById('reset-error').classList.add('show');
+    return;
+  }
+  document.getElementById('reset-error').classList.remove('show');
+  document.getElementById('reset-success').classList.add('show');
+  // → Supabase auth.resetPasswordForEmail() goes here
+}
+
+// ── CHIP TOGGLE ──
+function toggleChip(el) {
+  el.classList.toggle('selected');
+}
+
+// ── CHECKBOX TOGGLE ──
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  const cb = el.querySelector('input[type="checkbox"]');
+  if (cb) cb.checked = !cb.checked;
+}
+
+// ── PROFILE ACTIONS ──
+function saveProfile() {
+  showToast('Profile saved ✓', 'success');
+  setTimeout(() => {
+    // → Navigate to main app dashboard
+    showToast('Opening your dashboard…', '');
+  }, 1800);
+}
+
+function skipProfile() {
+  showToast('You can complete your profile anytime from Settings', '');
+  setTimeout(() => {
+    // → Navigate to main app dashboard
+  }, 2000);
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => el.className = 'toast', 2800);
+}
+
+// ── COUNTRY CHANGE ──
+function onCountryChange() {
+  // Could dynamically populate state dropdown for US
+}
+
+// ══════════════════════════════════════════════════
+//  LEGAL ACCEPTANCE SYSTEM
+// ══════════════════════════════════════════════════
+const legalState = { age: false, terms: false, disclaimer: false };
+let disclaimerRead = false;
+
+function toggleLegalCheck(key) {
+  if (key === 'disclaimer' && !disclaimerRead) return; // Must read first
+  legalState[key] = !legalState[key];
+  const el = document.getElementById('check-' + key);
+  el.classList.toggle('checked', legalState[key]);
+  updateSignupButton();
+}
+
+function updateSignupButton() {
+  const allChecked = legalState.age && legalState.terms && legalState.disclaimer;
+  const btn = document.getElementById('signup-btn');
+  const record = document.getElementById('acceptance-record');
+  if (btn) {
+    btn.disabled = !allChecked;
+    btn.style.opacity = allChecked ? '1' : '0.5';
+    btn.style.cursor  = allChecked ? 'pointer' : 'not-allowed';
+  }
+  if (record) record.classList.toggle('show', allChecked);
+}
+
+// ── DISCLAIMER MODAL ──
+function openDisclaimerModal() {
+  document.getElementById('disclaimer-modal').classList.add('open');
+  // Reset scroll progress
+  const area = document.getElementById('disclaimer-scroll');
+  area.scrollTop = 0;
+  updateDisclaimerProgress(0);
+  document.getElementById('btn-accept-disclaimer').classList.remove('ready');
+  document.getElementById('disclaimer-scroll-notice').textContent = 'Scroll to the bottom to enable acceptance ↓';
+}
+
+function onDisclaimerScroll() {
+  const area = document.getElementById('disclaimer-scroll');
+  const scrollPct = area.scrollTop / (area.scrollHeight - area.clientHeight);
+  updateDisclaimerProgress(scrollPct * 100);
+
+  if (scrollPct >= 0.98) {
+    document.getElementById('btn-accept-disclaimer').classList.add('ready');
+    document.getElementById('disclaimer-scroll-notice').textContent = '✓ You've read the full disclaimer';
+  }
+}
+
+function updateDisclaimerProgress(pct) {
+  document.getElementById('disclaimer-progress-fill').style.width = Math.min(100, pct) + '%';
+}
+
+function acceptDisclaimer() {
+  disclaimerRead = true;
+  // Unlock the disclaimer checkbox
+  const checkEl = document.getElementById('check-disclaimer');
+  checkEl.classList.remove('disabled');
+  checkEl.classList.add('checked');
+  document.getElementById('disclaimer-hint').classList.add('hidden');
+  legalState.disclaimer = true;
+  // Close modal
+  document.getElementById('disclaimer-modal').classList.remove('open');
+  updateSignupButton();
+  showToast('Medical disclaimer accepted ✓', 'success');
+}
+
+// ── UPDATED SIGNUP HANDLER ──
+const _originalHandleSignup = handleSignup;
+function handleSignup() {
+  if (!legalState.age || !legalState.terms || !legalState.disclaimer) {
+    const errEl = document.getElementById('signup-error');
+    errEl.textContent = 'Please review and accept all required agreements before continuing.';
+    errEl.classList.add('show');
+    return;
+  }
+  // Record acceptance data
+  const acceptanceRecord = {
+    timestamp:       new Date().toISOString(),
+    ipAddress:       'recorded_server_side',
+    termsVersion:    '1.0',
+    disclaimerRead:  true,
+    userAgent:       navigator.userAgent
+  };
+  localStorage.setItem('lts_acceptance', JSON.stringify(acceptanceRecord));
+  // → Pass acceptanceRecord to Supabase user metadata on signup
+
+  const email   = document.getElementById('signup-email').value;
+  const pass    = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+  const errEl   = document.getElementById('signup-error');
+
+  if (!email || !pass) { errEl.textContent='Please fill in all fields.'; errEl.classList.add('show'); return; }
+  if (pass.length < 8)  { errEl.textContent='Password must be at least 8 characters.'; errEl.classList.add('show'); return; }
+  if (pass !== confirm) { errEl.textContent='Passwords do not match.'; errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  showToast('Account created ✓', 'success');
+  setTimeout(() => showScreen('screen-profile'), 800);
+}
+
+
+// ── PASSWORD VISIBILITY TOGGLE ──
+function togglePW(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+    btn.title = 'Hide password';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁';
+    btn.title = 'Show password';
+  }
+}
+
+</script>
+
+<!-- Medical Disclaimer Scroll Modal -->
+<div class="disclaimer-modal" id="disclaimer-modal">
+  <div class="disclaimer-sheet">
+    <div class="disclaimer-sheet-header">
+      <div class="disclaimer-sheet-title">⚠️ Medical Disclaimer</div>
+      <div class="disclaimer-sheet-sub">Please scroll to the bottom to accept</div>
+    </div>
+    <div class="disclaimer-scroll-area" id="disclaimer-scroll" onscroll="onDisclaimerScroll()">
+
+      <h3>Not Medical Advice</h3>
+      <p>LTS Care is a personal wellness tracking application. The information, alerts, trends, and outputs provided by this app do <strong>not constitute medical advice</strong> of any kind. Always seek the advice of your physician, transplant team, or other qualified health provider with any questions regarding your medical condition.</p>
+
+      <h3>Not a Diagnostic Tool</h3>
+      <p>This app does not diagnose any medical condition. Alerts and color-coded indicators are for personal awareness based on general reference ranges and user-defined thresholds only. They are not clinical diagnoses. An alert does not mean you have a medical problem — and no alert does not mean you are medically clear.</p>
+
+      <h3>Accuracy of Data</h3>
+      <p>All data is entered by you. The app cannot verify the accuracy of your entries or the calibration of your home devices. Trends and correlations displayed may be misleading if data is entered inconsistently. This app is not a substitute for laboratory testing or clinical examination.</p>
+
+      <h3>Medications</h3>
+      <p><strong>Never adjust, start, stop, or change any medication</strong> — especially immunosuppressants — based on information displayed in this app without first consulting your healthcare provider. Immunosuppressant management requires precise clinical oversight.</p>
+
+      <h3>Lab Results</h3>
+      <p>Lab values displayed in this app are for personal tracking only. Clinical interpretation requires a qualified healthcare provider with full knowledge of your medical history. Do not make medical decisions based solely on lab values shown here.</p>
+
+      <h3>Correlation ≠ Causation</h3>
+      <p>Medication and symptom patterns displayed are statistical observations in your personal data only. They do not establish causal relationships. Any apparent associations must be evaluated by your healthcare team before any conclusions or actions are taken.</p>
+
+      <h3>Post-Transplant Caution</h3>
+      <p>Lung transplant recipients are medically complex patients. Health changes can be serious and progress rapidly. Any concerning changes — declining readings, new symptoms, fever, unusual weight gain — should be reported to your transplant team promptly. <strong>Do not wait for this app to alert you if you feel something is wrong.</strong></p>
+
+      <h3>No Emergency Services</h3>
+      <p>This app is not an emergency service and cannot detect or respond to medical emergencies. <strong>If you are experiencing a medical emergency, call 911 immediately.</strong> Do not rely on this app in an emergency situation.</p>
+
+      <h3>Hold Harmless</h3>
+      <p>By accepting this disclaimer, you expressly agree to hold harmless and release the creators, developers, and contributors of LTS Care from any and all claims, liability, damages, or expenses of any kind arising from your use of the app, including any health outcomes or medical decisions.</p>
+
+      <p style="color:var(--teal);font-weight:500;text-align:center;margin-top:20px">
+        — You have reached the end of the Medical Disclaimer —
+      </p>
+
+    </div>
+    <div class="disclaimer-sheet-footer">
+      <div class="disclaimer-progress">
+        <div class="disclaimer-progress-fill" id="disclaimer-progress-fill"></div>
+      </div>
+      <div class="disclaimer-scroll-notice" id="disclaimer-scroll-notice">
+        Scroll to the bottom to enable acceptance ↓
+      </div>
+      <button class="btn-accept-disclaimer" id="btn-accept-disclaimer" onclick="acceptDisclaimer()">
+        I Have Read and Understood the Medical Disclaimer
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Index</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #E8EFF5;
+  --border:    #D0DCE8;
+  --ink:       #1A2533;
+  --ink2:      #4A5E72;
+  --ink3:      #8A9EAF;
+  --accent:    #3B82C4;
+  --accent2:   #E8F1FA;
+  --good:      #2D9E6B;
+  --good-bg:   #E8F7F1;
+  --warn:      #E07B39;
+  --warn-bg:   #FDF0E8;
+  --danger:    #C94040;
+  --danger-bg: #FAEAEA;
+  --radius:    12px;
+  --radius-sm: 8px;
+
+  /* Score zone colors */
+  --zone-green:  #2D9E6B;
+  --zone-amber:  #E0A030;
+  --zone-orange: #E07B39;
+  --zone-red:    #C94040;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: baseline; gap: 8px; }
+.logo-title { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--ink); }
+.logo-sub { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── TABS ── */
+.tabs { display: flex; background: var(--surface2); border-bottom: 1px solid var(--border); padding: 0 16px; }
+.tab { padding: 11px 16px; font-size: 12px; font-weight: 500; color: var(--ink2); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; }
+.tab:hover { color: var(--accent); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── PAGES ── */
+.page { display: none; padding: 20px 16px 40px; max-width: 600px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ══════════════════════════════
+   DIAL / GAUGE
+══════════════════════════════ */
+.dial-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px 20px;
+  margin-bottom: 16px;
+  text-align: center;
+  position: relative;
+}
+.dial-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px; color: var(--ink);
+  margin-bottom: 4px;
+}
+.dial-subtitle { font-size: 12px; color: var(--ink3); margin-bottom: 20px; }
+
+.dial-wrap {
+  position: relative;
+  width: 240px; height: 135px;
+  margin: 0 auto 12px;
+}
+.dial-svg { width: 100%; height: 100%; overflow: visible; }
+
+/* Score number overlay */
+.dial-score-wrap {
+  position: absolute;
+  bottom: -8px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.dial-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 52px; font-weight: 500;
+  line-height: 1;
+  transition: color 0.5s;
+}
+.dial-score-label {
+  font-size: 11px; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-top: 4px;
+}
+
+/* Zone labels on arc */
+.zone-label { font-size: 10px; font-weight: 600; }
+
+/* Status badge */
+.dial-status {
+  display: inline-block;
+  padding: 5px 18px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  margin-top: 48px;
+  transition: all 0.5s;
+}
+.status-green  { background: var(--good-bg);   color: var(--good); }
+.status-amber  { background: #FEF9E7;           color: var(--zone-amber); }
+.status-orange { background: var(--warn-bg);    color: var(--warn); }
+.status-red    { background: var(--danger-bg);  color: var(--danger); }
+
+/* Data freshness */
+.dial-freshness {
+  font-size: 11px; color: var(--ink3);
+  margin-top: 8px; line-height: 1.5;
+}
+.stale-warn { color: var(--warn); font-weight: 500; }
+
+/* ── BREAKDOWN ── */
+.breakdown-toggle {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; margin-top: 12px;
+  font-size: 13px; color: var(--accent);
+  cursor: pointer; font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+}
+.breakdown-arrow { transition: transform 0.2s; }
+.breakdown-arrow.open { transform: rotate(180deg); }
+
+.breakdown-panel {
+  display: none;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.breakdown-panel.open { display: block; }
+
+.param-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.param-row:last-child { border-bottom: none; }
+.param-icon { font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; }
+.param-info { flex: 1; }
+.param-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+.param-detail { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.param-bar-wrap { width: 80px; flex-shrink: 0; }
+.param-bar-bg {
+  height: 6px; background: var(--surface2);
+  border-radius: 3px; overflow: hidden;
+}
+.param-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.param-score { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; width: 32px; text-align: right; flex-shrink: 0; }
+.param-weight { font-size: 10px; color: var(--ink3); text-align: right; width: 28px; flex-shrink: 0; }
+.param-stale { font-size: 10px; color: var(--warn); background: var(--warn-bg); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+.param-missing { font-size: 10px; color: var(--ink3); background: var(--surface2); padding: 1px 6px; border-radius: 8px; flex-shrink: 0; }
+
+/* ── TREND CHART ── */
+.trend-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px;
+}
+.trend-title { font-size: 11px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.trend-wrap { position: relative; height: 160px; }
+
+/* ── SETTINGS ── */
+.settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+.settings-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.settings-sub { font-size: 13px; color: var(--ink3); margin-bottom: 18px; line-height: 1.5; }
+
+.weight-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.weight-row:last-of-type { border-bottom: none; }
+.weight-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.weight-name { font-size: 13px; font-weight: 500; color: var(--ink); flex: 1; }
+.weight-name-sub { font-size: 11px; color: var(--ink3); }
+.weight-input {
+  width: 64px; text-align: center;
+  font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500;
+  padding: 6px 8px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border); background: var(--bg); color: var(--ink);
+  -moz-appearance: textfield;
+}
+.weight-input::-webkit-outer-spin-button, .weight-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.weight-input:focus { outline: none; border-color: var(--accent); }
+.weight-pct { font-size: 12px; color: var(--ink3); width: 14px; }
+.weight-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0 4px; margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.weight-total-label { font-size: 13px; font-weight: 600; color: var(--ink2); }
+.weight-total-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; }
+.weight-total-val.ok    { color: var(--good); }
+.weight-total-val.over  { color: var(--danger); }
+.weight-total-val.under { color: var(--warn); }
+
+.threshold-section { margin-top: 20px; }
+.threshold-title { font-size: 12px; font-weight: 600; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+.threshold-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 10px; }
+.threshold-group { display: flex; flex-direction: column; gap: 4px; }
+.threshold-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.threshold-input {
+  text-align: center; font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500;
+  padding: 7px 6px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+  background: var(--bg); color: var(--ink); width: 100%; -moz-appearance: textfield;
+}
+.threshold-input::-webkit-outer-spin-button, .threshold-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.threshold-input:focus { outline: none; border-color: var(--accent); }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2d6faa; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--ink2); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ── MISC ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--ink3); }
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink2); margin-bottom: 5px; }
+.empty-sub { font-size: 13px; line-height: 1.5; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: #fff; padding: 11px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--good); }
+.info-note { background: var(--accent2); border: 1px solid #BDD5EE; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 13px; color: var(--accent); margin-bottom: 14px; line-height: 1.5; }
+
+@media (max-width: 480px) { .page { padding: 14px 12px 40px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-title">Health Index</span>
+    <span class="logo-sub">Composite Score</span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙️ Weights</button>
+    <button class="btn btn-primary btn-sm" onclick="computeScore()">↻ Refresh</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('index')"   id="tab-index">Index</button>
+  <button class="tab"        onclick="showTab('trend')"   id="tab-trend">Trend</button>
+  <button class="tab"        onclick="showTab('settings')"id="tab-settings">Settings</button>
+</div>
+
+<!-- ═══════════════════
+     INDEX PAGE
+═══════════════════ -->
+<div class="page active" id="page-index">
+
+  <div class="dial-card">
+    <div class="dial-title">Composite Health Index</div>
+    <div class="dial-subtitle">Weighted score across all surveillance parameters</div>
+
+    <!-- DIAL -->
+    <div class="dial-wrap">
+      <svg class="dial-svg" viewBox="0 0 240 135" id="dial-svg">
+        <!-- Background arc zones: 180° sweep, center 120,130, radius 90 -->
+        <!-- Zone: Red 0-50 (0°-90°) -->
+        <path id="arc-bg-red"    fill="none" stroke="#FAEAEA"   stroke-width="18" stroke-linecap="butt"/>
+        <path id="arc-bg-orange" fill="none" stroke="#FDF0E8"   stroke-width="18" stroke-linecap="butt"/>
+        <path id="arc-bg-amber"  fill="none" stroke="#FEF9E7"   stroke-width="18" stroke-linecap="butt"/>
+        <path id="arc-bg-green"  fill="none" stroke="#E8F7F1"   stroke-width="18" stroke-linecap="butt"/>
+        <!-- Foreground needle arc -->
+        <path id="arc-fill"      fill="none" stroke="#2D9E6B"   stroke-width="18" stroke-linecap="round"/>
+        <!-- Center dot -->
+        <circle cx="120" cy="130" r="5" fill="var(--ink3)"/>
+        <!-- Zone labels -->
+        <text x="14"  y="132" class="zone-label" fill="var(--zone-red)"   text-anchor="middle">0</text>
+        <text x="52"  y="55"  class="zone-label" fill="var(--zone-orange)"text-anchor="middle">50</text>
+        <text x="120" y="30"  class="zone-label" fill="var(--zone-amber)" text-anchor="middle">70</text>
+        <text x="188" y="55"  class="zone-label" fill="var(--zone-green)" text-anchor="middle">85</text>
+        <text x="226" y="132" class="zone-label" fill="var(--zone-green)" text-anchor="middle">100</text>
+      </svg>
+
+      <div class="dial-score-wrap">
+        <div class="dial-score" id="dial-score">—</div>
+        <div class="dial-score-label">out of 100</div>
+      </div>
+    </div>
+
+    <div class="dial-status" id="dial-status">Calculating…</div>
+    <div class="dial-freshness" id="dial-freshness"></div>
+
+    <!-- BREAKDOWN TOGGLE -->
+    <div class="breakdown-toggle" onclick="toggleBreakdown()">
+      <span id="breakdown-toggle-label">Show parameter breakdown</span>
+      <span class="breakdown-arrow" id="breakdown-arrow">▼</span>
+    </div>
+
+    <div class="breakdown-panel" id="breakdown-panel">
+      <div id="breakdown-rows"></div>
+      <div style="display:flex;justify-content:space-between;padding-top:10px;font-size:11px;color:var(--ink3)">
+        <span>★ = highest impact on score</span>
+        <span id="score-basis"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-note">
+    💡 This score synthesizes your most recent readings across all monitored parameters.
+    A score above 85 indicates all readings are near your personal baseline.
+    A drop of 5+ points from your usual range warrants attention.
+    <strong>This score does not replace clinical judgment — always contact your transplant team with concerns.</strong>
+  </div>
+
+</div>
+
+<!-- ═══════════════════
+     TREND PAGE
+═══════════════════ -->
+<div class="page" id="page-trend">
+  <div class="trend-card">
+    <div class="trend-title">Composite Score Over Time</div>
+    <div class="trend-wrap"><canvas id="trend-chart"></canvas></div>
+  </div>
+  <div id="trend-stats"></div>
+</div>
+
+<!-- ═══════════════════
+     SETTINGS PAGE
+═══════════════════ -->
+<div class="page" id="page-settings">
+  <div class="settings-card">
+    <div class="settings-title">Parameter Weights</div>
+    <div class="settings-sub">Adjust how much each parameter contributes to the overall score. Weights must add up to exactly 100%. Higher weight = stronger influence on the final number.</div>
+
+    <div id="weight-rows"></div>
+
+    <div class="weight-total">
+      <span class="weight-total-label">Total weight</span>
+      <span class="weight-total-val" id="weight-total-val">100%</span>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:14px" id="weight-warning"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="resetWeights()">Reset to defaults</button>
+      <button class="btn btn-primary" onclick="saveWeights()">Save Weights</button>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-title">Score Zone Thresholds</div>
+    <div class="settings-sub">Define the boundaries between score zones. Defaults are clinically recommended for post-transplant monitoring.</div>
+
+    <div class="threshold-section">
+      <div class="threshold-title">Zone boundaries (0–100)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label" style="color:var(--zone-red)">🔴 Critical</div>
+          <input type="number" class="threshold-input" id="th-red" value="50" min="0" max="100" style="border-color:#FAEAEA">
+          <div style="font-size:10px;color:var(--ink3)">below this</div>
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label" style="color:var(--zone-orange)">🟠 Concern</div>
+          <input type="number" class="threshold-input" id="th-orange" value="70" min="0" max="100" style="border-color:#FDF0E8">
+          <div style="font-size:10px;color:var(--ink3)">below this</div>
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label" style="color:var(--zone-amber)">🟡 Watch</div>
+          <input type="number" class="threshold-input" id="th-amber" value="85" min="0" max="100" style="border-color:#FEF9E7">
+          <div style="font-size:10px;color:var(--ink3)">below this</div>
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label" style="color:var(--zone-green)">🟢 Good</div>
+          <input type="number" class="threshold-input" id="th-green" value="85" min="0" max="100" style="border-color:#E8F7F1">
+          <div style="font-size:10px;color:var(--ink3)">and above</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-ghost btn-sm" onclick="resetThresholds()">Reset</button>
+      <button class="btn btn-primary" onclick="saveThresholds()">Save Thresholds</button>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-title">Data Freshness Rules</div>
+    <div class="settings-sub">How old can a reading be before it's considered stale and flagged in the score?</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+      <input type="number" id="freshness-days" value="7" min="1" max="30"
+        style="width:70px;text-align:center;font-family:'DM Mono',monospace;font-size:18px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);-moz-appearance:textfield">
+      <span style="font-size:14px;color:var(--ink2)">days — readings older than this are flagged as stale</span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="saveFreshness()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════
+//  PARAMETER DEFINITIONS
+// ══════════════════════════════════════════════════
+const PARAMS = [
+  {
+    key:        'spo2',
+    name:       'SpO₂',
+    icon:       '🩸',
+    unit:       '%',
+    weight:     22,
+    storageKey: 'vss_spo2_v1',
+    direction:  'higher_better', // higher = better
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.val).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  },
+  {
+    key:        'peakflow',
+    name:       'Peak Flow',
+    icon:       '📊',
+    unit:       '',
+    weight:     18,
+    storageKey: 'peak_flow_sessions_v1',
+    direction:  'higher_better',
+    getLatest(recs) { return recs.length ? recs[recs.length-1].avg : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.avg).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  },
+  {
+    key:        'spiro',
+    name:       'Spirometer',
+    icon:       '🌬️',
+    unit:       'mL',
+    weight:     18,
+    storageKey: 'spiro_records_v1',
+    direction:  'higher_better',
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.val).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  },
+  {
+    key:        'temp',
+    name:       'Temperature',
+    icon:       '🌡️',
+    unit:       '°F',
+    weight:     13,
+    storageKey: 'vss_temp_v1',
+    direction:  'lower_better', // closer to normal = better
+    normalTarget: 98.6,
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) { return 98.6; } // always use clinical normal for temp
+  },
+  {
+    key:        'hr',
+    name:       'Heart Rate',
+    icon:       '❤️',
+    unit:       'bpm',
+    weight:     7,
+    storageKey: 'vss_hr_v1',
+    direction:  'target_range',
+    targetLow:  60, targetHigh: 100,
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.val).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  },
+  {
+    key:        'bp',
+    name:       'Blood Pressure',
+    icon:       '💜',
+    unit:       'mmHg',
+    weight:     6,
+    storageKey: 'vss_bp_v1',
+    direction:  'target_range',
+    targetLow:  90, targetHigh: 130, // systolic
+    getLatest(recs) { return recs.length ? recs[recs.length-1].sys : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.sys).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  },
+  {
+    key:        'wt',
+    name:       'Weight',
+    icon:       '🟠',
+    unit:       'lbs',
+    weight:     6,
+    storageKey: 'vss_wt_v1',
+    direction:  'stable', // deviation from personal baseline
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.val).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  }
+];
+
+// ══════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════
+const WEIGHTS_KEY    = 'chi_weights_v1';
+const THRESHOLDS_KEY = 'chi_thresholds_v1';
+const HISTORY_KEY    = 'chi_history_v1';
+const FRESHNESS_KEY  = 'chi_freshness_v1';
+
+function getWeights() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WEIGHTS_KEY)||'{}');
+    const w = {};
+    PARAMS.forEach(p => w[p.key] = saved[p.key] ?? p.weight);
+    return w;
+  } catch(e) {
+    const w = {}; PARAMS.forEach(p => w[p.key] = p.weight); return w;
+  }
+}
+
+function getThresholds() {
+  try {
+    return { ...{ red: 50, orange: 70, amber: 85 }, ...JSON.parse(localStorage.getItem(THRESHOLDS_KEY)||'{}') };
+  } catch(e) { return { red: 50, orange: 70, amber: 85 }; }
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }
+  catch(e) { return []; }
+}
+
+function getFreshnessDays() {
+  return parseInt(localStorage.getItem(FRESHNESS_KEY)||'7');
+}
+
+// ══════════════════════════════════════════════════
+//  SCORE COMPUTATION
+// ══════════════════════════════════════════════════
+function computeParamScore(param, latest, baseline) {
+  if (latest === null || latest === undefined) return null;
+
+  if (param.direction === 'higher_better') {
+    if (!baseline || baseline === 0) return 75; // no history — neutral
+    const ratio = latest / baseline;
+    // 100% of baseline = 100 score, 80% = 60 score, 60% = 0
+    if (ratio >= 1.0)  return 100;
+    if (ratio >= 0.95) return Math.round(100 - (1-ratio)*200);
+    if (ratio >= 0.85) return Math.round(90  - (0.95-ratio)*300);
+    if (ratio >= 0.70) return Math.round(50  - (0.85-ratio)*267);
+    return Math.max(0, Math.round((ratio/0.70)*20));
+  }
+
+  if (param.direction === 'lower_better') {
+    // Temperature: deviation from 98.6
+    const deviation = Math.abs(latest - 98.6);
+    if (deviation <= 0.5) return 100;
+    if (deviation <= 1.0) return 85;
+    if (deviation <= 1.5) return 65;
+    if (deviation <= 2.0) return 40;
+    return Math.max(0, 20 - (deviation-2)*20);
+  }
+
+  if (param.direction === 'target_range') {
+    const lo = param.targetLow, hi = param.targetHigh;
+    if (latest >= lo && latest <= hi) return 100;
+    const overHigh = latest > hi ? latest - hi : 0;
+    const underLow = latest < lo ? lo - latest : 0;
+    const deviation = Math.max(overHigh, underLow);
+    const range = hi - lo;
+    const pctDev = deviation / range;
+    if (pctDev <= 0.1)  return 85;
+    if (pctDev <= 0.25) return 65;
+    if (pctDev <= 0.5)  return 40;
+    return Math.max(0, 20 - pctDev*20);
+  }
+
+  if (param.direction === 'stable') {
+    if (!baseline || baseline === 0) return 75;
+    const pctChange = Math.abs((latest - baseline) / baseline) * 100;
+    if (pctChange <= 2)  return 100;
+    if (pctChange <= 5)  return 85;
+    if (pctChange <= 8)  return 65;
+    if (pctChange <= 12) return 40;
+    return Math.max(0, 20 - (pctChange-12)*2);
+  }
+
+  return 75;
+}
+
+function computeScore() {
+  const weights     = getWeights();
+  const freshDays   = getFreshnessDays();
+  const cutoff      = new Date();
+  cutoff.setDate(cutoff.getDate() - freshDays);
+  const staleCutoff = new Date();
+  staleCutoff.setDate(staleCutoff.getDate() - freshDays * 2);
+
+  let weightedSum  = 0;
+  let totalWeight  = 0;
+  let staleCount   = 0;
+  let missingCount = 0;
+  const breakdown  = [];
+
+  PARAMS.forEach(param => {
+    const w = weights[param.key] || 0;
+    if (w === 0) return;
+
+    let recs = [];
+    try { recs = JSON.parse(localStorage.getItem(param.storageKey)||'[]'); } catch(e) {}
+
+    const latest = param.getLatest(recs);
+    const baseline = param.getBaseline(recs);
+    const latestDate = recs.length ? new Date(recs[recs.length-1].date) : null;
+
+    let freshness = 'ok';
+    if (!latestDate || latest === null) { freshness = 'missing'; missingCount++; }
+    else if (latestDate < staleCutoff)  { freshness = 'missing'; missingCount++; }
+    else if (latestDate < cutoff)       { freshness = 'stale';   staleCount++; }
+
+    if (freshness === 'missing') {
+      breakdown.push({ param, score: null, latest, baseline, w, freshness, daysAgo: null });
+      return;
+    }
+
+    const score = computeParamScore(param, latest, baseline);
+    const daysAgo = latestDate ? Math.floor((new Date() - latestDate) / 86400000) : null;
+
+    weightedSum += score * (w / 100);
+    totalWeight += w;
+    breakdown.push({ param, score, latest, baseline, w, freshness, daysAgo });
+  });
+
+  // Adjust for missing parameters — penalize slightly
+  const missingPenalty = missingCount * 3;
+  let finalScore = totalWeight > 0
+    ? Math.round((weightedSum / (totalWeight / 100)) - missingPenalty)
+    : null;
+  if (finalScore !== null) finalScore = Math.max(0, Math.min(100, finalScore));
+
+  // Sort breakdown by impact (score deviation from 100, weighted)
+  breakdown.sort((a, b) => {
+    const impA = a.score !== null ? (100 - a.score) * a.w : -1;
+    const impB = b.score !== null ? (100 - b.score) * b.w : -1;
+    return impB - impA;
+  });
+
+  renderDial(finalScore, breakdown, staleCount, missingCount);
+  saveScoreToHistory(finalScore);
+}
+
+// ══════════════════════════════════════════════════
+//  DIAL RENDER
+// ══════════════════════════════════════════════════
+function renderDial(score, breakdown, staleCount, missingCount) {
+  const thresholds = getThresholds();
+
+  // ── Draw arcs ──
+  const cx = 120, cy = 130, r = 90;
+  // Arc spans 180° from left (180°) to right (0°)
+  // Score 0 = leftmost, 100 = rightmost
+
+  function arcPath(startAngle, endAngle) {
+    const s = (startAngle * Math.PI) / 180;
+    const e = (endAngle   * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(Math.PI - s);
+    const y1 = cy - r * Math.sin(Math.PI - s);
+    const x2 = cx + r * Math.cos(Math.PI - e);
+    const y2 = cy - r * Math.sin(Math.PI - e);
+    const large = (endAngle - startAngle) > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+  }
+
+  function scoreToAngle(s) { return (s / 100) * 180; }
+
+  // Background zone arcs
+  document.getElementById('arc-bg-red').setAttribute('d',    arcPath(0,   scoreToAngle(thresholds.red)));
+  document.getElementById('arc-bg-orange').setAttribute('d', arcPath(scoreToAngle(thresholds.red),    scoreToAngle(thresholds.orange)));
+  document.getElementById('arc-bg-amber').setAttribute('d',  arcPath(scoreToAngle(thresholds.orange), scoreToAngle(thresholds.amber)));
+  document.getElementById('arc-bg-green').setAttribute('d',  arcPath(scoreToAngle(thresholds.amber),  180));
+
+  // Filled arc (score)
+  const fillEl = document.getElementById('arc-fill');
+  if (score !== null && score > 0) {
+    const angle = scoreToAngle(Math.min(score, 99.5));
+    fillEl.setAttribute('d', arcPath(0, angle));
+    fillEl.setAttribute('stroke', getZoneColor(score, thresholds));
+    fillEl.style.display = 'block';
+  } else {
+    fillEl.style.display = 'none';
+  }
+
+  // ── Score number ──
+  const scoreEl = document.getElementById('dial-score');
+  if (score !== null) {
+    scoreEl.textContent = score;
+    scoreEl.style.color = getZoneColor(score, thresholds);
+  } else {
+    scoreEl.textContent = '—';
+    scoreEl.style.color = 'var(--ink3)';
+  }
+
+  // ── Status badge ──
+  const statusEl = document.getElementById('dial-status');
+  if (score === null) {
+    statusEl.textContent = 'No data yet — log readings to generate score';
+    statusEl.className = 'dial-status status-amber';
+  } else if (score >= thresholds.amber) {
+    statusEl.textContent = '✓ All parameters near baseline';
+    statusEl.className = 'dial-status status-green';
+  } else if (score >= thresholds.orange) {
+    statusEl.textContent = '👀 Minor deviation — watch closely';
+    statusEl.className = 'dial-status status-amber';
+  } else if (score >= thresholds.red) {
+    statusEl.textContent = '⚠️ Notable deviation — consider contacting team';
+    statusEl.className = 'dial-status status-orange';
+  } else {
+    statusEl.textContent = '🚨 Significant deviation — contact transplant team';
+    statusEl.className = 'dial-status status-red';
+  }
+
+  // ── Freshness notice ──
+  const freshEl = document.getElementById('dial-freshness');
+  const notices = [];
+  if (staleCount > 0)   notices.push(`<span class="stale-warn">${staleCount} reading${staleCount>1?'s':''} overdue for update</span>`);
+  if (missingCount > 0) notices.push(`${missingCount} parameter${missingCount>1?'s':''} not yet logged`);
+  freshEl.innerHTML = notices.length ? notices.join(' · ') : 'All parameters have recent readings';
+
+  // ── Breakdown rows ──
+  const rowsEl = document.getElementById('breakdown-rows');
+  const weights = getWeights();
+  const totalActiveWeight = PARAMS.filter(p=>weights[p.key]>0).reduce((a,p)=>a+weights[p.key],0);
+
+  rowsEl.innerHTML = breakdown.map((b, i) => {
+    const { param, score, latest, baseline, w, freshness, daysAgo } = b;
+    const barColor = score !== null ? getZoneColor(score, thresholds) : 'var(--ink3)';
+    const barWidth = score !== null ? score : 0;
+    const isTopImpact = i === 0 && score !== null && score < 90;
+    const sinceText = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo ? `${daysAgo}d ago` : '—';
+    const baselineText = baseline !== null ? `Baseline: ${typeof baseline === 'number' ? baseline.toFixed(1) : baseline} ${param.unit}` : 'No baseline yet';
+    const latestText = latest !== null ? `Latest: ${typeof latest === 'number' ? latest.toFixed(1) : latest} ${param.unit}` : 'Not logged';
+
+    return `
+    <div class="param-row">
+      <div class="param-icon">${param.icon}</div>
+      <div class="param-info">
+        <div class="param-name">${param.name} ${isTopImpact ? '<span style="color:var(--warn);font-size:11px">★ highest impact</span>' : ''}</div>
+        <div class="param-detail">${latestText} · ${baselineText} · ${sinceText}</div>
+        <div class="param-bar-wrap" style="margin-top:5px">
+          <div class="param-bar-bg">
+            <div class="param-bar-fill" style="width:${barWidth}%;background:${barColor}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="param-score" style="color:${barColor}">${score !== null ? score : '—'}</div>
+      <div class="param-weight">${w}%</div>
+      ${freshness === 'stale'   ? '<span class="param-stale">Stale</span>'   : ''}
+      ${freshness === 'missing' ? '<span class="param-missing">No data</span>' : ''}
+    </div>`;
+  }).join('');
+
+  const activePct = Math.round(breakdown.filter(b=>b.score!==null).reduce((a,b)=>a+b.w,0));
+  document.getElementById('score-basis').textContent = `Score based on ${activePct}% of total weight`;
+}
+
+function getZoneColor(score, thresholds) {
+  if (score >= thresholds.amber)  return 'var(--zone-green)';
+  if (score >= thresholds.orange) return 'var(--zone-amber)';
+  if (score >= thresholds.red)    return 'var(--zone-orange)';
+  return 'var(--zone-red)';
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORY & TREND
+// ══════════════════════════════════════════════════
+function saveScoreToHistory(score) {
+  if (score === null) return;
+  const hist = getHistory();
+  const today = toDateStr(new Date());
+  // Update or add today's score
+  const idx = hist.findIndex(h => h.date === today);
+  if (idx >= 0) hist[idx].score = score;
+  else hist.push({ date: today, score });
+  // Keep last 90 days
+  hist.sort((a,b) => a.date.localeCompare(b.date));
+  const trimmed = hist.slice(-90);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+}
+
+let trendChart = null;
+function renderTrend() {
+  const hist = getHistory();
+  const thresholds = getThresholds();
+  const el = document.getElementById('trend-stats');
+
+  if (trendChart) { try{trendChart.destroy();}catch(e){} trendChart = null; }
+
+  if (hist.length < 2) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">Not enough history yet</div><div class="empty-sub">The score is recorded each time you open the Index tab. Check back after a few days to see your trend.</div></div>`;
+    return;
+  }
+
+  const labels = hist.map(h => formatDateShort(h.date));
+  const scores = hist.map(h => h.score);
+  const avg    = scores.reduce((a,b)=>a+b,0)/scores.length;
+  const latest = scores[scores.length-1];
+  const pct    = parseFloat(((latest-avg)/avg*100).toFixed(1));
+  const sign   = pct>=0?'+':'';
+
+  const vsBg    = pct<=-5?'var(--danger-bg)':pct>=5?'var(--good-bg)':'var(--surface2)';
+  const vsColor = pct<=-5?'var(--danger)':pct>=5?'var(--good)':'var(--ink2)';
+  const vsNote  = pct<=-5?'⚠️ Below running average':pct>=5?'✅ Above running average':'Near running average';
+
+  el.innerHTML = `
+    <div style="background:${vsBg};border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:${vsColor};margin-bottom:2px">Latest vs Running Avg</div>
+        <div style="font-size:12px;color:var(--ink2)">${vsNote}</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:${vsColor}">${sign}${pct}%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3);margin-bottom:3px">Latest</div>
+        <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:${getZoneColor(latest,thresholds)}">${latest}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3);margin-bottom:3px">Running Avg</div>
+        <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--ink)">${avg.toFixed(1)}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3);margin-bottom:3px">Days tracked</div>
+        <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--ink)">${hist.length}</div>
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    const runAvg = scores.map((_,i)=>parseFloat((scores.slice(0,i+1).reduce((a,b)=>a+b,0)/(i+1)).toFixed(1)));
+    trendChart = new Chart(document.getElementById('trend-chart'), {
+      type: 'line',
+      data: { labels, datasets: [
+        { label: 'Health Index', data: scores,
+          borderColor: '#3B82C4', backgroundColor: 'rgba(59,130,196,0.08)',
+          borderWidth: 2.5, pointBackgroundColor: scores.map(s=>getZoneColor(s,thresholds)),
+          pointRadius: 5, fill: true, tension: 0.3 },
+        { label: 'Running Avg', data: runAvg,
+          borderColor: '#8A9EAF', borderDash: [6,4],
+          borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 }
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, labels: { font:{family:'DM Sans',size:11}, color:'#4A5E72', usePointStyle:true, pointStyle:'line', boxWidth:28, padding:12 } },
+          tooltip: { mode:'index', intersect:false }
+        },
+        scales: {
+          x: { grid:{color:'#E8EFF5'}, ticks:{font:{family:'DM Mono',size:9},color:'#8A9EAF',maxTicksLimit:10} },
+          y: { grid:{color:'#E8EFF5'}, ticks:{font:{family:'DM Mono',size:10},color:'#8A9EAF'}, min:0, max:100 }
+        }
+      }
+    });
+  }, 60);
+}
+
+// ══════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════
+function buildWeightRows() {
+  const weights = getWeights();
+  const el = document.getElementById('weight-rows');
+  el.innerHTML = PARAMS.map(p => `
+    <div class="weight-row">
+      <div class="weight-icon">${p.icon}</div>
+      <div style="flex:1">
+        <div class="weight-name">${p.name}</div>
+        <div style="font-size:11px;color:var(--ink3)">${getParamDescription(p.key)}</div>
+      </div>
+      <input type="number" class="weight-input" id="w-${p.key}"
+        value="${weights[p.key]}" min="0" max="100"
+        oninput="updateWeightTotal()">
+      <div class="weight-pct">%</div>
+    </div>
+  `).join('');
+  updateWeightTotal();
+}
+
+function getParamDescription(key) {
+  return {
+    spo2:     'Oxygen saturation — primary lung function indicator',
+    peakflow: 'Peak expiratory flow — early rejection signal',
+    spiro:    'Inspiratory volume — complements peak flow',
+    temp:     'Temperature — key infection indicator',
+    hr:       'Heart rate — tachycardia signals infection/rejection',
+    bp:       'Blood pressure — tacrolimus side effect marker',
+    wt:       'Weight — fluid retention indicator',
+    symptoms: 'Subjective wellness — SOB, fatigue, stamina, cough, chest, wellbeing'
+  }[key] || '';
+}
+
+function updateWeightTotal() {
+  let total = 0;
+  PARAMS.forEach(p => {
+    const v = parseInt(document.getElementById('w-'+p.key)?.value||0);
+    total += isNaN(v) ? 0 : v;
+  });
+  const el = document.getElementById('weight-total-val');
+  el.textContent = total + '%';
+  el.className = 'weight-total-val ' + (total===100?'ok':total>100?'over':'under');
+  const warn = document.getElementById('weight-warning');
+  warn.textContent = total !== 100 ? `Weights must total exactly 100%. Currently ${total > 100 ? total-100 + '% over' : 100-total + '% under'}.` : '';
+}
+
+function saveWeights() {
+  let total = 0;
+  const w = {};
+  PARAMS.forEach(p => {
+    const v = parseInt(document.getElementById('w-'+p.key)?.value||0);
+    w[p.key] = isNaN(v) ? 0 : v;
+    total += w[p.key];
+  });
+  if (total !== 100) { showToast('Weights must total exactly 100%', ''); return; }
+  localStorage.setItem(WEIGHTS_KEY, JSON.stringify(w));
+  showToast('Weights saved ✓', 'success');
+  computeScore();
+}
+
+function resetWeights() {
+  PARAMS.forEach(p => {
+    const el = document.getElementById('w-'+p.key);
+    if (el) el.value = p.weight;
+  });
+  updateWeightTotal();
+  showToast('Reset to clinical defaults');
+}
+
+function saveThresholds() {
+  const t = {
+    red:    parseInt(document.getElementById('th-red').value)    || 50,
+    orange: parseInt(document.getElementById('th-orange').value) || 70,
+    amber:  parseInt(document.getElementById('th-amber').value)  || 85
+  };
+  localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(t));
+  showToast('Thresholds saved ✓', 'success');
+  computeScore();
+}
+
+function resetThresholds() {
+  document.getElementById('th-red').value    = 50;
+  document.getElementById('th-orange').value = 70;
+  document.getElementById('th-amber').value  = 85;
+  showToast('Reset to defaults');
+}
+
+function saveFreshness() {
+  const v = parseInt(document.getElementById('freshness-days').value) || 7;
+  localStorage.setItem(FRESHNESS_KEY, String(v));
+  showToast('Freshness rule saved ✓', 'success');
+  computeScore();
+}
+
+// ══════════════════════════════════════════════════
+//  BREAKDOWN TOGGLE
+// ══════════════════════════════════════════════════
+function toggleBreakdown() {
+  const panel  = document.getElementById('breakdown-panel');
+  const arrow  = document.getElementById('breakdown-arrow');
+  const label  = document.getElementById('breakdown-toggle-label');
+  const isOpen = panel.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+  label.textContent = isOpen ? 'Hide parameter breakdown' : 'Show parameter breakdown';
+}
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'trend')    renderTrend();
+  if (name === 'settings') buildWeightRows();
+}
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function toDateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function formatDateShort(d) { const [y,m,day]=d.split('-'); return `${m}/${day}`; }
+function showToast(msg,type='') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); setTimeout(()=>el.className='toast',2800); }
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+computeScore();
+</script>
+</body>
+</html>
