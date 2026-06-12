@@ -523,8 +523,19 @@ Example: [{"key":"wbc","name":"WBC","value":5.4,"unit":"K/µL","refLow":4.0,"ref
     const data = await callClaude(b64, mimeType, prompt);
     bar.classList.remove('show');
     const text = data.content.map(c=>c.text||'').join('').trim();
-    const clean = text.replace(/```json|```/g,'').trim();
-    const extracted = JSON.parse(clean);
+    // Robust JSON extraction - find the JSON block even if surrounded by other text
+    let clean = text.replace(/```json|```/g,'').trim();
+    // Try to extract JSON array or object from the response
+    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+    if (jsonMatch) clean = jsonMatch[1];
+    let extracted;
+    try {
+      extracted = JSON.parse(clean);
+    } catch(parseErr) {
+      // Try more aggressive cleanup
+      clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
+      extracted = JSON.parse(clean);
+    }
 
     if (!Array.isArray(extracted) || !extracted.length) throw new Error('No lab values found');
 
@@ -684,8 +695,19 @@ Use null for any not found. Numbers only, no units.`;
     const data = await callClaude(b64, getFileMimeType(file), prompt);
     bar.classList.remove('show');
     const text = data.content.map(c=>c.text||'').join('').trim();
-    const clean = text.replace(/```json|```/g,'').trim();
-    const extracted = JSON.parse(clean);
+    // Robust JSON extraction - find the JSON block even if surrounded by other text
+    let clean = text.replace(/```json|```/g,'').trim();
+    // Try to extract JSON array or object from the response
+    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+    if (jsonMatch) clean = jsonMatch[1];
+    let extracted;
+    try {
+      extracted = JSON.parse(clean);
+    } catch(parseErr) {
+      // Try more aggressive cleanup
+      clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
+      extracted = JSON.parse(clean);
+    }
 
     currentVals = {};
     panel.forEach(lab => {

@@ -1234,9 +1234,17 @@ If no medications are found, return an empty array: []`;
     bar.style.display = 'none';
     if (data.error) throw new Error(data.error.message);
 
-    const text  = data.content.map(c => c.text || '').join('').trim();
-    const clean = text.replace(/```json|```/g, '').trim();
-    const meds  = JSON.parse(clean);
+    const text = data.content.map(c => c.text || '').join('').trim();
+    let clean = text.replace(/```json|```/g, '').trim();
+    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
+    if (jsonMatch) clean = jsonMatch[1];
+    let meds;
+    try {
+      meds = JSON.parse(clean);
+    } catch(parseErr) {
+      clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
+      meds = JSON.parse(clean);
+    }
 
     if (!meds.length) {
       showMedImportNotice('No medications found in image. Try a clearer photo or enter manually.', 'warn');
