@@ -524,12 +524,10 @@ Example: [{"key":"wbc","name":"WBC","value":5.4,"unit":"K/µL","refLow":4.0,"ref
     bar.classList.remove('show');
     const text = data.content.map(c=>c.text||'').join('').trim();
     // Robust JSON extraction - find the JSON block even if surrounded by other text
-    let clean = text.replace(/```json|```/g,'').trim();
-    // Try to extract JSON array or object from the response
-    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-    if (jsonMatch) clean = jsonMatch[1];
-    let extracted;
-    try {
+    let clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = clean.search(/[\[{]/);
+      const e = Math.max(clean.lastIndexOf(']'), clean.lastIndexOf('}'));
+      if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
       extracted = JSON.parse(clean);
     } catch(parseErr) {
       // Try more aggressive cleanup
@@ -696,12 +694,10 @@ Use null for any not found. Numbers only, no units.`;
     bar.classList.remove('show');
     const text = data.content.map(c=>c.text||'').join('').trim();
     // Robust JSON extraction - find the JSON block even if surrounded by other text
-    let clean = text.replace(/```json|```/g,'').trim();
-    // Try to extract JSON array or object from the response
-    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-    if (jsonMatch) clean = jsonMatch[1];
-    let extracted;
-    try {
+    let clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = clean.search(/[\[{]/);
+      const e = Math.max(clean.lastIndexOf(']'), clean.lastIndexOf('}'));
+      if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
       extracted = JSON.parse(clean);
     } catch(parseErr) {
       // Try more aggressive cleanup

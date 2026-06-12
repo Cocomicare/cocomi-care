@@ -1235,11 +1235,10 @@ If no medications are found, return an empty array: []`;
     if (data.error) throw new Error(data.error.message);
 
     const text = data.content.map(c => c.text || '').join('').trim();
-    let clean = text.replace(/```json|```/g, '').trim();
-    const jsonMatch = clean.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-    if (jsonMatch) clean = jsonMatch[1];
-    let meds;
-    try {
+    let clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
+      const s = clean.search(/[\[{]/);
+      const e = Math.max(clean.lastIndexOf(']'), clean.lastIndexOf('}'));
+      if (s !== -1 && e !== -1) clean = clean.slice(s, e + 1);
       meds = JSON.parse(clean);
     } catch(parseErr) {
       clean = clean.replace(/[ -]/g, ' ').replace(/,\s*([}\]])/g, '$1');
