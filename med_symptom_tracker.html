@@ -1169,15 +1169,23 @@ function importMedsCSV(input) {
 async function importMedsImage(input) {
   const file = input.files ? input.files[0] : input; if (!file) return;
 
-  // Show preview
+  // Show preview — image or PDF filename card
   const previewWrap = document.getElementById('med-img-preview-wrap');
   const previewImg  = document.getElementById('med-img-preview');
-  const reader = new FileReader();
-  reader.onload = e => {
-    previewImg.src = e.target.result;
+  const isPDF = file.type === 'application/pdf' || file.name?.endsWith('.pdf');
+  if (isPDF) {
+    previewImg.style.display = 'none';
+    previewWrap.innerHTML = `<div style="padding:14px 16px;background:var(--surface2);display:flex;align-items:center;gap:12px;border-radius:var(--radius)"><span style="font-size:28px">📄</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink)">${file.name||'Medication List PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF — Claude will extract medications</div></div><button onclick="document.getElementById('med-img-preview-wrap').style.display='none'" style="background:rgba(0,0,0,0.15);color:var(--ink2);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">✕</button></div>`;
     previewWrap.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
+      previewWrap.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
 
   const bar = document.getElementById('med-import-analyzing');
   bar.style.display = 'flex';

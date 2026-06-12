@@ -503,7 +503,7 @@ async function runSetupExtraction(file) {
   document.getElementById('upload-zone-setup').style.display = 'none';
 
   const b64 = await fileToB64(file);
-  const mimeType = file.type || 'image/jpeg';
+  const mimeType = getFileMimeType(file);
 
   const prompt = `You are analyzing a lab results document from the UF Health Shands patient portal.
 
@@ -540,12 +540,10 @@ Example: [{"key":"wbc","name":"WBC","value":5.4,"unit":"K/µL","refLow":4.0,"ref
 function showPanelConfirm(labs, file) {
   const wrap = document.getElementById('setup-panel-confirm');
   wrap.style.display = 'block';
+  const isPDF = getFileMimeType(file) === 'application/pdf';
 
-  // Preview image
-  const reader = new FileReader();
-  reader.onload = e => {
-    wrap.innerHTML = `
-      <img src="${e.target.result}" style="width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:14px;background:var(--surface2)">
+  function buildConfirmHTML(previewHTML) {
+    wrap.innerHTML = previewHTML + `
       <div class="card">
         <div class="card-title">✓ Claude found ${labs.length} lab tests — review and confirm</div>
         <p style="font-size:13px;color:var(--ink3);margin-bottom:14px;line-height:1.5">Review the extracted values below. Edit names or units if needed. Remove any that aren't relevant. Then tap <strong>Confirm Panel</strong> to save these as your tracking template.</p>
@@ -557,11 +555,21 @@ function showPanelConfirm(labs, file) {
           <button class="btn btn-ghost" onclick="resetSetup()">Start Over</button>
           <button class="btn btn-primary" onclick="confirmPanel()">Confirm Panel (${labs.length} tests)</button>
         </div>
-      </div>
-    `;
+      </div>`;
     renderConfirmGrid();
-  };
-  reader.readAsDataURL(file);
+  }
+
+  if (isPDF) {
+    // Show PDF filename instead of image preview
+    buildConfirmHTML(`<div style="padding:14px 16px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:12px"><span style="font-size:28px">📄</span><div><div style="font-size:13px;font-weight:600;color:var(--ink)">${file.name||'Lab Results PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF document</div></div></div>`);
+  } else {
+    // Show image preview
+    const reader = new FileReader();
+    reader.onload = e => {
+      buildConfirmHTML(`<img src="${e.target.result}" style="width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:14px;background:var(--surface2)">`);
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
 function renderConfirmGrid() {
@@ -650,13 +658,21 @@ async function runLogExtraction(file) {
   notice.className = 'notice';
 
   // Show preview
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('img-preview-log').src = e.target.result;
-    document.getElementById('img-preview-wrap-log').style.display = 'block';
+  const isPDF = getFileMimeType(file) === 'application/pdf';
+  if (isPDF) {
+    const wrap = document.getElementById('img-preview-wrap-log');
+    wrap.innerHTML = `<div style="padding:14px 16px;background:var(--surface2);display:flex;align-items:center;gap:12px;border-radius:var(--radius)"><span style="font-size:28px">📄</span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--ink)">${file.name||'Lab Results PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF — extracting lab values…</div></div><button onclick="removeLogImage()" style="background:rgba(0,0,0,0.15);color:var(--ink2);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">✕</button></div>`;
+    wrap.style.display = 'block';
     document.getElementById('upload-zone-log').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('img-preview-log').src = e.target.result;
+      document.getElementById('img-preview-wrap-log').style.display = 'block';
+      document.getElementById('upload-zone-log').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
 
   const b64 = await fileToB64(file);
   const labList = panel.map(l=>`${l.key} (${l.name}, ${l.unit})`).join(', ');
