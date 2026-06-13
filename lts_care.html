@@ -761,53 +761,45 @@ async function runSyncDebug() {
   el.style.display = 'block';
   el.textContent = 'Running sync debug...\n';
 
-  // 1. Check session
-  const { data: { session } } = await _sb.auth.getSession();
-  el.textContent += session ? `✅ Session: ${session.user.email}\n` : '❌ No session!\n';
-  if (!session) return;
-
-  const userId = session.user.id;
-  el.textContent += `User ID: ${userId.slice(0,8)}...\n\n`;
-
-  // 2. Check what's in Supabase clinical_data
-  el.textContent += '── Supabase clinical_data ──\n';
   try {
-    const { data, error } = await _sb.from('clinical_data').select('data_type, updated_at').eq('user_id', userId);
-    if (error) { el.textContent += `❌ Error: ${error.message}\n`; }
-    else if (!data?.length) { el.textContent += '⚠️ No clinical_data rows found\n'; }
-    else { data.forEach(r => { el.textContent += `✅ ${r.data_type} (${r.updated_at?.slice(0,10)})\n`; }); }
-  } catch(e) { el.textContent += `❌ ${e.message}\n`; }
+    // 1. Check session
+    const { data: { session } } = await sb.auth.getSession();
+    el.textContent += session ? `✅ Session: ${session.user.email}\n` : '❌ No session!\n';
+    if (!session) return;
 
-  // 3. Check health_records
-  el.textContent += '\n── Supabase health_records ──\n';
-  try {
-    const { data, error } = await _sb.from('health_records').select('module').eq('user_id', userId);
-    if (error) { el.textContent += `❌ Error: ${error.message}\n`; }
-    else if (!data?.length) { el.textContent += '⚠️ No health_records found\n'; }
+    const userId = session.user.id;
+    el.textContent += `User ID: ${userId.slice(0,8)}...\n\n`;
+
+    // 2. Check clinical_data in Supabase
+    el.textContent += '── Supabase clinical_data ──\n';
+    const { data: cd, error: cde } = await sb.from('clinical_data').select('data_type, updated_at').eq('user_id', userId);
+    if (cde) { el.textContent += `❌ Error: ${cde.message}\n`; }
+    else if (!cd?.length) { el.textContent += '⚠️ No rows found\n'; }
+    else { cd.forEach(r => { el.textContent += `✅ ${r.data_type} (${r.updated_at?.slice(0,10)})\n`; }); }
+
+    // 3. Check health_records in Supabase
+    el.textContent += '\n── Supabase health_records ──\n';
+    const { data: hr, error: hre } = await sb.from('health_records').select('module').eq('user_id', userId);
+    if (hre) { el.textContent += `❌ Error: ${hre.message}\n`; }
+    else if (!hr?.length) { el.textContent += '⚠️ No rows found\n'; }
     else {
       const counts = {};
-      data.forEach(r => { counts[r.module] = (counts[r.module]||0)+1; });
+      hr.forEach(r => { counts[r.module] = (counts[r.module]||0)+1; });
       Object.entries(counts).forEach(([m,c]) => { el.textContent += `✅ ${m}: ${c} records\n`; });
     }
-  } catch(e) { el.textContent += `❌ ${e.message}\n`; }
 
-  // 4. Check localStorage
-  el.textContent += '\n── localStorage ──\n';
-  const keys = ['clinical_meds_v1','symptom_checkins_v1','peak_flow_sessions_v1','spiro_records_v1','vss_spo2_v1'];
-  keys.forEach(k => {
-    const val = localStorage.getItem(k);
-    if (!val) { el.textContent += `⚠️ ${k}: empty\n`; }
-    else {
-      try { const arr = JSON.parse(val); el.textContent += `✅ ${k}: ${arr.length} items\n`; }
-      catch(e) { el.textContent += `✅ ${k}: (data)\n`; }
-    }
-  });
+    // 4. localStorage
+    el.textContent += '\n── localStorage ──\n';
+    ['clinical_meds_v1','symptom_checkins_v1','peak_flow_sessions_v1','spiro_records_v1','vss_spo2_v1'].forEach(k => {
+      const val = localStorage.getItem(k);
+      if (!val) { el.textContent += `⚠️ ${k}: empty\n`; }
+      else { try { el.textContent += `✅ ${k}: ${JSON.parse(val).length} items\n`; } catch(e) { el.textContent += `✅ ${k}: exists\n`; } }
+    });
 
-  // 5. Force pull
-  el.textContent += '\n── Forcing pull from Supabase ──\n';
-  const ok = await syncPullAll();
-  el.textContent += ok ? '✅ Pull completed — refreshing dashboard\n' : '❌ Pull failed\n';
-  renderDashboard();
+    el.textContent += '\nDone.';
+  } catch(e) {
+    el.textContent += `\n❌ Crashed: ${e.message}`;
+  }
 }
 
 function showDashboard() {
