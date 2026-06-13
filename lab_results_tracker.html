@@ -370,22 +370,40 @@ function showConfirm(labs) {
 
       <div class="confirm-grid" id="confirm-grid">
         ${labs.map((lab,i)=>{
-          const flagColor = lab.flag==='high'?'color:var(--danger)':lab.flag==='low'?'color:#4338CA':'color:var(--good)';
-          return `
-          <div class="confirm-row" id="cr-${i}">
-            <div style="display:flex;align-items:center;gap:5px;min-width:0">
-              <input class="cin" value="${lab.name}" id="cn-${i}" placeholder="Name" style="flex:1;min-width:0">
-              ${lab._isNew?'<span class="row-new-badge">NEW</span>':'<span class="row-existing-badge">↑</span>'}
-              <button onclick="document.getElementById('cr-${i}').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;flex-shrink:0;padding:0 2px">✕</button>
+          const isHigh = lab.flag==='high';
+          const isLow  = lab.flag==='low';
+          const flagTxt= isHigh?'HIGH':isLow?'LOW':lab.flag==='normal'?'NORMAL':'NA';
+          const flagClr= isHigh?'color:var(--danger)':isLow?'color:#4338CA':lab.flag==='normal'?'color:var(--good)':'color:var(--ink3)';
+          const cardBdr= isHigh?'border-color:#f0c0c0;background:var(--danger-bg)':isLow?'border-color:#c0c8f0;background:#EEF2FF':'';
+          const valBdr = isHigh?'border-color:#f0a0a0;background:var(--danger-bg);color:var(--danger)':isLow?'border-color:#a0a8e0;background:#EEF2FF;color:#4338CA':'background:var(--bg);color:var(--ink)';
+          return \`
+          <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;\${cardBdr}" id="cr-\${i}">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:6px">
+                \${lab._isNew?'<span style="background:var(--lab-bg);color:var(--lab);font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px">NEW</span>':'<span style="background:var(--surface2);color:var(--ink3);font-size:10px;padding:2px 7px;border-radius:5px">↑ update</span>'}
+                <span style="font-size:11px;font-weight:700;\${flagClr}">\${flagTxt}</span>
+              </div>
+              <button onclick="document.getElementById('cr-\${i}').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:16px">✕</button>
             </div>
-            <div style="display:flex;align-items:center;gap:3px">
-              <input class="cin-num" type="number" value="${lab.value??''}" id="cv-${i}" step="any">
-              <span style="font-size:9px;color:var(--ink3)">${lab.unit||''}</span>
+            <div style="margin-bottom:10px">
+              <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:4px">Test Name</div>
+              <input style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--surface)" value="\${lab.name}" id="cn-\${i}">
             </div>
-            <input class="cin-num" type="number" value="${lab.refLow??''}" id="cl-${i}" step="any" placeholder="—">
-            <input class="cin-num" type="number" value="${lab.refHigh??''}" id="ch-${i}" step="any" placeholder="—">
-            <div style="font-size:12px;font-weight:700;text-align:center;${flagColor}">${(lab.flag||'').toUpperCase()}</div>
-          </div>`;
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div>
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Value <span style="font-weight:400;text-transform:none">\${lab.unit||''}</span></div>
+                <input type="number" step="any" id="cv-\${i}" value="\${lab.value??''}" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:16px;font-weight:600;text-align:center;\${valBdr};-moz-appearance:textfield">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Ref Low</div>
+                <input type="number" step="any" id="cl-\${i}" value="\${lab.refLow??''}" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--surface);text-align:center;-moz-appearance:textfield">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Ref High</div>
+                <input type="number" step="any" id="ch-\${i}" value="\${lab.refHigh??''}" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--surface);text-align:center;-moz-appearance:textfield">
+              </div>
+            </div>
+          </div>\`;
         }).join('')}
       </div>
 
