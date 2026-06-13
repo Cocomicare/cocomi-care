@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medications</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#F0F4F8;--surface:#fff;--surface2:#E8EFF5;--border:#D0DCE8;
+  --ink:#1A2533;--ink2:#4A5E72;--ink3:#8A9EAF;
+  --good:#2D9E6B;--good-bg:#E8F7F1;
+  --danger:#C94040;--danger-bg:#FAEAEA;
+  --purple:#6B4FA8;--purple-bg:#F0EAFA;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;}
+
+.app{display:flex;flex-direction:column;height:100vh;max-width:640px;margin:0 auto;background:var(--surface);box-shadow:0 0 40px rgba(0,0,0,.06);}
+
+/* Header */
+.header{padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.header-left{display:flex;flex-direction:column;}
+.header-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);}
+.header-sub{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+.print-btn{background:var(--purple);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.print-btn:hover{background:#5a3f90;}
+
+/* Content */
+.content{flex:1;overflow-y:auto;padding:18px 18px 24px;}
+
+/* Info bar */
+.info-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.info-counts{font-size:13px;color:var(--ink2);}
+.info-updated{font-size:11px;color:var(--ink3);}
+
+/* Section */
+.section{margin-bottom:20px;}
+.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.section-count{font-size:10px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:1px 7px;border-radius:8px;}
+
+/* Med card */
+.med-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:8px;display:flex;align-items:flex-start;gap:11px;transition:border-color .15s;}
+.med-card:hover{border-color:var(--purple);}
+.med-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.med-dot.active{background:var(--good);}
+.med-dot.inactive{background:var(--ink3);}
+.med-info{flex:1;min-width:0;}
+.med-name{font-size:14px;font-weight:600;color:var(--ink);}
+.med-details{font-size:12px;color:var(--ink2);margin-top:3px;}
+.med-note{font-size:11px;color:var(--ink3);margin-top:3px;font-style:italic;}
+.med-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.med-cat{font-size:10px;font-weight:600;color:var(--purple);background:var(--purple-bg);padding:2px 8px;border-radius:8px;white-space:nowrap;}
+.med-btn{background:none;border:none;font-size:11px;color:var(--ink3);cursor:pointer;padding:1px 0;font-family:'DM Sans',sans-serif;}
+.med-btn:hover{color:var(--danger);}
+
+/* Empty */
+.empty{text-align:center;padding:48px 24px;color:var(--ink3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink2);margin-bottom:6px;}
+.empty-sub{font-size:13px;line-height:1.6;max-width:300px;margin:0 auto;}
+
+/* Add bar */
+.add-bar{border-top:1px solid var(--border);padding:12px 16px;background:var(--surface);flex-shrink:0;}
+.add-row{display:flex;gap:8px;}
+.add-input{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s;}
+.add-input:focus{border-color:var(--purple);background:#faf8ff;}
+.add-btn{background:var(--purple);color:#fff;border:none;border-radius:20px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.add-btn:hover{background:#5a3f90;}
+.add-hint{font-size:11px;color:var(--ink3);margin-top:5px;padding:0 4px;}
+
+/* Edit modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:22px 18px 32px;width:100%;max-width:520px;}
+.modal-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink);margin-bottom:16px;}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--ink2);}
+.field input,.field select,.field textarea{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--purple);}
+.field textarea{resize:vertical;min-height:60px;}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-actions{display:flex;gap:10px;margin-top:6px;}
+.btn-cancel{flex:1;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink2);cursor:pointer;}
+.btn-save{flex:2;background:var(--purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--good);}
+.toast.error{background:var(--danger);}
+
+/* Print */
+@media print {
+  .add-bar,.med-btn,.modal-backdrop,.toast,.print-btn{display:none!important;}
+  .app{box-shadow:none;max-width:100%;}
+  body{background:#fff;}
+  .header{border-bottom:2px solid #000;}
+  .med-card{border:1px solid #ccc;page-break-inside:avoid;}
+  .content{overflow:visible;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="header-title">Medications</div>
+      <div class="header-sub">Current medication list</div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="add-bar">
+    <div class="add-row">
+      <input class="add-input" id="quick-add" placeholder="Add medication: e.g. Tacrolimus 2mg twice daily" onkeydown="if(event.key==='Enter')quickAdd()">
+      <button class="add-btn" onclick="quickAdd()">+ Add</button>
+    </div>
+    <div class="add-hint">Or talk to Clinical Assistant to auto-update this list from uploaded documents.</div>
+  </div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Edit Medication</div>
+    <div class="field">
+      <label>Drug Name</label>
+      <input id="e-name" placeholder="e.g. Tacrolimus">
+    </div>
+    <div class="modal-row">
+      <div class="field">
+        <label>Dose</label>
+        <input id="e-dose" placeholder="e.g. 2mg">
+      </div>
+      <div class="field">
+        <label>Frequency</label>
+        <input id="e-freq" placeholder="e.g. twice daily">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="field">
+        <label>Category</label>
+        <select id="e-cat">
+          <option>Immunosuppression</option>
+          <option>Antiviral</option>
+          <option>Antifungal</option>
+          <option>Antibiotic</option>
+          <option>Cardiac</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="e-active">
+          <option value="true">Active</option>
+          <option value="false">Stopped</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="e-note" placeholder="e.g. Take with food, trough target 8-12 ng/mL"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MEDS_KEY = 'clinical_meds_v1';
+
+function getMeds() { try{return JSON.parse(localStorage.getItem(MEDS_KEY)||'[]');}catch(e){return[];} }
+function saveMeds(d) { localStorage.setItem(MEDS_KEY, JSON.stringify(d)); }
+
+const CAT_ORDER = ['Immunosuppression','Antiviral','Antifungal','Antibiotic','Cardiac','Other'];
+
+// ── RENDER ──
+function render() {
+  const meds    = getMeds();
+  const active  = meds.filter(m => m.active);
+  const stopped = meds.filter(m => !m.active);
+  const el      = document.getElementById('content');
+
+  if (!meds.length) {
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">💊</div>
+      <div class="empty-title">No medications yet</div>
+      <div class="empty-sub">Add medications manually below, or upload a medication document in the Clinical Assistant and this list will update automatically.</div>
+    </div>`;
+    return;
+  }
+
+  // Info bar
+  const lastUpdated = meds.reduce((a,m) => (m.updated||'') > a ? (m.updated||'') : a, '');
+  const updatedStr  = lastUpdated ? 'Updated ' + new Date(lastUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  let html = `<div class="info-bar">
+    <div class="info-counts"><strong>${active.length}</strong> active · <span style="color:var(--ink3)">${stopped.length} stopped</span></div>
+    <div class="info-updated">${updatedStr}</div>
+  </div>`;
+
+  // Group active by category
+  const cats = {};
+  active.forEach(m => {
+    const c = m.category || 'Other';
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(m);
+  });
+
+  CAT_ORDER.forEach(cat => {
+    if (!cats[cat]?.length) return;
+    html += `<div class="section">
+      <div class="section-title">${cat} <span class="section-count">${cats[cat].length}</span></div>
+      ${cats[cat].map(m => medCard(m)).join('')}
+    </div>`;
+  });
+  // Any extra categories not in order
+  Object.keys(cats).filter(c => !CAT_ORDER.includes(c)).forEach(cat => {
+    html += `<div class="section">
+      <div class="section-title">${cat} <span class="section-count">${cats[cat].length}</span></div>
+      ${cats[cat].map(m => medCard(m)).join('')}
+    </div>`;
+  });
+
+  // Stopped
+  if (stopped.length) {
+    html += `<div class="section">
+      <div class="section-title" style="color:var(--ink3)">Stopped / Inactive <span class="section-count" style="background:var(--surface2);color:var(--ink3)">${stopped.length}</span></div>
+      ${stopped.map(m => medCard(m)).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function medCard(m) {
+  const details = [m.dose, m.freq].filter(Boolean).join(' · ');
+  return `<div class="med-card">
+    <div class="med-dot ${m.active ? 'active' : 'inactive'}"></div>
+    <div class="med-info">
+      <div class="med-name">${m.name}</div>
+      ${details ? `<div class="med-details">${details}</div>` : ''}
+      ${m.note ? `<div class="med-note">${m.note}</div>` : ''}
+    </div>
+    <div class="med-actions">
+      <span class="med-cat">${m.category || 'Other'}</span>
+      <button class="med-btn" onclick="openEdit('${m.id}')">Edit</button>
+      <button class="med-btn" onclick="toggleActive('${m.id}')">${m.active ? 'Stop' : 'Restart'}</button>
+      <button class="med-btn" style="color:var(--danger)" onclick="deleteMed('${m.id}')">Remove</button>
+    </div>
+  </div>`;
+}
+
+// ── QUICK ADD ──
+function quickAdd() {
+  const input = document.getElementById('quick-add');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  // Try to parse "Name dose freq" loosely
+  // e.g. "Tacrolimus 2mg twice daily" or "Prednisone 5mg once daily with food"
+  const words = text.split(/\s+/);
+  const name  = words[0];
+
+  // Look for dose pattern (number + unit)
+  const doseMatch = text.match(/\b(\d+\.?\d*\s*(?:mg|mcg|g|ml|mL|units?|tabs?|capsules?))\b/i);
+  const dose = doseMatch ? doseMatch[1] : '';
+
+  // Look for frequency keywords
+  const freqMatch = text.match(/\b(once|twice|three times|four times|every \d+ hours?|daily|weekly|BID|TID|QID|QD|PRN|as needed)\b/i);
+  const freq = freqMatch ? freqMatch[0] : '';
+
+  const meds = getMeds();
+  meds.push({
+    id:       Date.now().toString(),
+    name,
+    dose,
+    freq,
+    note:     '',
+    category: 'Other',
+    active:   true,
+    updated:  new Date().toISOString()
+  });
+  saveMeds(meds);
+  render();
+  input.value = '';
+  showToast(`${name} added ✓`, 'success');
+}
+
+// ── TOGGLE / DELETE ──
+function toggleActive(id) {
+  const meds = getMeds();
+  const m = meds.find(x => x.id === id);
+  if (m) { m.active = !m.active; m.updated = new Date().toISOString(); }
+  saveMeds(meds);
+  render();
+  showToast(m.active ? `${m.name} restarted` : `${m.name} marked stopped`);
+}
+
+function deleteMed(id) {
+  const meds = getMeds();
+  const m    = meds.find(x => x.id === id);
+  if (!confirm(`Remove ${m?.name || 'this medication'}?`)) return;
+  saveMeds(meds.filter(x => x.id !== id));
+  render();
+  showToast('Medication removed');
+}
+
+// ── EDIT MODAL ──
+let editingId = null;
+
+function openEdit(id) {
+  const meds = getMeds();
+  const m    = meds.find(x => x.id === id);
+  if (!m) return;
+  editingId = id;
+
+  document.getElementById('modal-title').textContent = 'Edit Medication';
+  document.getElementById('e-name').value  = m.name || '';
+  document.getElementById('e-dose').value  = m.dose || '';
+  document.getElementById('e-freq').value  = m.freq || '';
+  document.getElementById('e-note').value  = m.note || '';
+  document.getElementById('e-cat').value   = m.category || 'Other';
+  document.getElementById('e-active').value= m.active ? 'true' : 'false';
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  editingId = null;
+  document.getElementById('modal').classList.remove('show');
+}
+
+function saveEdit() {
+  const meds = getMeds();
+  const idx  = meds.findIndex(m => m.id === editingId);
+  if (idx < 0) return;
+
+  meds[idx] = {
+    ...meds[idx],
+    name:     document.getElementById('e-name').value.trim(),
+    dose:     document.getElementById('e-dose').value.trim(),
+    freq:     document.getElementById('e-freq').value.trim(),
+    note:     document.getElementById('e-note').value.trim(),
+    category: document.getElementById('e-cat').value,
+    active:   document.getElementById('e-active').value === 'true',
+    updated:  new Date().toISOString()
+  };
+  saveMeds(meds);
+  closeModal();
+  render();
+  showToast('Medication updated ✓', 'success');
+}
+
+// Close modal on backdrop click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── TOAST ──
+function showToast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => el.className = 'toast', 2800);
+}
+
+// ── INIT ──
+// Pre-populate with known meds if empty
+function initKnownMeds() {
+  const existing = getMeds();
+  if (existing.length) return;
+  const known = [
+    {name:'Tacrolimus',     dose:'',  freq:'twice daily',  note:'Trough target 8-12 ng/mL early post-transplant', category:'Immunosuppression'},
+    {name:'CellCept',       dose:'',  freq:'twice daily',  note:'Mycophenolate mofetil',                          category:'Immunosuppression'},
+    {name:'Prednisone',     dose:'',  freq:'once daily',   note:'Taper per transplant protocol',                  category:'Immunosuppression'},
+    {name:'Valganciclovir', dose:'',  freq:'',             note:'CMV prophylaxis',                                category:'Antiviral'},
+    {name:'Posaconazole',   dose:'',  freq:'',             note:'Antifungal prophylaxis',                         category:'Antifungal'},
+    {name:'Atovaquone',     dose:'',  freq:'',             note:'PCP prophylaxis',                                category:'Antibiotic'},
+    {name:'Amikacin',       dose:'',  freq:'',             note:'Inhaled antibiotic',                             category:'Antibiotic'},
+    {name:'Rifabutin',      dose:'',  freq:'',             note:'Mycobacterial coverage',                         category:'Antibiotic'},
+    {name:'Clofazimine',    dose:'',  freq:'',             note:'Mycobacterial coverage',                         category:'Antibiotic'},
+    {name:'Amphotericin B', dose:'',  freq:'',             note:'Inhaled antifungal',                             category:'Antifungal'},
+  ];
+  saveMeds(known.map((m,i) => ({...m, id:String(i+1), active:true, updated:new Date().toISOString()})));
+}
+
+initKnownMeds();
+render();
+</script>
+</body>
+</html>

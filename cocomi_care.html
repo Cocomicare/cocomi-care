@@ -125,8 +125,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 .tile.peakflow::before{ background: #3B82C4; }
 .tile.spiro::before   { background: #6B4FA8; }
 .tile.vitals::before  { background: #C94040; }
-.tile.medlog::before  { background: #C4663B; }
-.tile.labs::before    { background: #0E7490; }
+.tile.clinical::before { background: #0E7490; }
+.tile.meds::before    { background: #6B4FA8; }
 
 .tile-icon  { font-size: 22px; margin-bottom: 8px; display: block; }
 .tile-name  { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
@@ -218,8 +218,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
     <div class="section-label">Symptoms & Measurements</div>
     <div class="tiles-grid" id="tiles-measurements"></div>
 
-    <!-- ── 4. MEDICATIONS & LABS ── -->
-    <div class="section-label">Medications & Labs</div>
+    <!-- ── 4. CLINICAL ASSISTANT & MEDICATIONS ── -->
+    <div class="section-label">Clinical Assistant & Medications</div>
     <div class="tiles-grid" id="tiles-medlabs"></div>
 
     <div class="last-updated" id="last-updated"></div>
@@ -311,39 +311,46 @@ const MODULES = [
     }
   },
   {
-    id:'medlog', name:'Medications', icon:'🔬',
-    file:'med_symptom_tracker.html', group:'medlabs',
+    id:'clinical', name:'Clinical Assistant', icon:'🧬',
+    file:'clinical_assistant.html', group:'medlabs',
     getSummary() {
       try {
-        const meds=JSON.parse(localStorage.getItem('msc_meds_v1')||'[]');
-        const cur =JSON.parse(localStorage.getItem('msc_cur_meds_v1')||'[]').filter(m=>m.active);
-        const all =meds.sort((a,b)=>b.date.localeCompare(a.date));
-        return{val:cur.length||null,unit:cur.length?' active':'',sub:cur.length?`${meds.length} change${meds.length!==1?'s':''} logged`:'No medications added',since:all.length?daysSince(all[0].date):null};
-      } catch(e){return{val:null,sub:'Med changes & correlation',since:null};}
-    }
-  },
-  {
-    id:'labs', name:'Lab Results', icon:'🧪',
-    file:'lab_results_tracker.html', group:'medlabs',
-    getSummary() {
-      try {
-        const conv  = JSON.parse(localStorage.getItem('lab_conversation_v1')||'[]');
-        const files = JSON.parse(localStorage.getItem('lab_files_v1')||'[]');
-        if (!conv.length) return{val:null,sub:'AI-powered lab assistant',since:null};
+        const conv  = JSON.parse(localStorage.getItem('clinical_conversation_v1')||'[]');
+        const files = JSON.parse(localStorage.getItem('clinical_files_v1')||'[]');
+        if (!conv.length) return{val:null,sub:'Labs · Medications · Trends',since:null};
         const lastMsg   = conv[conv.length-1];
-        const lastDate  = lastMsg.timestamp ? lastMsg.timestamp.split('T')[0] : null;
-        const fileCount = files.length;
-        const msgCount  = conv.filter(m=>m.role==='assistant').length;
+        const lastDate  = lastMsg?.timestamp ? lastMsg.timestamp.split('T')[0] : null;
         const lastReply = conv.filter(m=>m.role==='assistant').pop();
         const hasFlags  = lastReply && (lastReply.displayText||'').match(/\bHIGH\b|\bLOW\b/);
+        const fileCount = files.length;
+        const msgCount  = conv.filter(m=>m.role==='assistant').length;
         return{
-          val:  fileCount||msgCount,
-          unit: fileCount ? ' doc' + (fileCount!==1?'s':'') + ' analyzed' : ' exchange' + (msgCount!==1?'s':''),
-          sub:  hasFlags ? '⚠️ Flags in last analysis' : msgCount + ' AI response' + (msgCount!==1?'s':''),
+          val:  fileCount || msgCount || null,
+          unit: fileCount ? ' doc' + (fileCount!==1?'s':'') + ' analyzed' : ' response' + (msgCount!==1?'s':''),
+          sub:  hasFlags ? '⚠️ Flags in last analysis' : 'Labs · Medications · Trends',
           since: lastDate ? daysSince(lastDate) : null,
           alert: hasFlags ? 'warn' : null
         };
-      } catch(e){return{val:null,sub:'AI-powered lab assistant',since:null};}
+      } catch(e){return{val:null,sub:'Labs · Medications · Trends',since:null};}
+    }
+  },
+  {
+    id:'meds', name:'Medications', icon:'💊',
+    file:'medications.html', group:'medlabs',
+    getSummary() {
+      try {
+        const meds = JSON.parse(localStorage.getItem('clinical_meds_v1')||'[]');
+        const active = meds.filter(m=>m.active);
+        if(!active.length) return{val:null,sub:'Current medication list',since:null};
+        const lastUpdated = meds.reduce((a,m)=>m.updated>a?m.updated:a,'');
+        const lastDate = lastUpdated ? lastUpdated.split('T')[0] : null;
+        return{
+          val: active.length,
+          unit: ' active',
+          sub: active.slice(0,2).map(m=>m.name).join(', ') + (active.length>2?'…':''),
+          since: lastDate ? daysSince(lastDate) : null
+        };
+      } catch(e){return{val:null,sub:'Current medication list',since:null};}
     }
   }
 ];

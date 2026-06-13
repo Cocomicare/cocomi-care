@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinical Assistant</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#F0F4F8;--surface:#fff;--surface2:#E8EFF5;--border:#D0DCE8;
+  --ink:#1A2533;--ink2:#4A5E72;--ink3:#8A9EAF;
+  --good:#2D9E6B;--teal:#0E7490;--teal-bg:#E0F2F5;--teal-light:#f0fafc;
+  --warn:#E07B39;--danger:#C94040;--danger-bg:#FAEAEA;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink);font-size:15px;}
+
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:52px;flex-shrink:0;}
+.header-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink);}
+.header-sub{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+.clear-btn{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:12px;padding:5px 8px;border-radius:6px;font-family:'DM Sans',sans-serif;}
+.clear-btn:hover{color:var(--danger);background:var(--danger-bg);}
+
+/* ── MESSAGES ── */
+.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
+.messages::-webkit-scrollbar{width:3px;}
+.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.msg{display:flex;gap:8px;max-width:100%;}
+.msg.user{flex-direction:row-reverse;}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;}
+.msg.assistant .avatar{background:var(--teal-bg);}
+.msg.user .avatar{background:var(--surface2);}
+.bubble{max-width:87%;padding:10px 13px;border-radius:14px;line-height:1.55;font-size:14px;}
+.msg.assistant .bubble{background:var(--surface2);color:var(--ink);border-radius:4px 14px 14px 14px;}
+.msg.user .bubble{background:var(--teal);color:#fff;border-radius:14px 4px 14px 14px;}
+.bubble p{margin-bottom:7px;}
+.bubble p:last-child{margin-bottom:0;}
+.bubble ul,.bubble ol{margin:5px 0 7px 16px;}
+.bubble li{margin-bottom:3px;}
+.bubble strong{font-weight:600;}
+.flag-h{color:#ff6b6b;font-weight:600;}
+.flag-l{color:#748ffc;font-weight:600;}
+.flag-n{color:#51cf66;}
+.msg-time{font-size:10px;color:var(--ink3);margin-top:3px;}
+.msg.user .msg-time{text-align:right;}
+
+.attach-card{background:var(--teal-light);border:1px solid var(--teal-bg);border-radius:8px;padding:8px 11px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.attach-name{font-size:12px;font-weight:600;color:var(--teal);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Typing */
+.typing-row{display:flex;gap:8px;}
+.typing-bubble{background:var(--surface2);border-radius:4px 14px 14px 14px;padding:12px 14px;display:flex;align-items:center;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);animation:bop .8s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bop{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* Suggestions */
+.sugs{padding:6px 16px 0;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0;}
+.sug{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--ink2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.sug:hover{background:var(--teal-bg);border-color:var(--teal);color:var(--teal);}
+
+/* ── INPUT ── */
+.input-bar{border-top:1px solid var(--border);padding:10px 14px;background:var(--surface);flex-shrink:0;}
+.attach-preview{background:var(--teal-light);border:1px solid var(--teal-bg);border-radius:7px;padding:7px 10px;margin-bottom:7px;display:none;align-items:center;gap:7px;}
+.attach-preview.show{display:flex;}
+.ap-name{font-size:12px;font-weight:500;color:var(--teal);flex:1;}
+.ap-remove{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;padding:0;}
+.input-row{display:flex;gap:7px;align-items:flex-end;}
+.attach-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--ink3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;transition:all .15s;}
+.attach-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-bg);}
+textarea.inp{flex:1;border:1.5px solid var(--border);border-radius:18px;padding:8px 13px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);resize:none;outline:none;max-height:100px;line-height:1.4;transition:border-color .15s;}
+textarea.inp:focus{border-color:var(--teal);background:var(--teal-light);}
+.send-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--teal);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .15s;}
+.send-btn:disabled{background:var(--border);cursor:not-allowed;}
+input[type=file]{display:none;}
+
+/* Empty */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center;}
+.empty-icon{font-size:44px;margin-bottom:14px;}
+.empty-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);margin-bottom:8px;}
+.empty-sub{font-size:13px;color:var(--ink2);line-height:1.6;max-width:340px;margin-bottom:22px;}
+.empty-btn{background:var(--teal);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--good);}
+.toast.error{background:var(--danger);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <div class="header-title">Clinical Assistant</div>
+      <div class="header-sub">Labs · Medications · Trends</div>
+    </div>
+    <button class="clear-btn" onclick="clearConfirm()">Clear chat</button>
+  </div>
+
+  <div class="messages" id="messages"></div>
+  <div class="sugs" id="sugs"></div>
+
+  <div class="input-bar">
+    <div class="attach-preview" id="ap">
+      <span style="font-size:16px">📄</span>
+      <span class="ap-name" id="ap-name"></span>
+      <button class="ap-remove" onclick="removeAttach()">✕</button>
+    </div>
+    <div class="input-row">
+      <button class="attach-btn" onclick="document.getElementById('fi').click()" title="Attach lab or medication document">📎</button>
+      <input type="file" id="fi" accept="image/*,.pdf,application/pdf" onchange="handleFile(this)">
+      <textarea class="inp" id="inp" placeholder="Ask about labs or meds, upload a document, or describe what changed…" rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button class="send-btn" id="sb" onclick="send()">↑</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONV_KEY  = 'clinical_conversation_v1';
+const FILES_KEY = 'clinical_files_v1';
+const SUMM_KEY  = 'clinical_summary_v1';
+const MEDS_KEY  = 'clinical_meds_v1';
+
+const load = k => { try{return JSON.parse(localStorage.getItem(k)||'[]');}catch(e){return[];} };
+const loadStr = k => { try{return localStorage.getItem(k)||'';}catch(e){return '';} };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+let conv = [];
+let pf   = null; // pending file
+let busy = false;
+
+// ── SYSTEM PROMPT ──
+function system() {
+  const meds    = load(MEDS_KEY).filter(m=>m.active);
+  const files   = load(FILES_KEY);
+  const summary = loadStr(SUMM_KEY);
+  const medList = meds.length
+    ? '\n\nCurrent active medications:\n' + meds.map(m=>`- ${m.name}${m.dose?' '+m.dose:''}${m.freq?' '+m.freq:''}${m.note?' ('+m.note+')':''}`).join('\n')
+    : '';
+  const fileList = files.length
+    ? '\n\nPreviously uploaded documents:\n' + files.map(f=>`- ${f.name} (${f.date})`).join('\n')
+    : '';
+
+  return `You are a caring clinical assistant helping Cocomi, a young lung transplant patient at UF Health Shands in Gainesville, Florida.
+
+Responsibilities:
+- Analyze lab results from uploaded documents. Flag HIGH/LOW values, explain clinical significance, track trends.
+- Track medications. Explain what each drug does, monitor for interactions and toxicity signs.
+- Connect lab findings to medications (e.g. rising creatinine + high tacrolimus = nephrotoxicity concern).
+- Answer clinical questions in plain language for a patient and family.
+- Always recommend discussing findings with the transplant team.
+
+Clinical context:
+- Recent bilateral lung transplant
+- Immunosuppression: Tacrolimus (target trough 8-12 ng/mL), CellCept, Prednisone
+- Prophylaxis: Valganciclovir (CMV), Posaconazole (fungal), Atovaquone (PCP)
+- Antibiotics: Amikacin, Rifabutin, Clofazimine, Amphotericin B (inhaled)
+- Monitor: tacrolimus levels, CBC, CMP (creatinine), liver enzymes
+
+When analyzing labs: list every test with value + range + HIGH/LOW/NORMAL flag, highlight significant findings, note trends vs previous results, give a plain-language summary.
+
+When medications change, end your response with:
+<MED_UPDATE>[{"name":"Drug","dose":"dose","freq":"freq","note":"note","active":true,"category":"Immunosuppression"}]</MED_UPDATE>
+Only include when meds actually change. Categories: Immunosuppression, Antiviral, Antifungal, Antibiotic, Cardiac, Other.
+${summary?'\n\nPrior conversation summary:\n'+summary:''}${medList}${fileList}`;
+}
+
+// ── API ──
+async function claude(messages) {
+  const r = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({model:'claude-sonnet-4-5', max_tokens:2000, system:system(), messages})
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.content.map(c=>c.text||'').join('').trim();
+}
+
+// ── MED UPDATE ──
+function extractMedUpdate(text) {
+  const m = text.match(/<MED_UPDATE>([\s\S]*?)<\/MED_UPDATE>/);
+  if (!m) return null;
+  try {
+    let c = m[1].trim().replace(/[^\x20-\x7E\n\r\t]/g,'').replace(/,(\s*[}\]])/g,'$1');
+    return JSON.parse(c);
+  } catch(e) { return null; }
+}
+function stripMedUpdate(t) { return t.replace(/<MED_UPDATE>[\s\S]*?<\/MED_UPDATE>/g,'').trim(); }
+function applyMedUpdate(updates) {
+  if(!updates?.length) return;
+  const meds = load(MEDS_KEY);
+  updates.forEach(u => {
+    const i = meds.findIndex(m=>m.name.toLowerCase()===u.name.toLowerCase());
+    const entry = {id:i>=0?meds[i].id:Date.now().toString()+Math.random(), name:u.name, dose:u.dose||'', freq:u.freq||'', note:u.note||'', category:u.category||'Other', active:u.active!==false, updated:new Date().toISOString()};
+    if(i>=0) meds[i]=entry; else meds.push(entry);
+  });
+  save(MEDS_KEY, meds);
+  showToast('Medication list updated ✓','success');
+}
+
+// ── FILE ──
+function handleFile(input) {
+  const file = input.files?.[0]; if(!file) return; input.value='';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64  = e.target.result.split(',')[1];
+    const mime = file.type==='application/pdf'||file.name.endsWith('.pdf') ? 'application/pdf' : (file.type||'image/jpeg');
+    pf = {name:file.name, b64, mime};
+    document.getElementById('ap').classList.add('show');
+    document.getElementById('ap-name').textContent = file.name;
+    document.getElementById('inp').focus();
+  };
+  reader.readAsDataURL(file);
+}
+function removeAttach() { pf=null; document.getElementById('ap').classList.remove('show'); }
+
+// ── SEND ──
+async function send() {
+  const inp  = document.getElementById('inp');
+  const text = inp.value.trim();
+  const file = pf;
+  if(!text&&!file) return;
+  if(busy) return;
+
+  let apiContent, displayText=text;
+  if(file) {
+    const fb = file.mime==='application/pdf'
+      ? {type:'document',source:{type:'base64',media_type:'application/pdf',data:file.b64}}
+      : {type:'image',   source:{type:'base64',media_type:file.mime,data:file.b64}};
+    const prompt = text || 'Please analyze this document. If it contains lab results, list every test with values and flags, note trends vs previous results, and summarize findings. If it contains medications, extract the full list.';
+    apiContent = [fb, {type:'text',text:prompt}];
+    displayText = text || `📄 ${file.name}`;
+    const files = load(FILES_KEY);
+    files.push({name:file.name, date:new Date().toLocaleDateString()});
+    save(FILES_KEY, files);
+  } else {
+    apiContent = text;
+  }
+
+  inp.value=''; resize(inp); removeAttach();
+  document.getElementById('sugs').innerHTML='';
+
+  const um = {role:'user', content:apiContent, displayText, timestamp:new Date().toISOString(), hasFile:!!file, fileName:file?.name};
+  conv.push(um); renderMsg(um); scrollBottom();
+
+  busy=true; showTyping(); document.getElementById('sb').disabled=true;
+
+  try {
+    const msgs = conv.slice(-16).map(m=>({
+      role:m.role,
+      content: m.role==='user'&&m.content!==m.displayText ? m.content : (typeof m.content==='string'?m.content:m.displayText)
+    }));
+    let response = await claude(msgs);
+    const mu = extractMedUpdate(response);
+    if(mu) applyMedUpdate(mu);
+    response = stripMedUpdate(response);
+
+    hideTyping(); busy=false; document.getElementById('sb').disabled=false;
+    const am = {role:'assistant', content:response, displayText:response, timestamp:new Date().toISOString()};
+    conv.push(am); renderMsg(am); scrollBottom();
+    save(CONV_KEY, conv);
+    if(conv.length>20) compress();
+    showSugs();
+  } catch(err) {
+    hideTyping(); busy=false; document.getElementById('sb').disabled=false;
+    showToast('Error: '+err.message,'error');
+  }
+}
+
+async function compress() {
+  const old = conv.slice(0,-10);
+  if(old.length<4) return;
+  try {
+    const r = await claude([{role:'user',content:'Summarize the key clinical findings from this conversation in concise bullet points. Include specific lab values, medication changes, and trends.\n\n'+old.map(m=>m.role.toUpperCase()+': '+m.displayText).join('\n\n')}]);
+    const ex = loadStr(SUMM_KEY);
+    localStorage.setItem(SUMM_KEY, (ex?ex+'\n\n---\n\n':'')+r);
+    conv = conv.slice(-10);
+    save(CONV_KEY, conv);
+  } catch(e){}
+}
+
+// ── RENDER ──
+function renderMsg(msg) {
+  const el = document.getElementById('messages');
+  const empty = el.querySelector('.empty');
+  if(empty) empty.remove();
+
+  const d = document.createElement('div');
+  d.className = 'msg '+msg.role;
+  const t = new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  let body = '';
+  if(msg.hasFile && msg.fileName) {
+    body += `<div class="attach-card"><span style="font-size:18px">${msg.fileName.endsWith('.pdf')?'📄':'🖼️'}</span><span class="attach-name">${msg.fileName}</span></div>`;
+  }
+  const txt = msg.displayText;
+  if(txt && !txt.startsWith('📄 ')) body += fmt(txt);
+  else if(!msg.hasFile) body += fmt(txt);
+
+  d.innerHTML = `<div class="avatar">${msg.role==='assistant'?'🧬':'👤'}</div><div><div class="bubble">${body}</div><div class="msg-time">${t}</div></div>`;
+  el.appendChild(d);
+}
+
+function fmt(t) {
+  if(!t) return '';
+  return t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(0,0,0,.07);padding:1px 4px;border-radius:3px;font-family:DM Mono,monospace;font-size:12px">$1</code>')
+    .replace(/\bHIGH\b/g,'<span class="flag-h">HIGH ↑</span>')
+    .replace(/\bLOW\b/g,'<span class="flag-l">LOW ↓</span>')
+    .replace(/\bNORMAL\b/g,'<span class="flag-n">NORMAL ✓</span>')
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+
+function showTyping() {
+  const c=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.id='ty'; d.className='typing-row';
+  d.innerHTML='<div class="avatar" style="width:30px;height:30px;border-radius:50%;background:var(--teal-bg);display:flex;align-items:center;justify-content:center;font-size:14px">🧬</div><div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="font-size:11px;color:var(--ink3);margin-left:4px">Thinking…</span></div>';
+  c.appendChild(d); scrollBottom();
+}
+function hideTyping() { document.getElementById('ty')?.remove(); }
+function scrollBottom() { const e=document.getElementById('messages'); setTimeout(()=>e.scrollTop=e.scrollHeight,50); }
+
+// ── SUGGESTIONS ──
+const SUGS = [
+  "What's trending in my recent labs?","Any signs of rejection or infection?",
+  "How is my tacrolimus level?","What are my kidney function markers?",
+  "Explain my immunosuppression balance","What should I ask my transplant team?",
+  "How has my WBC changed over time?","Any drug interactions to watch for?"
+];
+function showSugs() {
+  if(conv.length<2) return;
+  const el=document.getElementById('sugs');
+  el.innerHTML=[...SUGS].sort(()=>Math.random()-.5).slice(0,3).map(s=>`<button class="sug" onclick="qs('${s.replace(/'/g,"\\'")}')"> ${s}</button>`).join('');
+}
+function qs(t){ document.getElementById('inp').value=t; send(); }
+
+// ── CLEAR ──
+function clearConfirm() {
+  if(!confirm('Clear this conversation? This cannot be undone.')) return;
+  [CONV_KEY,FILES_KEY,SUMM_KEY].forEach(k=>localStorage.removeItem(k));
+  conv=[];
+  document.getElementById('messages').innerHTML='';
+  document.getElementById('sugs').innerHTML='';
+  showEmpty();
+  showToast('Conversation cleared');
+}
+
+// ── EMPTY STATE ──
+function showEmpty() {
+  document.getElementById('messages').innerHTML=`
+    <div class="empty">
+      <div class="empty-icon">🧬</div>
+      <div class="empty-title">Clinical Assistant</div>
+      <div class="empty-sub">Upload any lab result or medication document — I'll analyze it, track trends over time, flag abnormal values, and answer your clinical questions about Cocomi's post-transplant care.</div>
+      <button class="empty-btn" onclick="document.getElementById('fi').click()">📎 Upload First Document</button>
+    </div>`;
+}
+
+// ── INPUT HELPERS ──
+function onKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+function showToast(msg,type='') { const e=document.getElementById('toast'); e.textContent=msg; e.className='toast show'+(type?' '+type:''); setTimeout(()=>e.className='toast',3000); }
+
+// ── INIT ──
+conv = load(CONV_KEY);
+if(!conv.length) {
+  showEmpty();
+} else {
+  conv.forEach(m=>renderMsg(m));
+  scrollBottom();
+  if(conv.length>=2) showSugs();
+}
+</script>
+</body>
+</html>
