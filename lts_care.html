@@ -841,7 +841,8 @@ async function runSyncDebug() {
     ];
     for (const { key, module } of modules) {
       const { data, error } = await sb.from('health_records').select('data').eq('user_id', uid).eq('module', module).order('recorded_at');
-      if (error || !data?.length) continue;
+      if (error) { el.textContent += `❌ ${module}: ${error.message}\n`; continue; }
+      if (!data?.length) { el.textContent += `⚠️ ${module}: no records in Supabase\n`; continue; }
       localStorage.setItem(key, JSON.stringify(data.map(r => r.data)));
       el.textContent += `✅ pulled ${module} (${data.length})\n`;
     }
