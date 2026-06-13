@@ -268,11 +268,16 @@ function parseJSON(text) {
   const s = clean.indexOf('[')!==-1?clean.indexOf('['):clean.indexOf('{');
   const e = Math.max(clean.lastIndexOf(']'),clean.lastIndexOf('}'));
   if(s!==-1&&e!==-1&&e>s) clean=clean.substring(s,e+1);
-  // Replace known non-ASCII
-  clean = clean.replace(/µ/g,'u').replace(/μ/g,'u').replace(/×/g,'x').replace(/[^\x20-\x7E\n\r\t]/g,'');
+  // Replace known non-ASCII characters
+  clean = clean.replace(/µ/g,'u').replace(/μ/g,'u').replace(/×/g,'x');
+  // Remove remaining non-ASCII
+  let result = '';
+  for(let i=0;i<clean.length;i++){const c=clean.charCodeAt(i);if(c>=32&&c<=126||c===10||c===13||c===9)result+=clean[i];}
+  clean = result;
   // Fix trailing commas
-  clean = clean.replace(/,(\s*[}\]])/g,'$1');
-  return JSON.parse(clean);
+  clean = clean.replace(/,(\s*[\}\]])/g,'$1');
+  try { return JSON.parse(clean); }
+  catch(e) { throw new Error('JSON parse failed: ' + e.message); }
 }
 
 // ══════════════════════════════════════════════════
@@ -349,7 +354,7 @@ function buildConfirmRow(lab, i) {
         badge +
         '<span style="font-size:11px;font-weight:700;color:' + flagClr + '">' + flagTxt + '</span>' +
       '</div>' +
-      '<button onclick="document.getElementById('cr-' + i + '').remove()" style="background:none;border:none;color:#8A9EAF;cursor:pointer;font-size:16px">✕</button>' +
+      '<button onclick="document.getElementById(\'cr-' + i + '\').remove()" style="background:none;border:none;color:#8A9EAF;cursor:pointer;font-size:16px">&#x2715;</button>' +
     '</div>' +
     '<div style="margin-bottom:10px">' +
       '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#8A9EAF;margin-bottom:4px">Test Name</div>' +
