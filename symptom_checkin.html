@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Symptom Check-in</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -452,7 +454,10 @@ const SYM_WEIGHTS = {
 // ══════════════════════════════════════════════════
 const REC_KEY = 'symptom_checkins_v1';
 function getRecords() { try { return JSON.parse(localStorage.getItem(REC_KEY)||'[]'); } catch(e) { return []; } }
-function saveRecords(r) { localStorage.setItem(REC_KEY, JSON.stringify(r)); }
+function saveRecords(r) {
+  localStorage.setItem(REC_KEY, JSON.stringify(r));
+  syncSaveClinical('symptoms', r).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+}
 
 // ══════════════════════════════════════════════════
 //  BASELINE CALCULATION
@@ -791,7 +796,7 @@ function renderTrendChart(sorted, labels) {
       <div class="chart-wrap"><canvas id="chart-sym"></canvas></div>
     </div>`;
 
-  setTimeout(() => {
+  setTimeout(async () => {
     trendCharts.main = new Chart(document.getElementById('chart-sym'), {
       type: 'line',
       data: { labels, datasets: [
@@ -891,6 +896,14 @@ function showToast(msg,type=''){const el=document.getElementById('toast');el.tex
   updateNudge();
   updateBaselineNotice();
   updateWellnessPreview();
+})();
+// Pull from Supabase after init
+(async()=>{
+  const remote = await syncLoadClinical('symptoms');
+  if(remote&&Array.isArray(remote)&&remote.length){
+    localStorage.setItem(REC_KEY, JSON.stringify(remote));
+    updateNudge(); updateBaselineNotice(); updateWellnessPreview();
+  }
 })();
 </script>
 </body>

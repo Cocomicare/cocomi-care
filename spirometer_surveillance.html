@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spirometer Surveillance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -403,7 +405,10 @@ function getRecords() {
   try { return JSON.parse(localStorage.getItem(REC_KEY) || '[]'); }
   catch(e) { return []; }
 }
-function saveRecords(r) { localStorage.setItem(REC_KEY, JSON.stringify(r)); }
+function saveRecords(r) {
+  localStorage.setItem(REC_KEY, JSON.stringify(r));
+  syncSaveClinical('spirometer', r).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+}
 
 const DEFAULT_SETTINGS = { target: null, warnPct: 80, cadence: 1 };
 function getSettings() {
@@ -828,9 +833,13 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 // ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
-clearLog();
-loadSettings();
-updateLastLogged();
+(async()=>{
+  const remote = await syncLoadClinical('spirometer');
+  if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  clearLog();
+  loadSettings();
+  updateLastLogged();
+})();
 
 
 </script>

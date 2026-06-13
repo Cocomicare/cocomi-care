@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Medications</title>
 <style>
@@ -196,7 +198,10 @@ const MEDS_KEY = 'clinical_meds_v1';
 const CAT_ORDER = ['Immunosuppression','Antiviral','Antifungal','Antibiotic','Cardiac','Other'];
 
 function getMeds()    { try{return JSON.parse(localStorage.getItem(MEDS_KEY)||'[]');}catch(e){return[];} }
-function saveMeds(d)  { localStorage.setItem(MEDS_KEY, JSON.stringify(d)); }
+function saveMeds(d) {
+  localStorage.setItem(MEDS_KEY, JSON.stringify(d));
+  syncSaveClinical('medications', d).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+}
 
 // ── RENDER ──
 function render() {
@@ -434,8 +439,14 @@ function initKnownMeds() {
   saveMeds(known.map((m,i)=>({...m, id:String(i+1), active:true, updated:now})));
 }
 
-initKnownMeds();
-render();
+(async () => {
+  const remote = await syncLoadClinical('medications');
+  if (remote && Array.isArray(remote) && remote.length) {
+    localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
+  }
+  initKnownMeds();
+  render();
+})();
 </script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vital Signs Surveillance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -659,7 +661,10 @@ function getRecords(vital) {
   try { return JSON.parse(localStorage.getItem(SK(vital)) || '[]'); }
   catch(e) { return []; }
 }
-function saveRecords(vital, data) { localStorage.setItem(SK(vital), JSON.stringify(data)); }
+function saveRecords(vital, data) {
+  localStorage.setItem(SK(vital), JSON.stringify(data));
+  syncSaveClinical('vitals_' + vital, data).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+}
 
 // ══════════════════════════════════════════════════
 //  SETTINGS
@@ -1234,7 +1239,14 @@ function initVitalDateTime(vital) {
 
 VITALS.forEach(v => initVitalDateTime(v));
 loadSettings();
-renderDashboard();
+(async()=>{
+  const vitals=['spo2','hr','bp','wt','temp'];
+  for(const v of vitals){
+    const remote = await syncLoadClinical('vitals_'+v);
+    if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(SK(v), JSON.stringify(remote));
+  }
+  renderDashboard();
+})();
 
 
 </script>

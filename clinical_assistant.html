@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clinical Assistant</title>
 <style>
@@ -206,6 +208,7 @@ function applyMedUpdate(updates) {
     if(i>=0) meds[i]=entry; else meds.push(entry);
   });
   save(MEDS_KEY, meds);
+  syncSaveClinical('medications', meds).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
   showToast('Medication list updated ✓','success');
 }
 
@@ -242,7 +245,17 @@ async function send() {
     apiContent = [fb, {type:'text',text:prompt}];
     displayText = text || `📄 ${file.name}`;
     const files = load(FILES_KEY);
-    files.push({name:file.name, date:new Date().toLocaleDateString()});
+    const fileEntry = {name:file.name, date:new Date().toLocaleDateString(), storagePath:null};
+    // Upload file to Supabase Storage
+    syncUploadFile(file.b64, file.mime, file.name).then(path => {
+      if (path) {
+        fileEntry.storagePath = path;
+        files.push(fileEntry);
+        save(FILES_KEY, files);
+        syncSaveClinical('files', files).catch(()=>{});
+      }
+    });
+    files.push(fileEntry);
     save(FILES_KEY, files);
   } else {
     apiContent = text;
@@ -270,6 +283,8 @@ async function send() {
     const am = {role:'assistant', content:response, displayText:response, timestamp:new Date().toISOString()};
     conv.push(am); renderMsg(am); scrollBottom();
     save(CONV_KEY, conv);
+    // Sync conversation to Supabase
+    syncSaveClinical('conversation', conv).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
     if(conv.length>20) compress();
     showSugs();
   } catch(err) {
@@ -377,14 +392,24 @@ function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scroll
 function showToast(msg,type='') { const e=document.getElementById('toast'); e.textContent=msg; e.className='toast show'+(type?' '+type:''); setTimeout(()=>e.className='toast',3000); }
 
 // ── INIT ──
-conv = load(CONV_KEY);
-if(!conv.length) {
-  showEmpty();
-} else {
-  conv.forEach(m=>renderMsg(m));
-  scrollBottom();
-  if(conv.length>=2) showSugs();
-}
+(async () => {
+  // Pull latest data from Supabase
+  const [remoteConv, remoteMeds] = await Promise.all([
+    syncLoadClinical('conversation'),
+    syncLoadClinical('medications')
+  ]);
+  if (remoteConv) save(CONV_KEY, remoteConv);
+  if (remoteMeds) save(MEDS_KEY, remoteMeds);
+
+  conv = load(CONV_KEY);
+  if(!conv.length) {
+    showEmpty();
+  } else {
+    conv.forEach(m=>renderMsg(m));
+    scrollBottom();
+    if(conv.length>=2) showSugs();
+  }
+})();
 </script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cocomi Care</title>
 <style>
@@ -244,6 +246,22 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 
 <script>
 // ══════════════════════════════════════════════════
+//  AUTH GATE — redirect to login if not authenticated
+// ══════════════════════════════════════════════════
+(async function() {
+  const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
+    return;
+  }
+  // Pull latest data from Supabase into localStorage
+  await syncPullAll();
+})();
+
+// ══════════════════════════════════════════════════
 //  MODULE DEFINITIONS
 // ══════════════════════════════════════════════════
 const MODULES = [
@@ -347,7 +365,7 @@ const MODULES = [
         return{
           val: active.length,
           unit: ' active',
-          sub: active.slice(0,2).map(m=>m.name).join(', ') + (active.length>2?'…':''),
+          sub: active.slice(0,2).map(m=>m.name+(m.dose?' '+m.dose:'')).join(', ') + (active.length>2?'…':''),
           since: lastDate ? daysSince(lastDate) : null
         };
       } catch(e){return{val:null,sub:'Current medication list',since:null};}
