@@ -78,15 +78,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 /* Confirm grid */
 .confirm-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:50vh;overflow-y:auto;}
-.confirm-row{display:grid;grid-template-columns:1fr 70px 65px 65px 65px;gap:6px;align-items:center;}
-.confirm-hdr{display:grid;grid-template-columns:1fr 70px 65px 65px 65px;gap:6px;margin-bottom:4px;}
-.cin{padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink);background:var(--bg);width:100%;}
+.confirm-row{display:block;}
+.confirm-hdr{display:none;}
+.cin{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%;}
 .cin:focus{outline:none;border-color:var(--lab);}
-.cin-num{padding:6px 6px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg);width:100%;text-align:center;-moz-appearance:textfield;}
+.cin-num{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--bg);width:100%;text-align:center;-moz-appearance:textfield;}
 .cin-num::-webkit-outer-spin-button,.cin-num::-webkit-inner-spin-button{-webkit-appearance:none;}
 .cin-num:focus{outline:none;border-color:var(--lab);}
-.row-new-badge{font-size:10px;font-weight:700;color:var(--lab);background:var(--lab-bg);padding:1px 5px;border-radius:6px;flex-shrink:0;}
-.row-existing-badge{font-size:10px;color:var(--ink3);padding:1px 5px;}
+.row-new-badge{font-size:10px;font-weight:700;color:var(--lab);background:var(--lab-bg);padding:2px 7px;border-radius:6px;flex-shrink:0;}
+.row-existing-badge{font-size:10px;color:var(--ink3);padding:2px 5px;}
+.confirm-row-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
+.confirm-row-card.flag-high{border-color:#f0c0c0;background:var(--danger-bg);}
+.confirm-row-card.flag-low{border-color:#c0c8f0;background:#EEF2FF;}
 
 /* History */
 .hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
@@ -135,7 +138,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 
 @media(max-width:480px){
   .page{padding:14px 12px 40px;}
-  .confirm-row,.confirm-hdr{grid-template-columns:1fr 60px 56px 56px 56px;}
 }
 </style>
 </head>
@@ -289,26 +291,26 @@ async function processFile(file) {
     const b64  = await toB64(file);
     const mime = getMime(file);
 
-    const prompt = `You are analyzing a medical lab results document.
+    const prompt = `You are analyzing a medical lab results document from a hospital patient portal.
 
-Extract EVERY lab test result you can find. For each test return:
-- key: camelCase identifier, no spaces (e.g. "wbc", "hemoglobin", "tacrolimusLevel", "crpHighSensitivity")
-- name: full display name (e.g. "WBC", "Hemoglobin", "Tacrolimus Level", "CRP High Sensitivity")
-- value: numeric result as a number (not a string)
-- unit: unit using ONLY ASCII - write uL not µL, use x10E3/uL not x10E3/µL
-- refLow: lower reference range as number or null if not provided
-- refHigh: upper reference range as number or null if not provided
-- flag: "high" if value > refHigh, "low" if value < refLow, "normal" otherwise, "na" if no reference range
-- decimals: decimal places to display (0, 1, or 2)
-- category: panel type such as "CBC", "CMP", "Immunosuppression", "Inflammation", "Thyroid", "Liver", "Kidney", "Lipids", or best match
+Extract EVERY lab test result. For each test return a JSON object:
+- key: camelCase identifier (e.g. "wbc", "hemoglobin", "tacrolimusLevel", "procalcitonin")
+- name: full test name as shown in document
+- value: numeric result as a NUMBER (e.g. 20.5 not "20.5")
+- unit: unit in plain ASCII only — replace µ with u, so x10E3/uL not x10E3/µL
+- refLow: lower limit of normal range as a NUMBER — look carefully for "Normal range: X - Y" or reference intervals. Extract X as refLow
+- refHigh: upper limit of normal range as a NUMBER — extract Y as refHigh. Only use null if truly no range is given
+- flag: "high" if value > refHigh, "low" if value < refLow, "normal" if within range, "na" only if no reference range exists
+- decimals: 0, 1, or 2 decimal places appropriate for this test
+- category: "CBC", "CMP", "Immunosuppression", "Inflammation", "Thyroid", "Liver", "Kidney", "Lipids", "Coagulation", or best match
 
-CRITICAL RULES:
-- ASCII characters ONLY — no µ, no ×, no special symbols
-- value must be a number not a string
-- Start response with [ and end with ] — no markdown, no backticks, no explanation
+RULES:
+- ASCII only — no µ no × no special chars
+- value, refLow, refHigh must be numbers not strings
+- Reference ranges are usually shown as "Normal range: X - Y" — always extract both numbers
+- Start with [ end with ] — no markdown no backticks no preamble
 
-Example:
-[{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,"refHigh":10.0,"flag":"high","decimals":1,"category":"CBC"}]`;
+Example: [{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,"refHigh":10.0,"flag":"high","decimals":1,"category":"CBC"},{"key":"procalcitonin","name":"Procalcitonin","value":0.05,"unit":"ng/mL","refLow":null,"refHigh":0.5,"flag":"normal","decimals":2,"category":"Inflammation"}]`;
 
     document.getElementById('upload-analyzing-sub').textContent = 'Reading document…';
     const text      = await callClaude(b64, mime, prompt);
