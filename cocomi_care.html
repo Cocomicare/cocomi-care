@@ -149,7 +149,17 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 
 /* ── MODULE FRAME ── */
 #view-home   { display: block; }
-#view-module { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+#view-module {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  background: var(--bg);
+  z-index: 100;
+}
 #view-module.active { display: flex; }
 .module-bar {
   background: var(--surface); border-bottom: 1px solid var(--border);
@@ -193,7 +203,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
   <div class="dashboard">
 
     <!-- ── 1. IMMUNOSUPPRESSION — the why ── -->
-    <div class="immuno-banner" data-banner="immuno">
+    <div class="immuno-banner" onclick="openModule('immuno')">
       <div class="immuno-banner-icon">💊</div>
       <div class="immuno-banner-text">
         <div class="immuno-banner-title">Immunosuppression Balance</div>
@@ -203,7 +213,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
     </div>
 
     <!-- ── 2. HEALTH INDEX — the answer ── -->
-    <div class="health-banner" id="health-banner" data-banner="health">
+    <div class="health-banner" id="health-banner" onclick="openModule('health')">
       <div class="health-banner-icon">📈</div>
       <div class="health-banner-text">
         <div class="health-banner-label">Composite Health Index</div>
@@ -248,7 +258,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 // ══════════════════════════════════════════════════
 //  AUTH GATE — redirect to login if not authenticated
 // ══════════════════════════════════════════════════
-// Hide body until auth check completes to prevent flash
 document.documentElement.style.visibility = 'hidden';
 
 (async function() {
@@ -258,9 +267,7 @@ document.documentElement.style.visibility = 'hidden';
       window.location.replace('lts_care.html');
       return;
     }
-    // Auth passed — show page
     document.documentElement.style.visibility = 'visible';
-    // Pull latest data from Supabase, then re-render tiles with fresh data
     await syncPullAll();
     renderDashboard();
   } catch(e) {
@@ -442,7 +449,7 @@ function renderDashboard() {
       : `<div class="tile-empty">No data yet</div>`;
 
     groups[mod.group].push(`
-      <div class="tile ${mod.id} ${alertCls}" data-module="${mod.id}">
+      <div class="tile ${mod.id} ${alertCls}" onclick="openModule('${mod.id}')">
         <div class="tile-alert-dot"></div>
         <span class="tile-icon">${mod.icon}</span>
         <div class="tile-name">${mod.name}</div>
@@ -484,19 +491,6 @@ function goHome() {
   document.getElementById('module-iframe').src = 'about:blank';
   renderDashboard();
 }
-
-// Event delegation for tile clicks — works reliably on iOS Safari
-// and survives innerHTML re-renders
-document.addEventListener('click', function(e) {
-  const tile = e.target.closest('[data-module]');
-  if (tile) openModule(tile.dataset.module);
-});
-
-// Also handle banner clicks via data attributes
-document.addEventListener('click', function(e) {
-  const banner = e.target.closest('[data-banner]');
-  if (banner) openModule(banner.dataset.banner);
-});
 
 // ══════════════════════════════════════════════════
 //  INIT
