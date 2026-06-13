@@ -810,6 +810,74 @@ async function runSyncDebug() {
   }
 
   el.textContent += '\nDone.';
+
+  // Push local data up to Supabase (for first-time sync from this device)
+  el.textContent += '\n\n── Pushing local data to Supabase ──\n';
+  try {
+    const { data: { session: s2 } } = await sb.auth.getSession();
+    if (!s2) { el.textContent += '❌ No session for push\n'; return; }
+    const uid = s2.user.id;
+    let pushed = 0;
+
+    // Push clinical_meds
+    const meds = localStorage.getItem('clinical_meds_v1');
+    if (meds) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'medications', data:JSON.parse(meds), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (error) el.textContent += `❌ meds: ${error.message}\n`;
+      else { el.textContent += `✅ medications pushed\n`; pushed++; }
+    }
+
+    // Push symptoms
+    const syms = localStorage.getItem('symptom_checkins_v1');
+    if (syms) {
+      const recs = JSON.parse(syms);
+      for (const rec of recs) {
+        const ts = rec.date ? rec.date+'T00:00:00Z' : new Date().toISOString();
+        await sb.from('health_records').upsert(
+          { user_id:uid, module:'symptoms', recorded_at:ts, data:rec },
+          { onConflict:'user_id,module,recorded_at' }
+        );
+      }
+      el.textContent += `✅ symptoms pushed (${recs.length})\n`; pushed++;
+    }
+
+    // Push peak flow
+    const pf = localStorage.getItem('peak_flow_sessions_v1');
+    if (pf) {
+      const recs = JSON.parse(pf);
+      for (const rec of recs) {
+        const ts = rec.date ? rec.date+'T'+(rec.time||'00:00')+':00Z' : new Date().toISOString();
+        await sb.from('health_records').upsert(
+          { user_id:uid, module:'peak_flow', recorded_at:ts, data:rec },
+          { onConflict:'user_id,module,recorded_at' }
+        );
+      }
+      el.textContent += `✅ peak_flow pushed (${recs.length})\n`; pushed++;
+    }
+
+    // Push vitals
+    for (const v of ['spo2','hr','bp','wt','temp']) {
+      const raw = localStorage.getItem(`vss_${v}_v1`);
+      if (!raw) continue;
+      const recs = JSON.parse(raw);
+      for (const rec of recs) {
+        const ts = rec.date ? rec.date+'T'+(rec.time||'00:00')+':00Z' : new Date().toISOString();
+        await sb.from('health_records').upsert(
+          { user_id:uid, module:`vitals_${v}`, recorded_at:ts, data:rec },
+          { onConflict:'user_id,module,recorded_at' }
+        );
+      }
+      el.textContent += `✅ vitals_${v} pushed (${recs.length})\n`; pushed++;
+    }
+
+    el.textContent += pushed > 0 ? `\n✅ Push complete — ${pushed} datasets uploaded\n` : `\n⚠️ Nothing to push (localStorage empty)\n`;
+    el.textContent += 'Now open this page on device 2 and tap Force Sync to pull.';
+  } catch(e) {
+    el.textContent += `❌ Push error: ${e.message}\n`;
+  }
 }
 
 function showDashboard() {
