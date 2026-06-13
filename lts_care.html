@@ -811,7 +811,46 @@ async function runSyncDebug() {
 
   el.textContent += '\nDone.';
 
-  // Push local data up to Supabase (for first-time sync from this device)
+  // Pull from Supabase into localStorage
+  el.textContent += '\n\n── Pulling Supabase → localStorage ──\n';
+  try {
+    const { data: { session: s3 } } = await sb.auth.getSession();
+    if (!s3) { el.textContent += '❌ No session\n'; return; }
+    const uid = s3.user.id;
+
+    // Pull clinical data
+    const types = ['medications','conversation','files','summary'];
+    const keyMap = { medications:'clinical_meds_v1', conversation:'clinical_conversation_v1', files:'clinical_files_v1', summary:'clinical_summary_v1' };
+    for (const type of types) {
+      const { data, error } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', type).single();
+      if (error || !data) continue;
+      localStorage.setItem(keyMap[type], JSON.stringify(data.data));
+      el.textContent += `✅ pulled ${type}\n`;
+    }
+
+    // Pull health records
+    const modules = [
+      { key:'symptom_checkins_v1',   module:'symptoms' },
+      { key:'peak_flow_sessions_v1', module:'peak_flow' },
+      { key:'spiro_records_v1',      module:'spirometer' },
+      { key:'vss_spo2_v1',           module:'vitals_spo2' },
+      { key:'vss_hr_v1',             module:'vitals_hr' },
+      { key:'vss_bp_v1',             module:'vitals_bp' },
+      { key:'vss_wt_v1',             module:'vitals_wt' },
+      { key:'vss_temp_v1',           module:'vitals_temp' },
+    ];
+    for (const { key, module } of modules) {
+      const { data, error } = await sb.from('health_records').select('data').eq('user_id', uid).eq('module', module).order('recorded_at');
+      if (error || !data?.length) continue;
+      localStorage.setItem(key, JSON.stringify(data.map(r => r.data)));
+      el.textContent += `✅ pulled ${module} (${data.length})\n`;
+    }
+
+    el.textContent += '\n✅ Sync complete — reloading dashboard\n';
+    renderDashboard();
+  } catch(e) {
+    el.textContent += `❌ Pull error: ${e.message}\n`;
+  }
   el.textContent += '\n\n── Pushing local data to Supabase ──\n';
   try {
     const { data: { session: s2 } } = await sb.auth.getSession();
