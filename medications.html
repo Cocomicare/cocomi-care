@@ -462,20 +462,19 @@ function initKnownMeds() {
 }
 
 (async () => {
-  // One-time cleanup: detect and remove hardcoded defaults that were saved previously
+  // One-time cleanup: wipe old hardcoded defaults from localStorage
   const DEFAULT_NAMES = ['Tacrolimus','CellCept','Prednisone','Valganciclovir',
     'Posaconazole','Amphotericin B','Atovaquone','Amikacin','Rifabutin','Clofazimine'];
   const current = getMeds();
-  const allAreDefaults = current.length > 0 &&
-    current.every(m => m._isDefault || DEFAULT_NAMES.includes(m.name));
+  const allAreDefaults = current.length > 0 && current.every(m => m._isDefault || DEFAULT_NAMES.includes(m.name));
   if (allAreDefaults) {
     localStorage.removeItem(MEDS_KEY);
     localStorage.removeItem('clinical_meds_imported');
   }
 
-  // Pull real data from Supabase
+  // Always pull from Supabase — remote wins if it has data
   const remote = await syncLoadClinical('medications');
-  if (remote && Array.isArray(remote) && remote.length && remote.some(m => !m._isDefault)) {
+  if (remote && Array.isArray(remote) && remote.length) {
     localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
     localStorage.setItem('clinical_meds_imported', '1');
   }

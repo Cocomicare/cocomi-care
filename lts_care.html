@@ -766,6 +766,8 @@ function showDashboard() {
   }
   setGreeting();
   renderDashboard();
+  // Pull all data from Supabase then re-render tiles with fresh data
+  syncPullAll().then(() => renderDashboard());
 }
 
 function setGreeting() {
