@@ -440,12 +440,25 @@ function initKnownMeds() {
 }
 
 (async () => {
+  // Pull from Supabase first
   const remote = await syncLoadClinical('medications');
   if (remote && Array.isArray(remote) && remote.length) {
     localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
   }
-  initKnownMeds();
+  // Only load hardcoded defaults if there's truly nothing saved yet
+  const existing = getMeds();
+  if (!existing.length) {
+    initKnownMeds();
+  }
   render();
+
+  // Listen for updates from Clinical Assistant (same-origin localStorage changes)
+  window.addEventListener('storage', e => {
+    if (e.key === MEDS_KEY) render();
+  });
+
+  // Also poll every 3 seconds in case storage event doesn't fire (same-tab iframe quirk)
+  setInterval(() => render(), 3000);
 })();
 </script>
 </body>

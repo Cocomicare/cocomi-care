@@ -204,11 +204,19 @@ function applyMedUpdate(updates) {
   const meds = load(MEDS_KEY);
   updates.forEach(u => {
     const i = meds.findIndex(m=>m.name.toLowerCase()===u.name.toLowerCase());
-    const entry = {id:i>=0?meds[i].id:Date.now().toString()+Math.random(), name:u.name, dose:u.dose||'', freq:u.freq||'', note:u.note||'', category:u.category||'Other', active:u.active!==false, updated:new Date().toISOString()};
+    const entry = {
+      id: i>=0 ? meds[i].id : Date.now().toString()+Math.random(),
+      name: u.name, dose: u.dose||'', freq: u.freq||'',
+      note: u.note||'', purpose: u.purpose||'', category: u.category||'Other',
+      active: u.active!==false, updated: new Date().toISOString()
+    };
     if(i>=0) meds[i]=entry; else meds.push(entry);
   });
   save(MEDS_KEY, meds);
+  // Sync to Supabase clinical_data table
   syncSaveClinical('medications', meds).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  // Dispatch storage event so Medications page iframe picks up the change immediately
+  window.dispatchEvent(new StorageEvent('storage', { key: MEDS_KEY, newValue: JSON.stringify(meds) }));
   showToast('Medication list updated ✓','success');
 }
 
