@@ -663,7 +663,13 @@ function getRecords(vital) {
 }
 function saveRecords(vital, data) {
   localStorage.setItem(SK(vital), JSON.stringify(data));
-  syncSaveClinical('vitals_' + vital, data).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  // Save each record individually to health_records table
+  const module = 'vitals_' + vital;
+  data.forEach(rec => {
+    const ts = rec.date ? rec.date + 'T' + (rec.time||'00:00') + ':00Z' : new Date().toISOString();
+    syncSaveHealthRecord(module, ts, rec).catch(()=>syncShowStatus('error'));
+  });
+  syncShowStatus('synced');
 }
 
 // ══════════════════════════════════════════════════
@@ -1242,8 +1248,11 @@ loadSettings();
 (async()=>{
   const vitals=['spo2','hr','bp','wt','temp'];
   for(const v of vitals){
-    const remote = await syncLoadClinical('vitals_'+v);
-    if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(SK(v), JSON.stringify(remote));
+    const rows = await syncLoadHealthRecords('vitals_'+v);
+    if(rows&&rows.length){
+      const remote = rows.map(r=>r.data);
+      localStorage.setItem(SK(v), JSON.stringify(remote));
+    }
   }
   renderDashboard();
 })();
