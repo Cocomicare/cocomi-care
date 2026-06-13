@@ -475,6 +475,10 @@ body {
       <div class="tiles-grid" id="tiles-medlabs"></div>
 
       <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:8px" id="last-updated"></div>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="runSyncDebug()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:11px;color:var(--ink3);cursor:pointer;font-family:'DM Sans',sans-serif">⟳ Force Sync</button>
+      </div>
+      <div id="sync-debug" style="display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ink2);line-height:1.8;white-space:pre-wrap"></div>
     </div>
 
     <div class="dash-footer">
@@ -752,6 +756,60 @@ async function handleSignOut() {
 // ══════════════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════════════
+async function runSyncDebug() {
+  const el = document.getElementById('sync-debug');
+  el.style.display = 'block';
+  el.textContent = 'Running sync debug...\n';
+
+  // 1. Check session
+  const { data: { session } } = await _sb.auth.getSession();
+  el.textContent += session ? `✅ Session: ${session.user.email}\n` : '❌ No session!\n';
+  if (!session) return;
+
+  const userId = session.user.id;
+  el.textContent += `User ID: ${userId.slice(0,8)}...\n\n`;
+
+  // 2. Check what's in Supabase clinical_data
+  el.textContent += '── Supabase clinical_data ──\n';
+  try {
+    const { data, error } = await _sb.from('clinical_data').select('data_type, updated_at').eq('user_id', userId);
+    if (error) { el.textContent += `❌ Error: ${error.message}\n`; }
+    else if (!data?.length) { el.textContent += '⚠️ No clinical_data rows found\n'; }
+    else { data.forEach(r => { el.textContent += `✅ ${r.data_type} (${r.updated_at?.slice(0,10)})\n`; }); }
+  } catch(e) { el.textContent += `❌ ${e.message}\n`; }
+
+  // 3. Check health_records
+  el.textContent += '\n── Supabase health_records ──\n';
+  try {
+    const { data, error } = await _sb.from('health_records').select('module').eq('user_id', userId);
+    if (error) { el.textContent += `❌ Error: ${error.message}\n`; }
+    else if (!data?.length) { el.textContent += '⚠️ No health_records found\n'; }
+    else {
+      const counts = {};
+      data.forEach(r => { counts[r.module] = (counts[r.module]||0)+1; });
+      Object.entries(counts).forEach(([m,c]) => { el.textContent += `✅ ${m}: ${c} records\n`; });
+    }
+  } catch(e) { el.textContent += `❌ ${e.message}\n`; }
+
+  // 4. Check localStorage
+  el.textContent += '\n── localStorage ──\n';
+  const keys = ['clinical_meds_v1','symptom_checkins_v1','peak_flow_sessions_v1','spiro_records_v1','vss_spo2_v1'];
+  keys.forEach(k => {
+    const val = localStorage.getItem(k);
+    if (!val) { el.textContent += `⚠️ ${k}: empty\n`; }
+    else {
+      try { const arr = JSON.parse(val); el.textContent += `✅ ${k}: ${arr.length} items\n`; }
+      catch(e) { el.textContent += `✅ ${k}: (data)\n`; }
+    }
+  });
+
+  // 5. Force pull
+  el.textContent += '\n── Forcing pull from Supabase ──\n';
+  const ok = await syncPullAll();
+  el.textContent += ok ? '✅ Pull completed — refreshing dashboard\n' : '❌ Pull failed\n';
+  renderDashboard();
+}
+
 function showDashboard() {
   showScreen('screen-dashboard');
   if (currentUser && !localStorage.getItem('lts_display_name')) {
