@@ -331,6 +331,47 @@ Example: [{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,
 // ══════════════════════════════════════════════════
 //  CONFIRM SCREEN
 // ══════════════════════════════════════════════════
+
+function buildConfirmRow(lab, i) {
+  const isHigh  = lab.flag === 'high';
+  const isLow   = lab.flag === 'low';
+  const flagTxt = isHigh ? 'HIGH' : isLow ? 'LOW' : lab.flag === 'normal' ? 'NORMAL' : 'NA';
+  const flagClr = isHigh ? '#C94040' : isLow ? '#4338CA' : lab.flag === 'normal' ? '#2D9E6B' : '#8A9EAF';
+  const cardBg  = isHigh ? 'background:#FAEAEA;border-color:#f0c0c0' : isLow ? 'background:#EEF2FF;border-color:#c0c8f0' : 'background:#fff';
+  const valStyle= isHigh ? 'border-color:#f0a0a0;background:#FAEAEA;color:#C94040' : isLow ? 'border-color:#a0a8e0;background:#EEF2FF;color:#4338CA' : 'background:#F0F4F8;color:#1A2533';
+  const badge   = lab._isNew
+    ? '<span style="background:#E0F2F5;color:#0E7490;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px">NEW</span>'
+    : '<span style="background:#E8EFF5;color:#8A9EAF;font-size:10px;padding:2px 7px;border-radius:5px">update</span>';
+
+  return '<div style="border:1.5px solid #D0DCE8;border-radius:10px;padding:14px;margin-bottom:10px;' + cardBg + '" id="cr-' + i + '">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;gap:6px">' +
+        badge +
+        '<span style="font-size:11px;font-weight:700;color:' + flagClr + '">' + flagTxt + '</span>' +
+      '</div>' +
+      '<button onclick="document.getElementById('cr-' + i + '').remove()" style="background:none;border:none;color:#8A9EAF;cursor:pointer;font-size:16px">✕</button>' +
+    '</div>' +
+    '<div style="margin-bottom:10px">' +
+      '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#8A9EAF;margin-bottom:4px">Test Name</div>' +
+      '<input style="width:100%;padding:9px 12px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Sans,sans-serif;font-size:14px;color:#1A2533;background:#F0F4F8" value="' + (lab.name||'') + '" id="cn-' + i + '">' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+      '<div>' +
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Value <span style="font-weight:400;text-transform:none">' + (lab.unit||'') + '</span></div>' +
+        '<input type="number" step="any" id="cv-' + i + '" value="' + (lab.value != null ? lab.value : '') + '" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:17px;font-weight:600;text-align:center;' + valStyle + ';-moz-appearance:textfield">' +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Ref Low</div>' +
+        '<input type="number" step="any" id="cl-' + i + '" value="' + (lab.refLow != null ? lab.refLow : '') + '" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:15px;color:#1A2533;background:#F0F4F8;text-align:center;-moz-appearance:textfield">' +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Ref High</div>' +
+        '<input type="number" step="any" id="ch-' + i + '" value="' + (lab.refHigh != null ? lab.refHigh : '') + '" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:15px;color:#1A2533;background:#F0F4F8;text-align:center;-moz-appearance:textfield">' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
 // Store pending labs for saveRecord
 let _pendingLabs = [];
 
@@ -369,42 +410,7 @@ function showConfirm(labs) {
       </div>
 
       <div class="confirm-grid" id="confirm-grid">
-        ${labs.map((lab,i)=>{
-          const isHigh = lab.flag==='high';
-          const isLow  = lab.flag==='low';
-          const flagTxt= isHigh?'HIGH':isLow?'LOW':lab.flag==='normal'?'NORMAL':'NA';
-          const flagClr= isHigh?'color:var(--danger)':isLow?'color:#4338CA':lab.flag==='normal'?'color:var(--good)':'color:var(--ink3)';
-          const cardBdr= isHigh?'border-color:#f0c0c0;background:var(--danger-bg)':isLow?'border-color:#c0c8f0;background:#EEF2FF':'';
-          const valBdr = isHigh?'border-color:#f0a0a0;background:var(--danger-bg);color:var(--danger)':isLow?'border-color:#a0a8e0;background:#EEF2FF;color:#4338CA':'background:var(--bg);color:var(--ink)';
-          return \`
-          <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;\${cardBdr}" id="cr-\${i}">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <div style="display:flex;align-items:center;gap:6px">
-                \${lab._isNew?'<span style="background:var(--lab-bg);color:var(--lab);font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px">NEW</span>':'<span style="background:var(--surface2);color:var(--ink3);font-size:10px;padding:2px 7px;border-radius:5px">↑ update</span>'}
-                <span style="font-size:11px;font-weight:700;\${flagClr}">\${flagTxt}</span>
-              </div>
-              <button onclick="document.getElementById('cr-\${i}').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:16px">✕</button>
-            </div>
-            <div style="margin-bottom:10px">
-              <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:4px">Test Name</div>
-              <input style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--surface)" value="\${lab.name}" id="cn-\${i}">
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-              <div>
-                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Value <span style="font-weight:400;text-transform:none">\${lab.unit||''}</span></div>
-                <input type="number" step="any" id="cv-\${i}" value="\${lab.value??''}" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:16px;font-weight:600;text-align:center;\${valBdr};-moz-appearance:textfield">
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Ref Low</div>
-                <input type="number" step="any" id="cl-\${i}" value="\${lab.refLow??''}" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--surface);text-align:center;-moz-appearance:textfield">
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Ref High</div>
-                <input type="number" step="any" id="ch-\${i}" value="\${lab.refHigh??''}" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--surface);text-align:center;-moz-appearance:textfield">
-              </div>
-            </div>
-          </div>\`;
-        }).join('')}
+        ${labs.map((lab,i) => buildConfirmRow(lab, i)).join('')}
       </div>
 
       <div style="display:flex;gap:10px;justify-content:flex-end">
