@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab Results Tracker</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<title>Lab Results — Cocomi Care</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
@@ -14,192 +13,156 @@
   --good:#2D9E6B;--good-bg:#E8F7F1;
   --warn:#E07B39;--warn-bg:#FDF0E8;
   --danger:#C94040;--danger-bg:#FAEAEA;
-  --lab:#0E7490;--lab-bg:#E0F2F5;--lab-mid:#1A8FAA;
+  --lab:#0E7490;--lab-bg:#E0F2F5;--lab-light:#f0fafc;
   --radius:12px;--radius-sm:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;}
 
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;}
-.logo{display:flex;align-items:baseline;gap:8px;}
-.logo-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);}
-.logo-sub{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;height:100vh;max-width:680px;margin:0 auto;background:var(--surface);box-shadow:0 0 40px rgba(0,0,0,.08);}
 
-.tabs{display:flex;background:var(--surface2);border-bottom:1px solid var(--border);padding:0 16px;overflow-x:auto;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{padding:11px 14px;font-size:12px;font-weight:500;color:var(--ink2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;}
-.tab:hover{color:var(--lab);}
-.tab.active{color:var(--lab);border-bottom-color:var(--lab);}
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.header-left{display:flex;align-items:baseline;gap:8px;}
+.header-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);}
+.header-sub{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;}
+.header-actions{display:flex;gap:8px;}
+.hbtn{background:none;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;color:var(--ink2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.hbtn:hover{border-color:var(--lab);color:var(--lab);}
+.hbtn.active{background:var(--lab);color:#fff;border-color:var(--lab);}
 
-.page{display:none;padding:20px 16px 40px;max-width:640px;margin:0 auto;}
-.page.active{display:block;}
+/* ── VIEWS ── */
+.view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.view.active{display:flex;}
 
-/* Upload */
-.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:10px;}
-.upload-zone:hover{border-color:var(--lab);background:var(--lab-bg);}
-.upload-zone input{display:none;}
+/* ── CHAT VIEW ── */
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-.paste-btn{width:100%;padding:11px;background:var(--lab-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--lab);cursor:pointer;transition:all .15s;margin-bottom:14px;}
-.paste-btn:hover{border-color:var(--lab);}
+/* Message bubbles */
+.msg{display:flex;gap:10px;max-width:100%;}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;}
+.msg.assistant .msg-avatar{background:var(--lab-bg);color:var(--lab);}
+.msg.user .msg-avatar{background:var(--surface2);color:var(--ink2);}
+.msg-bubble{max-width:85%;padding:11px 14px;border-radius:14px;line-height:1.55;font-size:14px;}
+.msg.assistant .msg-bubble{background:var(--surface2);color:var(--ink);border-radius:4px 14px 14px 14px;}
+.msg.user .msg-bubble{background:var(--lab);color:#fff;border-radius:14px 4px 14px 14px;}
+.msg-bubble p{margin-bottom:8px;}
+.msg-bubble p:last-child{margin-bottom:0;}
+.msg-bubble ul,.msg-bubble ol{margin:6px 0 8px 18px;}
+.msg-bubble li{margin-bottom:4px;}
+.msg-bubble strong{font-weight:600;}
+.msg-bubble .flag-high{color:#ff6b6b;font-weight:600;}
+.msg-bubble .flag-low{color:#6b8cff;font-weight:600;}
+.msg-bubble .flag-ok{color:#51cf66;}
+.msg-time{font-size:10px;color:var(--ink3);margin-top:4px;text-align:right;}
+.msg.user .msg-time{text-align:left;}
 
-.or-div{display:flex;align-items:center;gap:10px;margin:6px 0 10px;}
-.or-div span{font-size:12px;color:var(--ink3);}
-.or-line{flex:1;height:1px;background:var(--border);}
+/* Lab upload card in chat */
+.lab-card{background:var(--lab-light);border:1px solid var(--lab-bg);border-radius:10px;padding:12px 14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+.lab-card-icon{font-size:22px;flex-shrink:0;}
+.lab-card-info{flex:1;min-width:0;}
+.lab-card-name{font-size:13px;font-weight:600;color:var(--lab);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lab-card-sub{font-size:11px;color:var(--ink3);}
 
-/* Analyzing */
-.analyzing{display:none;align-items:center;gap:12px;padding:14px 16px;background:var(--lab-bg);border-radius:var(--radius-sm);margin-bottom:14px;}
-.analyzing.show{display:flex;}
-.spinner{width:22px;height:22px;border:2px solid #9dd4de;border-top-color:var(--lab);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
-@keyframes spin{to{transform:rotate(360deg);}}
+/* Typing indicator */
+.typing{display:flex;align-items:center;gap:10px;padding:0 4px;}
+.typing-dots{display:flex;gap:4px;}
+.typing-dot{width:8px;height:8px;border-radius:50%;background:var(--ink3);animation:bounce .8s infinite;}
+.typing-dot:nth-child(2){animation-delay:.15s;}
+.typing-dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:scale(0.6);opacity:.4}40%{transform:scale(1);opacity:1}}
 
-/* Notice */
-.notice{border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.5;}
-.notice.success{background:var(--good-bg);color:var(--good);}
-.notice.error{background:var(--danger-bg);color:var(--danger);}
-.notice.info{background:var(--lab-bg);color:var(--lab);}
-.notice.warn{background:var(--warn-bg);color:var(--warn);}
+/* Suggested prompts */
+.suggestions{padding:8px 16px 0;display:flex;flex-wrap:wrap;gap:6px;}
+.suggestion{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--ink2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.suggestion:hover{background:var(--lab-bg);border-color:var(--lab);color:var(--lab);}
 
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
-.card-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink);margin-bottom:14px;}
+/* ── INPUT BAR ── */
+.input-bar{border-top:1px solid var(--border);padding:12px 16px;background:var(--surface);flex-shrink:0;}
+.upload-preview{background:var(--lab-light);border:1px solid var(--lab-bg);border-radius:8px;padding:8px 12px;margin-bottom:8px;display:none;align-items:center;gap:8px;}
+.upload-preview.show{display:flex;}
+.upload-preview-name{font-size:12px;font-weight:500;color:var(--lab);flex:1;}
+.upload-preview-remove{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:14px;padding:0;}
+.input-row{display:flex;gap:8px;align-items:flex-end;}
+.attach-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--ink3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .15s;}
+.attach-btn:hover{border-color:var(--lab);color:var(--lab);background:var(--lab-bg);}
+.msg-input{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);resize:none;outline:none;max-height:120px;line-height:1.4;transition:border-color .15s;}
+.msg-input:focus{border-color:var(--lab);background:var(--lab-light);}
+.send-btn{width:36px;height:36px;border-radius:50%;border:none;background:var(--lab);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .15s;}
+.send-btn:hover{background:#0c6680;}
+.send-btn:disabled{background:var(--border);cursor:not-allowed;}
+input[type=file]{display:none;}
 
-/* Lab value rows */
-.lab-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
-.lab-row:last-child{border-bottom:none;}
-.lab-name{flex:1;font-size:13px;font-weight:500;color:var(--ink);}
-.lab-ref{font-size:10px;color:var(--ink3);min-width:70px;text-align:right;}
-.lab-unit{font-size:11px;color:var(--ink3);min-width:55px;text-align:right;}
-.lab-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;min-width:65px;text-align:right;}
-.lab-flag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;min-width:36px;text-align:center;}
-.flag-high{background:var(--danger-bg);color:var(--danger);}
-.flag-low{background:#EEF2FF;color:#4338CA;}
-.flag-ok{background:var(--good-bg);color:var(--good);}
-.flag-new{background:var(--lab-bg);color:var(--lab);}
+/* ── HISTORY VIEW ── */
+.history-view{flex:1;overflow-y:auto;padding:16px;}
+.hist-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin:14px 0 8px;}
+.hist-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.hist-entry:hover{border-color:var(--lab);background:var(--lab-light);}
+.hist-entry-date{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink3);margin-bottom:4px;}
+.hist-entry-preview{font-size:13px;color:var(--ink2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.hist-entry-badge{display:inline-block;margin-top:6px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--lab-bg);color:var(--lab);}
 
-/* Confirm grid */
-.confirm-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:50vh;overflow-y:auto;}
-.confirm-row{display:block;}
-.confirm-hdr{display:none;}
-.cin{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%;}
-.cin:focus{outline:none;border-color:var(--lab);}
-.cin-num{padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:15px;color:var(--ink);background:var(--bg);width:100%;text-align:center;-moz-appearance:textfield;}
-.cin-num::-webkit-outer-spin-button,.cin-num::-webkit-inner-spin-button{-webkit-appearance:none;}
-.cin-num:focus{outline:none;border-color:var(--lab);}
-.row-new-badge{font-size:10px;font-weight:700;color:var(--lab);background:var(--lab-bg);padding:2px 7px;border-radius:6px;flex-shrink:0;}
-.row-existing-badge{font-size:10px;color:var(--ink3);padding:2px 5px;}
-.confirm-row-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
-.confirm-row-card.flag-high{border-color:#f0c0c0;background:var(--danger-bg);}
-.confirm-row-card.flag-low{border-color:#c0c8f0;background:#EEF2FF;}
+/* ── EMPTY STATE ── */
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px;}
+.empty-sub{font-size:14px;color:var(--ink2);line-height:1.6;max-width:380px;margin-bottom:24px;}
+.empty-start-btn{background:var(--lab);color:#fff;border:none;border-radius:20px;padding:12px 28px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+.empty-start-btn:hover{background:#0c6680;}
 
-/* History */
-.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
-.hist-header{display:flex;align-items:center;padding:12px 16px;gap:10px;cursor:pointer;transition:background .15s;}
-.hist-header:hover{background:var(--surface2);}
-.hist-datetime{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;flex:1;color:var(--ink);}
-.hist-type{font-size:11px;color:var(--ink3);background:var(--surface2);padding:2px 8px;border-radius:10px;}
-.hist-body{display:none;padding:4px 16px 14px;}
-
-/* Panel grid */
-.panel-group{margin-bottom:16px;}
-.panel-group-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
-
-/* Trend selector */
-.trend-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.trend-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--bg);color:var(--ink2);cursor:pointer;transition:all .15s;}
-.trend-pill.active{background:var(--lab);color:#fff;border-color:var(--lab);}
-
-/* Chart */
-.chart-wrap{position:relative;height:200px;}
-
-/* Buttons */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
-.btn-primary{background:var(--lab);color:#fff;}
-.btn-primary:hover{background:var(--lab-mid);}
-.btn-ghost{background:none;border:1px solid var(--border);color:var(--ink2);}
-.btn-ghost:hover{border-color:var(--lab);color:var(--lab);}
-.btn-sm{padding:6px 12px;font-size:12px;}
-.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #f0c0c0;}
-
-/* Empty */
-.empty{text-align:center;padding:40px 20px;color:var(--ink3);}
-.empty-icon{font-size:36px;margin-bottom:10px;}
-.empty-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink2);margin-bottom:5px;}
-.empty-sub{font-size:13px;line-height:1.5;}
-
-/* PDF preview */
-.pdf-prev{padding:12px 16px;background:var(--surface2);display:flex;align-items:center;gap:12px;border-radius:var(--radius);margin-bottom:12px;}
-.img-prev{width:100%;max-height:160px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);display:block;margin-bottom:12px;}
-
-/* Toast */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:var(--good);}
 .toast.error{background:var(--danger);}
-
-@media(max-width:480px){
-  .page{padding:14px 12px 40px;}
-}
 </style>
 </head>
 <body>
+<div class="app">
 
-<header>
-  <div class="logo">
-    <span class="logo-title">Lab Results</span>
-    <span class="logo-sub">Surveillance</span>
-  </div>
-  <div style="display:flex;gap:8px">
-    <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
-  </div>
-</header>
-
-<div class="tabs">
-  <button class="tab active" onclick="showTab('upload')"  id="tab-upload">+ Upload</button>
-  <button class="tab"        onclick="showTab('history')" id="tab-history">History</button>
-  <button class="tab"        onclick="showTab('trends')"  id="tab-trends">Trends</button>
-  <button class="tab"        onclick="showTab('panel')"   id="tab-panel">My Panel</button>
-</div>
-
-<!-- UPLOAD -->
-<div class="page active" id="page-upload">
-  <div class="analyzing" id="upload-analyzing">
-    <div class="spinner"></div>
-    <div>
-      <div style="font-size:13px;font-weight:600;color:var(--lab)">Claude is reading your lab results…</div>
-      <div style="font-size:11px;color:var(--ink3)" id="upload-analyzing-sub">Extracting values and checking reference ranges</div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <span class="header-title">Lab Results</span>
+      <span class="header-sub">AI Assistant</span>
+    </div>
+    <div class="header-actions">
+      <button class="hbtn active" onclick="showView('chat')" id="btn-chat">💬 Chat</button>
+      <button class="hbtn" onclick="showView('history')" id="btn-history">📋 History</button>
+      <button class="hbtn" onclick="clearConfirm()" id="btn-clear">🗑</button>
     </div>
   </div>
-  <div id="upload-notice"></div>
-  <div id="upload-preview"></div>
-  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('upload-file-input').click()">
-    <input type="file" id="upload-file-input" accept="image/*,.pdf,application/pdf" onchange="handleFile(this)">
-    <div style="font-size:36px;margin-bottom:8px">🧪</div>
-    <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px">Tap to upload lab results</div>
-    <div style="font-size:12px;color:var(--ink3)">Screenshot, photo, or PDF — CBC, CMP, immunosuppression levels, any lab panel</div>
+
+  <!-- CHAT VIEW -->
+  <div class="view active" id="view-chat">
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages render here -->
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+    <div class="input-bar">
+      <div class="upload-preview" id="upload-preview">
+        <span style="font-size:18px">📄</span>
+        <span class="upload-preview-name" id="upload-preview-name"></span>
+        <button class="upload-preview-remove" onclick="removeAttachment()">✕</button>
+      </div>
+      <div class="input-row">
+        <button class="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach lab document">📎</button>
+        <input type="file" id="file-input" accept="image/*,.pdf,application/pdf" onchange="handleFileAttach(this)">
+        <textarea class="msg-input" id="msg-input" placeholder="Ask about your labs, upload a result, or ask what's trending…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+      </div>
+    </div>
   </div>
-  <div class="or-div"><div class="or-line"></div><span>or</span><div class="or-line"></div></div>
-  <button class="paste-btn" onclick="pasteFromClipboard()">📋 Paste from Clipboard (Ctrl+V)</button>
 
-  <div style="font-size:12px;color:var(--ink3);line-height:1.6;background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--border)">
-    <strong style="color:var(--ink2)">How it works:</strong> Upload any lab result document. Claude reads every test, value, and reference range. New tests are automatically added to your panel. Existing tests get a new data point for trending. Out-of-range values are flagged automatically.
+  <!-- HISTORY VIEW -->
+  <div class="view" id="view-history">
+    <div class="history-view" id="history-content"></div>
   </div>
 
-  <div id="confirm-wrap"></div>
-</div>
-
-<!-- HISTORY -->
-<div class="page" id="page-history">
-  <div id="history-content"></div>
-</div>
-
-<!-- TRENDS -->
-<div class="page" id="page-trends">
-  <div id="trends-content"></div>
-</div>
-
-<!-- MY PANEL -->
-<div class="page" id="page-panel">
-  <div id="panel-content"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -207,607 +170,491 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <script>
 // ══════════════════════════════════════════════════
 //  STORAGE
-//  panel: { [key]: { key, name, unit, refLow, refHigh, decimals, category } }
-//  records: [ { id, date, time, datetime, category, values: { [key]: number } } ]
 // ══════════════════════════════════════════════════
-const PANEL_KEY   = 'lab_panel_v3';
-const RECORDS_KEY = 'lab_records_v3';
+const CONV_KEY    = 'lab_conversation_v1';  // full conversation history
+const SUMM_KEY    = 'lab_summary_v1';       // running summary for context compression
+const FILES_KEY   = 'lab_files_v1';        // metadata of uploaded files
 
-function getPanel()   { try{return JSON.parse(localStorage.getItem(PANEL_KEY)||'{}');}catch(e){return{};} }
-function getRecords() { try{return JSON.parse(localStorage.getItem(RECORDS_KEY)||'[]');}catch(e){return[];} }
-function savePanel(d)   { localStorage.setItem(PANEL_KEY,JSON.stringify(d)); }
-function saveRecords(d) { localStorage.setItem(RECORDS_KEY,JSON.stringify(d)); }
+function getConversation() { try{return JSON.parse(localStorage.getItem(CONV_KEY)||'[]');}catch(e){return[];} }
+function getSummary()      { try{return localStorage.getItem(SUMM_KEY)||'';}catch(e){return '';} }
+function getFiles()        { try{return JSON.parse(localStorage.getItem(FILES_KEY)||'[]');}catch(e){return[];} }
+function saveConversation(d) { localStorage.setItem(CONV_KEY,JSON.stringify(d)); }
+function saveSummary(s)      { localStorage.setItem(SUMM_KEY,s); }
+function saveFiles(d)        { localStorage.setItem(FILES_KEY,JSON.stringify(d)); }
 
 // ══════════════════════════════════════════════════
-//  FILE HANDLING
+//  STATE
 // ══════════════════════════════════════════════════
-function getMime(file) {
-  if (file.type==='application/pdf'||(file.name&&file.name.endsWith('.pdf'))) return 'application/pdf';
-  return file.type||'image/jpeg';
-}
-async function toB64(file) {
-  return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-}
-function showPreview(file) {
-  const wrap = document.getElementById('upload-preview');
-  if (getMime(file)==='application/pdf') {
-    wrap.innerHTML=`<div class="pdf-prev"><span style="font-size:28px">📄</span><div><div style="font-size:13px;font-weight:600">${file.name||'Lab PDF'}</div><div style="font-size:11px;color:var(--ink3)">PDF — Claude will extract all values</div></div></div>`;
-  } else {
-    const reader=new FileReader();
-    reader.onload=e=>{wrap.innerHTML=`<img class="img-prev" src="${e.target.result}" alt="Lab result">`};
-    reader.readAsDataURL(file);
-  }
-}
+let pendingFile   = null;   // { name, b64, mime }
+let isTyping      = false;
+let conversation  = [];     // { role, content (text or array), displayText, timestamp, hasFile, fileName }
 
-function handleFile(input) {
-  const file=input.files?input.files[0]:null;
-  if(!file) return;
-  input.value='';
-  processFile(file);
+// ══════════════════════════════════════════════════
+//  SYSTEM PROMPT
+// ══════════════════════════════════════════════════
+function buildSystemPrompt() {
+  const summary = getSummary();
+  const files   = getFiles();
+  const fileList = files.length
+    ? '\n\nPreviously uploaded lab documents:\n' + files.map(f => `- ${f.name} (${f.date})`).join('\n')
+    : '';
+
+  return `You are a knowledgeable and caring medical assistant helping Cocomi, a young lung transplant patient at UF Health Shands in Gainesville, Florida, monitor her post-transplant lab results.
+
+Your role:
+- Analyze lab results uploaded in images or PDFs
+- Track trends across multiple uploads over time
+- Flag values outside reference ranges with clinical context
+- Explain what abnormal values might mean for a post-transplant patient
+- Connect patterns across different lab panels (CBC, CMP, immunosuppression levels, inflammation markers, etc.)
+- Answer questions in plain language that a patient and family can understand
+- Always remind the user that findings should be discussed with the transplant team
+
+Clinical context:
+- Cocomi recently received a lung transplant
+- She is on immunosuppressant medications (tacrolimus, CellCept, prednisone, and others)
+- Immunosuppression creates a balance between rejection risk and infection risk
+- Her CBC, CMP, tacrolimus levels, and inflammation markers are monitored regularly
+- Elevated WBC/neutrophils with low lymphocytes is expected with immunosuppression
+- Tacrolimus levels must stay in therapeutic range (typically 8-12 ng/mL early post-transplant)
+
+When analyzing a new lab upload:
+1. List every test found with value, reference range, and flag (HIGH/LOW/NORMAL)
+2. Highlight values that are clinically significant
+3. Note any trends compared to previously discussed results
+4. Give a brief plain-language summary of what the overall picture shows
+5. Suggest questions to ask the transplant team if warranted
+
+Always be warm, clear, and reassuring while being medically accurate.
+${summary ? '\n\nConversation summary so far:\n' + summary : ''}${fileList}`;
 }
 
 // ══════════════════════════════════════════════════
 //  CLAUDE API
 // ══════════════════════════════════════════════════
-async function callClaude(b64, mime, prompt) {
-  const fileBlock = mime==='application/pdf'
-    ? {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}
-    : {type:'image',   source:{type:'base64',media_type:mime,data:b64}};
+async function callClaude(messages) {
   const res = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,messages:[{role:'user',content:[fileBlock,{type:'text',text:prompt}]}]})
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model:      'claude-sonnet-4-5',
+      max_tokens: 2000,
+      system:     buildSystemPrompt(),
+      messages:   messages
+    })
   });
   const data = await res.json();
-  if(data.error) throw new Error(data.error.message);
-  return data.content.map(c=>c.text||'').join('').trim();
+  if (data.error) throw new Error(data.error.message);
+  return data.content.map(c => c.text||'').join('').trim();
 }
 
-function sanitizeForJSON(str) {
-  // First replace known problem chars
-  str = str.replace(/µ/g,'u')   // µ -> u
-           .replace(/μ/g,'u')   // μ -> u
-           .replace(/×/g,'x')   // × -> x
-           .replace(/—/g,'-')   // em dash -> -
-           .replace(/–/g,'-')   // en dash -> -
-           .replace(/±/g,'+/-') // ± -> +/-
-           .replace(/≥/g,'>=')  // ≥ -> >=
-           .replace(/≤/g,'<='); // ≤ -> <=
-  // Now remove any remaining non-ASCII, keeping only safe JSON chars
-  let result = '';
-  for(let i=0;i<str.length;i++){
-    const c=str.charCodeAt(i);
-    if((c>=32&&c<=126)||c===10||c===13||c===9) result+=str[i];
+// ══════════════════════════════════════════════════
+//  FILE HANDLING
+// ══════════════════════════════════════════════════
+function handleFileAttach(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64  = e.target.result.split(',')[1];
+    const mime = file.type === 'application/pdf' || file.name.endsWith('.pdf')
+      ? 'application/pdf' : (file.type || 'image/jpeg');
+    pendingFile = { name: file.name, b64, mime };
+    document.getElementById('upload-preview').classList.add('show');
+    document.getElementById('upload-preview-name').textContent = file.name;
+    document.getElementById('msg-input').placeholder = 'Add a message or just send to analyze this document…';
+    document.getElementById('msg-input').focus();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeAttachment() {
+  pendingFile = null;
+  document.getElementById('upload-preview').classList.remove('show');
+  document.getElementById('msg-input').placeholder = 'Ask about your labs, upload a result, or ask what\'s trending…';
+}
+
+// ══════════════════════════════════════════════════
+//  SEND MESSAGE
+// ══════════════════════════════════════════════════
+async function sendMessage() {
+  const input   = document.getElementById('msg-input');
+  const userText= input.value.trim();
+  const file    = pendingFile;
+
+  if (!userText && !file) return;
+  if (isTyping) return;
+
+  // Build user message for API
+  let apiContent;
+  let displayText = userText;
+
+  if (file) {
+    const fileBlock = file.mime === 'application/pdf'
+      ? { type:'document', source:{ type:'base64', media_type:'application/pdf', data:file.b64 } }
+      : { type:'image',    source:{ type:'base64', media_type:file.mime, data:file.b64 } };
+
+    const textPrompt = userText || 'Please analyze this lab result. List every test found, flag any out-of-range values, note any trends compared to previous results, and give me a plain-language summary.';
+    apiContent = [ fileBlock, { type:'text', text: textPrompt } ];
+    displayText = userText || `📄 Uploaded: ${file.name}`;
+
+    // Track uploaded file
+    const files = getFiles();
+    files.push({ name: file.name, date: new Date().toLocaleDateString() });
+    saveFiles(files);
+  } else {
+    apiContent = userText;
   }
-  return result;
-}
 
-function parseJSON(text) {
-  // Sanitize the entire response first
-  let clean = sanitizeForJSON(text);
-  // Strip markdown fences
-  clean = clean.replace(/```json/gi,'').replace(/```/g,'').trim();
-  // Extract JSON array/object
-  const s = clean.indexOf('[')!==-1?clean.indexOf('['):clean.indexOf('{');
-  const e = Math.max(clean.lastIndexOf(']'),clean.lastIndexOf('}'));
-  if(s!==-1&&e!==-1&&e>s) clean=clean.substring(s,e+1);
-  // Fix trailing commas
-  clean = clean.replace(/,(\s*[}\]])/g,'$1');
+  // Clear input
+  input.value = '';
+  autoResize(input);
+  removeAttachment();
+  hideSuggestions();
+
+  // Add user message to UI
+  const userMsg = {
+    role: 'user',
+    content: apiContent,
+    displayText,
+    timestamp: new Date().toISOString(),
+    hasFile: !!file,
+    fileName: file?.name || null
+  };
+  conversation.push(userMsg);
+  renderMessage(userMsg);
+  scrollToBottom();
+
+  // Show typing indicator
+  isTyping = true;
+  showTyping();
+  document.getElementById('send-btn').disabled = true;
+
   try {
-    return JSON.parse(clean);
+    // Build API messages — use stored conversation but limit context window
+    const apiMessages = buildAPIMessages();
+
+    const response = await callClaude(apiMessages);
+
+    hideTyping();
+    isTyping = false;
+    document.getElementById('send-btn').disabled = false;
+
+    const assistantMsg = {
+      role: 'assistant',
+      content: response,
+      displayText: response,
+      timestamp: new Date().toISOString()
+    };
+    conversation.push(assistantMsg);
+    renderMessage(assistantMsg);
+    scrollToBottom();
+    saveConversation(conversation);
+
+    // Compress old context if conversation is getting long
+    if (conversation.length > 20) compressOldContext();
+
+    // Show follow-up suggestions
+    showSuggestions(response);
+
   } catch(err) {
-    // Last resort: try to find and fix the problem position
-    console.error('JSON parse error:', err.message);
-    console.error('Clean text sample:', clean.substring(0,200));
-    throw new Error('JSON parse failed: ' + err.message);
+    hideTyping();
+    isTyping = false;
+    document.getElementById('send-btn').disabled = false;
+    showToast('Error: ' + err.message, 'error');
   }
 }
 
-// ══════════════════════════════════════════════════
-//  PROCESS FILE
-// ══════════════════════════════════════════════════
-async function processFile(file) {
-  const bar    = document.getElementById('upload-analyzing');
-  const notice = document.getElementById('upload-notice');
-  const zone   = document.getElementById('upload-zone');
-  bar.classList.add('show');
-  zone.style.display='none';
-  showPreview(file);
-  notice.innerHTML='';
+// Build API messages with context management
+function buildAPIMessages() {
+  // Include last 10 exchanges max to stay within context limits
+  // For older messages with files, include only text summary
+  const recent = conversation.slice(-20);
+  return recent.map(msg => ({
+    role: msg.role,
+    content: msg.role === 'user' && msg.content !== msg.displayText
+      ? msg.content  // keep file content for recent messages
+      : (typeof msg.content === 'string' ? msg.content : msg.displayText)
+  }));
+}
 
+// Compress old context into summary
+async function compressOldContext() {
+  const old = conversation.slice(0, -10);
+  if (old.length < 4) return;
   try {
-    const b64  = await toB64(file);
-    const mime = getMime(file);
-
-    const prompt = `You are analyzing a medical lab results document from a hospital patient portal.
-
-Extract EVERY lab test result. For each test return a JSON object:
-- key: camelCase identifier (e.g. "wbc", "hemoglobin", "tacrolimusLevel", "procalcitonin")
-- name: full test name as shown in document
-- value: numeric result as a NUMBER (e.g. 20.5 not "20.5")
-- unit: unit in plain ASCII only — replace µ with u, so x10E3/uL not x10E3/µL
-- refLow: lower limit of normal range as a NUMBER — look carefully for "Normal range: X - Y" or reference intervals. Extract X as refLow
-- refHigh: upper limit of normal range as a NUMBER — extract Y as refHigh. Only use null if truly no range is given
-- flag: "high" if value > refHigh, "low" if value < refLow, "normal" if within range, "na" only if no reference range exists
-- decimals: 0, 1, or 2 decimal places appropriate for this test
-- category: "CBC", "CMP", "Immunosuppression", "Inflammation", "Thyroid", "Liver", "Kidney", "Lipids", "Coagulation", or best match
-
-RULES:
-- ASCII only — no µ no × no special chars
-- value, refLow, refHigh must be numbers not strings
-- Reference ranges are usually shown as "Normal range: X - Y" — always extract both numbers
-- Start with [ end with ] — no markdown no backticks no preamble
-
-Example: [{"key":"wbc","name":"WBC","value":20.5,"unit":"x10E3/uL","refLow":4.0,"refHigh":10.0,"flag":"high","decimals":1,"category":"CBC"},{"key":"procalcitonin","name":"Procalcitonin","value":0.05,"unit":"ng/mL","refLow":null,"refHigh":0.5,"flag":"normal","decimals":2,"category":"Inflammation"}]`;
-
-    document.getElementById('upload-analyzing-sub').textContent = 'Reading document…';
-    const text      = await callClaude(b64, mime, prompt);
-    const extracted = parseJSON(text);
-
-    if(!Array.isArray(extracted)||!extracted.length) throw new Error('No lab values found in document');
-
-    bar.classList.remove('show');
-    showConfirm(extracted);
-
-  } catch(err) {
-    bar.classList.remove('show');
-    zone.style.display='block';
-    notice.innerHTML=`<div class="notice error">Could not read document: ${err.message}. Please try again.</div>`;
+    const summaryPrompt = `Summarize the key medical findings and discussion from this conversation in 3-5 bullet points. Focus on: lab values discussed, trends noted, clinical concerns raised, and recommendations made. Be specific with numbers.\n\n${old.map(m=>m.role.toUpperCase()+': '+m.displayText).join('\n\n')}`;
+    const summary = await callClaude([{ role:'user', content: summaryPrompt }]);
+    const existing = getSummary();
+    saveSummary((existing ? existing + '\n\n---\n\n' : '') + summary);
+    conversation = conversation.slice(-10);
+    saveConversation(conversation);
+  } catch(e) {
+    // Silent fail — not critical
   }
 }
 
 // ══════════════════════════════════════════════════
-//  CONFIRM SCREEN
+//  RENDER
 // ══════════════════════════════════════════════════
+function renderMessage(msg) {
+  const container = document.getElementById('chat-messages');
+  const isEmpty   = container.querySelector('.empty-chat');
+  if (isEmpty) isEmpty.remove();
 
-function buildConfirmRow(lab, i) {
-  const isHigh  = lab.flag === 'high';
-  const isLow   = lab.flag === 'low';
-  const flagTxt = isHigh ? 'HIGH' : isLow ? 'LOW' : lab.flag === 'normal' ? 'NORMAL' : 'NA';
-  const flagClr = isHigh ? '#C94040' : isLow ? '#4338CA' : lab.flag === 'normal' ? '#2D9E6B' : '#8A9EAF';
-  const cardBg  = isHigh ? 'background:#FAEAEA;border-color:#f0c0c0' : isLow ? 'background:#EEF2FF;border-color:#c0c8f0' : 'background:#fff';
-  const valStyle= isHigh ? 'border-color:#f0a0a0;background:#FAEAEA;color:#C94040' : isLow ? 'border-color:#a0a8e0;background:#EEF2FF;color:#4338CA' : 'background:#F0F4F8;color:#1A2533';
-  const badge   = lab._isNew
-    ? '<span style="background:#E0F2F5;color:#0E7490;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px">NEW</span>'
-    : '<span style="background:#E8EFF5;color:#8A9EAF;font-size:10px;padding:2px 7px;border-radius:5px">update</span>';
+  const div  = document.createElement('div');
+  div.className = 'msg ' + msg.role;
 
-  return '<div style="border:1.5px solid #D0DCE8;border-radius:10px;padding:14px;margin-bottom:10px;' + cardBg + '" id="cr-' + i + '">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
-      '<div style="display:flex;align-items:center;gap:6px">' +
-        badge +
-        '<span style="font-size:11px;font-weight:700;color:' + flagClr + '">' + flagTxt + '</span>' +
-      '</div>' +
-      '<button onclick="document.getElementById(\'cr-' + i + '\').remove()" style="background:none;border:none;color:#8A9EAF;cursor:pointer;font-size:16px">&#x2715;</button>' +
-    '</div>' +
-    '<div style="margin-bottom:10px">' +
-      '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#8A9EAF;margin-bottom:4px">Test Name</div>' +
-      '<input style="width:100%;padding:9px 12px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Sans,sans-serif;font-size:14px;color:#1A2533;background:#F0F4F8" value="' + (lab.name||'') + '" id="cn-' + i + '">' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
-      '<div>' +
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Value <span style="font-weight:400;text-transform:none">' + (lab.unit||'') + '</span></div>' +
-        '<input type="number" step="any" id="cv-' + i + '" value="' + (lab.value != null ? lab.value : '') + '" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:17px;font-weight:600;text-align:center;' + valStyle + ';-moz-appearance:textfield">' +
-      '</div>' +
-      '<div>' +
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Ref Low</div>' +
-        '<input type="number" step="any" id="cl-' + i + '" value="' + (lab.refLow != null ? lab.refLow : '') + '" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:15px;color:#1A2533;background:#F0F4F8;text-align:center;-moz-appearance:textfield">' +
-      '</div>' +
-      '<div>' +
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:#8A9EAF;margin-bottom:4px">Ref High</div>' +
-        '<input type="number" step="any" id="ch-' + i + '" value="' + (lab.refHigh != null ? lab.refHigh : '') + '" placeholder="—" style="width:100%;padding:9px 6px;border:1.5px solid #D0DCE8;border-radius:7px;font-family:DM Mono,monospace;font-size:15px;color:#1A2533;background:#F0F4F8;text-align:center;-moz-appearance:textfield">' +
-      '</div>' +
-    '</div>' +
-  '</div>';
-}
+  const avatar = msg.role === 'assistant' ? '🧬' : '👤';
+  const time   = new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-// Store pending labs for saveRecord
-let _pendingLabs = [];
+  let bubbleContent = '';
 
-function showConfirm(labs) {
-  _pendingLabs = labs;
-  const panel   = getPanel();
-  const today   = toDateStr(new Date());
-  const nowTime = new Date().toTimeString().slice(0,5);
-
-  // Mark which are new vs existing
-  labs.forEach(l => { l._isNew = !panel[l.key]; });
-  const newCount = labs.filter(l=>l._isNew).length;
-
-  const wrap = document.getElementById('confirm-wrap');
-  wrap.innerHTML = `
-    <div class="card" style="margin-top:16px">
-      <div class="card-title">✓ Claude found ${labs.length} tests — review and save</div>
-      ${newCount>0?`<div class="notice info" style="margin-bottom:12px">🆕 ${newCount} new test${newCount>1?'s':''} will be added to your panel.</div>`:''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div>
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Date</div>
-          <input type="date" id="rec-date" value="${today}" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%">
-        </div>
-        <div>
-          <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Time</div>
-          <input type="time" id="rec-time" value="${nowTime}" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);width:100%">
-        </div>
-      </div>
-
-      <div class="confirm-hdr">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3)">Test Name</div>
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Value</div>
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Low</div>
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">High</div>
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);text-align:center">Flag</div>
-      </div>
-
-      <div class="confirm-grid" id="confirm-grid">
-        ${labs.map((lab,i) => buildConfirmRow(lab, i)).join('')}
-      </div>
-
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="cancelConfirm()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveRecord()">Save Lab Results</button>
+  if (msg.hasFile && msg.fileName) {
+    bubbleContent += `<div class="lab-card">
+      <div class="lab-card-icon">${msg.fileName.endsWith('.pdf')?'📄':'🖼️'}</div>
+      <div class="lab-card-info">
+        <div class="lab-card-name">${msg.fileName}</div>
+        <div class="lab-card-sub">Lab document uploaded for analysis</div>
       </div>
     </div>`;
+  }
+
+  if (msg.displayText && msg.displayText !== `📄 Uploaded: ${msg.fileName}`) {
+    bubbleContent += formatMessage(msg.displayText);
+  } else if (!msg.hasFile) {
+    bubbleContent += formatMessage(msg.displayText);
+  }
+
+  div.innerHTML = `
+    <div class="msg-avatar">${avatar}</div>
+    <div>
+      <div class="msg-bubble">${bubbleContent}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+
+  container.appendChild(div);
 }
 
-function cancelConfirm() {
-  document.getElementById('confirm-wrap').innerHTML='';
-  document.getElementById('upload-zone').style.display='block';
-  document.getElementById('upload-preview').innerHTML='';
+function formatMessage(text) {
+  if (!text) return '';
+  // Convert markdown-like formatting
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(0,0,0,.08);padding:1px 4px;border-radius:3px;font-family:DM Mono,monospace;font-size:12px">$1</code>')
+    .replace(/\bHIGH\b/g,'<span class="flag-high">HIGH ↑</span>')
+    .replace(/\bLOW\b/g,'<span class="flag-low">LOW ↓</span>')
+    .replace(/\bNORMAL\b/g,'<span class="flag-ok">NORMAL ✓</span>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>')
+    .replace(/^(.+)$/,'<p>$1</p>');
 }
 
-function saveRecord() {
-  const originalLabs = _pendingLabs;
-  const panel   = getPanel();
-  const date    = document.getElementById('rec-date')?.value || toDateStr(new Date());
-  const time    = document.getElementById('rec-time')?.value || new Date().toTimeString().slice(0,5);
-  const datetime= `${date}T${time}`;
-  const record  = { id: Date.now().toString(), date, time, datetime, values:{}, flags:{} };
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="msg-avatar">🧬</div>
+    <div class="msg-bubble">
+      <div class="typing">
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+        <span style="font-size:12px;color:var(--ink3)">Analyzing…</span>
+      </div>
+    </div>`;
+  container.appendChild(div);
+  scrollToBottom();
+}
 
-  // Collect categories from original labs
-  const categories = new Set();
+function hideTyping() {
+  document.getElementById('typing-indicator')?.remove();
+}
 
-  originalLabs.forEach((lab, i) => {
-    const row = document.getElementById('cr-'+i);
-    if (!row) return; // row was removed by user
-
-    const name   = document.getElementById('cn-'+i)?.value?.trim() || lab.name;
-    const val    = parseFloat(document.getElementById('cv-'+i)?.value);
-    const refLow = parseFloat(document.getElementById('cl-'+i)?.value);
-    const refHigh= parseFloat(document.getElementById('ch-'+i)?.value);
-
-    if (!name) return;
-    if (lab.category) categories.add(lab.category);
-
-    // Update or add to panel
-    panel[lab.key] = {
-      key:      lab.key,
-      name:     name,
-      unit:     lab.unit || '',
-      refLow:   isNaN(refLow)  ? (panel[lab.key]?.refLow  ?? null) : refLow,
-      refHigh:  isNaN(refHigh) ? (panel[lab.key]?.refHigh ?? null) : refHigh,
-      decimals: lab.decimals ?? 1,
-      category: lab.category || panel[lab.key]?.category || 'Other'
-    };
-
-    // Record value
-    if (!isNaN(val)) {
-      record.values[lab.key] = val;
-      const lo = panel[lab.key].refLow;
-      const hi = panel[lab.key].refHigh;
-      if (hi !== null && val > hi) record.flags[lab.key] = 'high';
-      else if (lo !== null && val < lo) record.flags[lab.key] = 'low';
-    }
-  });
-
-  record.categories = [...categories];
-  savePanel(panel);
-
-  // Save record — allow multiple per date using datetime as key
-  const records = getRecords();
-  const existing = records.findIndex(r => r.datetime === datetime);
-  if (existing >= 0) records[existing] = record;
-  else { records.push(record); records.sort((a,b)=>a.datetime.localeCompare(b.datetime)); }
-  saveRecords(records);
-
-  // Reset upload UI
-  document.getElementById('confirm-wrap').innerHTML='';
-  document.getElementById('upload-zone').style.display='block';
-  document.getElementById('upload-preview').innerHTML='';
-
-  const panelSize  = Object.keys(panel).length;
-  const valCount   = Object.keys(record.values).length;
-  const flagCount  = Object.keys(record.flags).length;
-  const notice     = document.getElementById('upload-notice');
-  notice.innerHTML = `<div class="notice success">✓ ${valCount} values saved${flagCount?' · ⚠️ '+flagCount+' out of range':''}. Panel now has ${panelSize} tests.</div>`;
-  setTimeout(()=>{ if(notice) notice.innerHTML=''; }, 5000);
-  showToast(`Lab results saved ✓`, 'success');
+function scrollToBottom() {
+  const el = document.getElementById('chat-messages');
+  setTimeout(() => el.scrollTop = el.scrollHeight, 50);
 }
 
 // ══════════════════════════════════════════════════
-//  HISTORY
+//  SUGGESTIONS
+// ══════════════════════════════════════════════════
+const SUGGESTIONS = [
+  "What's trending in my recent labs?",
+  "Are any values concerning for rejection?",
+  "What do my WBC levels mean?",
+  "How are my kidney function markers?",
+  "Explain my immunosuppression levels",
+  "Compare this to my last CBC",
+  "What should I ask my transplant team?",
+  "Are there any infection signs?"
+];
+
+function showSuggestions(lastResponse) {
+  const conv = getConversation();
+  if (conv.length < 2) return;
+  const el = document.getElementById('suggestions');
+  // Pick 3 contextually relevant suggestions
+  const picks = SUGGESTIONS.sort(()=>Math.random()-.5).slice(0,3);
+  el.innerHTML = picks.map(s =>
+    `<button class="suggestion" onclick="quickSend('${s.replace(/'/g,"\\'")}')"> ${s}</button>`
+  ).join('');
+}
+
+function hideSuggestions() {
+  document.getElementById('suggestions').innerHTML = '';
+}
+
+function quickSend(text) {
+  document.getElementById('msg-input').value = text;
+  sendMessage();
+}
+
+// ══════════════════════════════════════════════════
+//  HISTORY VIEW
 // ══════════════════════════════════════════════════
 function renderHistory() {
-  const records = getRecords();
-  const panel   = getPanel();
-  const el      = document.getElementById('history-content');
+  const conv  = conversation;
+  const files = getFiles();
+  const el    = document.getElementById('history-content');
 
-  if (!records.length) {
-    el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No results yet</div><div class="empty-sub">Upload your first lab result to start tracking.</div></div>`;
-    return;
-  }
-
-  el.innerHTML = [...records].reverse().map(rec => {
-    const flagCount = Object.keys(rec.flags||{}).length;
-    const valCount  = Object.values(rec.values||{}).filter(v=>v!==null).length;
-    const cats      = (rec.categories||[]).join(', ') || 'Lab Results';
-    const flagBadge = flagCount
-      ? `<span style="color:var(--danger);font-size:12px;font-weight:600">⚠️ ${flagCount} flag${flagCount>1?'s':''}</span>`
-      : `<span style="color:var(--good);font-size:12px">✓ Normal</span>`;
-    return `
-    <div class="hist-card">
-      <div class="hist-header" onclick="toggleHist('hb-${rec.id}')">
-        <div>
-          <div class="hist-datetime">${formatDate(rec.date)} ${rec.time||''}</div>
-          <div style="font-size:11px;color:var(--ink3);margin-top:2px">${cats} · ${valCount} values</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${flagBadge}
-          <button onclick="event.stopPropagation();deleteRecord('${rec.id}')" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:14px">🗑</button>
-          <span style="color:var(--ink3)">▼</span>
-        </div>
-      </div>
-      <div class="hist-body" id="hb-${rec.id}">
-        ${Object.entries(rec.values||{}).map(([key,val])=>{
-          const p    = panel[key];
-          if(!p) return '';
-          const flag = rec.flags?.[key];
-          const color= flag==='high'?'var(--danger)':flag==='low'?'#4338CA':'var(--good)';
-          return `<div class="lab-row">
-            <div class="lab-name">${p.name}</div>
-            <div class="lab-ref">${[p.refLow,p.refHigh].filter(v=>v!==null).join('–') || '—'}</div>
-            <div class="lab-unit">${p.unit}</div>
-            <div class="lab-val" style="color:${color}">${typeof val==='number'?val.toFixed(p.decimals??1):val}</div>
-            ${flag?`<span class="lab-flag flag-${flag}">${flag.toUpperCase()}</span>`:`<span class="lab-flag flag-ok">OK</span>`}
-          </div>`;
-        }).join('')}
-      </div>
+  if (!conv.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--ink3)">
+      <div style="font-size:32px;margin-bottom:10px">📋</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink2);margin-bottom:5px">No conversation yet</div>
+      <div style="font-size:13px">Start a chat to analyze your lab results</div>
     </div>`;
-  }).join('');
-}
-
-function toggleHist(id) {
-  const el=document.getElementById(id);
-  if(el) el.style.display=el.style.display==='none'||!el.style.display?'block':'none';
-}
-
-function deleteRecord(id) {
-  saveRecords(getRecords().filter(r=>r.id!==id));
-  renderHistory();
-  showToast('Record deleted');
-}
-
-// ══════════════════════════════════════════════════
-//  TRENDS
-// ══════════════════════════════════════════════════
-let trendCharts={};
-let activeTrendKey=null;
-
-function renderTrends() {
-  const records = getRecords();
-  const panel   = getPanel();
-  const el      = document.getElementById('trends-content');
-  Object.values(trendCharts).forEach(c=>{try{c.destroy();}catch(e){}});
-  trendCharts={};
-
-  if(!records.length||!Object.keys(panel).length) {
-    el.innerHTML=`<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">No data yet</div><div class="empty-sub">Upload lab results to see trends.</div></div>`;
     return;
   }
 
-  const keys = Object.keys(panel);
-  if(!activeTrendKey||!panel[activeTrendKey]) activeTrendKey=keys[0];
+  let html = '';
 
-  // Group by category
-  const cats={};
-  keys.forEach(k=>{ const c=panel[k].category||'Other'; if(!cats[c]) cats[c]=[]; cats[c].push(k); });
+  if (files.length) {
+    html += `<div class="hist-section-title">Uploaded Documents</div>`;
+    html += files.map(f => `
+      <div class="hist-entry">
+        <div class="hist-entry-date">${f.date}</div>
+        <div class="hist-entry-preview">📄 ${f.name}</div>
+      </div>`).join('');
+  }
 
-  el.innerHTML=`
-    <div class="trend-pills">
-      ${Object.entries(cats).map(([cat,ks])=>
-        ks.map(k=>`<button class="trend-pill ${k===activeTrendKey?'active':''}" onclick="setTrend('${k}')">${panel[k].name}</button>`).join('')
-      ).join('')}
-    </div>
-    <div id="trend-chart-area"></div>`;
+  html += `<div class="hist-section-title">Conversation (${conv.length} messages)</div>`;
 
-  renderTrendChart(records, panel, activeTrendKey);
-}
+  // Show assistant messages as history entries
+  const assistantMsgs = conv.filter(m => m.role === 'assistant');
+  html += assistantMsgs.map(m => `
+    <div class="hist-entry" onclick="showView('chat')">
+      <div class="hist-entry-date">${new Date(m.timestamp).toLocaleString()}</div>
+      <div class="hist-entry-preview">${m.displayText?.substring(0,150)||''}</div>
+    </div>`).join('');
 
-function setTrend(key) {
-  activeTrendKey=key;
-  renderTrends();
-}
-
-function renderTrendChart(records, panel, key) {
-  const area=document.getElementById('trend-chart-area');
-  if(!area) return;
-  const lab=panel[key];
-  if(!lab) return;
-
-  const sorted=records.filter(r=>r.values&&r.values[key]!==undefined&&r.values[key]!==null).sort((a,b)=>a.datetime.localeCompare(b.datetime));
-  if(!sorted.length){area.innerHTML=`<div class="empty" style="padding:20px"><div class="empty-sub">No data for ${lab.name} yet.</div></div>`;return;}
-
-  const labels=sorted.map(r=>formatDateShort(r.date)+(sorted.filter(x=>x.date===r.date).length>1?' '+r.time:''));
-  const vals  =sorted.map(r=>r.values[r.date+r.time]!==undefined?r.values[r.date+r.time]:r.values[key]);
-
-  const nonNull=vals.filter(v=>v!==null);
-  const avg=nonNull.length?nonNull.reduce((a,b)=>a+b,0)/nonNull.length:null;
-  const latest=nonNull[nonNull.length-1];
-  const flagCount=sorted.filter(r=>r.flags&&r.flags[key]).length;
-
-  area.innerHTML=`
-    <div class="card">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-        <div>
-          <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink)">${lab.name}</div>
-          <div style="font-size:11px;color:var(--ink3)">${lab.unit}${lab.refLow!==null&&lab.refHigh!==null?' · Range: '+lab.refLow+'–'+lab.refHigh:''}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${latest>lab.refHigh?'var(--danger)':latest<lab.refLow?'#4338CA':'var(--good)'}">${latest?.toFixed(lab.decimals??1)??'—'}</div>
-          <div style="font-size:11px;color:var(--ink3)">Latest · ${flagCount} flag${flagCount!==1?'s':''}</div>
-        </div>
-      </div>
-      <div class="chart-wrap"><canvas id="tc-main"></canvas></div>
-      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
-          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Average</div>
-          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--ink)">${avg!==null?avg.toFixed(lab.decimals??1):'—'}</div>
-        </div>
-        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
-          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Readings</div>
-          <div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--ink)">${sorted.length}</div>
-        </div>
-        <div style="flex:1;min-width:100px;background:var(--surface2);border-radius:8px;padding:8px 12px">
-          <div style="font-size:10px;text-transform:uppercase;color:var(--ink3)">Out of Range</div>
-          <div style="font-family:'DM Mono',monospace;font-size:18px;color:${flagCount?'var(--danger)':'var(--good)'}">${flagCount}</div>
-        </div>
-      </div>
+  const summary = getSummary();
+  if (summary) {
+    html += `<div class="hist-section-title">Compressed Summary</div>
+    <div class="hist-entry">
+      <div class="hist-entry-preview">${summary.substring(0,300)}…</div>
+      <span class="hist-entry-badge">Auto-compressed</span>
     </div>`;
+  }
 
-  setTimeout(()=>{
-    const ctx=document.getElementById('tc-main');
-    if(!ctx) return;
-    trendCharts.main=new Chart(ctx,{
-      type:'line',
-      data:{labels,datasets:[{
-        label:lab.name,data:vals,
-        borderColor:'#0E7490',backgroundColor:'rgba(14,116,144,.08)',
-        borderWidth:2.5,
-        pointBackgroundColor:vals.map(v=>{
-          if(v===null) return 'transparent';
-          if(lab.refHigh!==null&&v>lab.refHigh) return 'var(--danger)';
-          if(lab.refLow!==null&&v<lab.refLow) return '#4338CA';
-          return 'var(--good)';
-        }),
-        pointRadius:5,fill:true,tension:0.3,spanGaps:false
-      }]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>`${ctx.parsed.y} ${lab.unit}`}}},
-        scales:{
-          x:{grid:{color:'#E8EFF5'},ticks:{font:{family:'DM Mono',size:9},color:'#8A9EAF',maxTicksLimit:10}},
-          y:{grid:{color:'#E8EFF5'},ticks:{font:{family:'DM Mono',size:10},color:'#8A9EAF'},
-             ...(lab.refLow!==null&&lab.refHigh!==null?{suggestedMin:lab.refLow*0.8,suggestedMax:lab.refHigh*1.2}:{})}
-        }
-      }
-    });
-  },60);
+  el.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════
-//  PANEL VIEW
+//  CLEAR / RESET
 // ══════════════════════════════════════════════════
-function renderPanel() {
-  const panel   = getPanel();
-  const records = getRecords();
-  const el      = document.getElementById('panel-content');
-  const keys    = Object.keys(panel);
+function clearConfirm() {
+  if (!confirm('Clear entire conversation and lab history? This cannot be undone.')) return;
+  localStorage.removeItem(CONV_KEY);
+  localStorage.removeItem(SUMM_KEY);
+  localStorage.removeItem(FILES_KEY);
+  conversation = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  showEmptyState();
+  showToast('Conversation cleared');
+}
 
-  if(!keys.length) {
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🧪</div><div class="empty-title">No panel yet</div><div class="empty-sub">Upload a lab result to build your panel automatically.</div></div>`;
-    return;
-  }
+// ══════════════════════════════════════════════════
+//  VIEWS
+// ══════════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.hbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.getElementById('btn-'+name).classList.add('active');
+  if (name === 'history') renderHistory();
+}
 
-  // Group by category
-  const cats={};
-  keys.forEach(k=>{ const c=panel[k].category||'Other'; if(!cats[c]) cats[c]=[]; cats[c].push(k); });
-
-  el.innerHTML=`
-    <div style="font-size:13px;color:var(--ink3);margin-bottom:14px">${keys.length} tests tracked across ${Object.keys(cats).length} panel${Object.keys(cats).length!==1?'s':''}.</div>
-    ${Object.entries(cats).map(([cat,ks])=>`
-      <div class="panel-group">
-        <div class="panel-group-title">${cat}</div>
-        ${ks.map(k=>{
-          const lab=panel[k];
-          // Find latest value
-          const recs=[...records].reverse();
-          const latest=recs.find(r=>r.values&&r.values[k]!==undefined);
-          const latestVal=latest?latest.values[k]:null;
-          const flag=latest?.flags?.[k];
-          const color=flag==='high'?'var(--danger)':flag==='low'?'#4338CA':latestVal!==null?'var(--good)':'var(--ink3)';
-          return `<div class="lab-row">
-            <div class="lab-name">${lab.name}</div>
-            <div class="lab-ref">${[lab.refLow,lab.refHigh].filter(v=>v!==null).join('–')||'—'}</div>
-            <div class="lab-unit">${lab.unit}</div>
-            <div class="lab-val" style="color:${color}">${latestVal!==null?latestVal.toFixed(lab.decimals??1):'—'}</div>
-            ${flag?`<span class="lab-flag flag-${flag}">${flag.toUpperCase()}</span>`:''}
-          </div>`;
-        }).join('')}
-      </div>`).join('')}
-    <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-danger btn-sm" onclick="if(confirm('Clear all panel data?')){localStorage.removeItem('${PANEL_KEY}');localStorage.removeItem('${RECORDS_KEY}');renderPanel();showToast('Panel cleared');}">🗑 Clear All Data</button>
+// ══════════════════════════════════════════════════
+//  EMPTY STATE
+// ══════════════════════════════════════════════════
+function showEmptyState() {
+  const el = document.getElementById('chat-messages');
+  el.innerHTML = `
+    <div class="empty-chat">
+      <div class="empty-icon">🧬</div>
+      <div class="empty-title">Lab Results Assistant</div>
+      <div class="empty-sub">Upload any lab result — CBC, CMP, tacrolimus levels, inflammation markers — and I'll analyze it, flag abnormal values, track trends over time, and answer your questions in plain language.</div>
+      <button class="empty-start-btn" onclick="document.getElementById('file-input').click()">📎 Upload First Lab Result</button>
     </div>`;
 }
 
 // ══════════════════════════════════════════════════
-//  CLIPBOARD
+//  INPUT HELPERS
 // ══════════════════════════════════════════════════
-async function pasteFromClipboard() {
-  try {
-    if(!navigator.clipboard||!navigator.clipboard.read){showToast('Use upload button instead');return;}
-    const items=await navigator.clipboard.read();
-    let found=null;
-    for(const item of items){const t=item.types.find(x=>x.startsWith('image/'));if(t){found={item,type:t};break;}}
-    if(!found){showToast('No image in clipboard — copy a screenshot first');return;}
-    const blob=await found.item.getType(found.type);
-    const file=new File([blob],'clipboard.png',{type:found.type});
-    showToast('Image pasted ✓','success');
-    processFile(file);
-  } catch(err) {
-    showToast(err.name==='NotAllowedError'?'Allow clipboard access in browser settings':'Could not paste: '+err.message);
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
   }
 }
 
-document.addEventListener('paste',async(e)=>{
-  if(!document.getElementById('page-upload').classList.contains('active')) return;
-  const items=e.clipboardData?.items;
-  if(!items) return;
-  for(const item of items){
-    if(item.type.startsWith('image/')){
-      e.preventDefault();
-      const file=item.getAsFile();
-      if(file){showToast('Image pasted ✓','success');processFile(file);}
-      return;
-    }
-  }
-});
-
-// ══════════════════════════════════════════════════
-//  EXPORT
-// ══════════════════════════════════════════════════
-function exportData() {
-  const data={panel:getPanel(),records:getRecords(),exportDate:new Date().toISOString()};
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`lab_results_${toDateStr(new Date())}.json`;a.click();
-}
-
-// ══════════════════════════════════════════════════
-//  TABS
-// ══════════════════════════════════════════════════
-function showTab(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
-  if(name==='history') renderHistory();
-  if(name==='trends')  renderTrends();
-  if(name==='panel')   renderPanel();
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
 // ══════════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════════
-function toDateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${m}/${day}/${y}`;}
-function formatDateShort(d){if(!d)return'';const[y,m,day]=d.split('-');return`${m}/${day}`;}
-function showToast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
+function showToast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type?' '+type:'');
+  setTimeout(() => el.className='toast', 3000);
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function init() {
+  conversation = getConversation();
+  const el     = document.getElementById('chat-messages');
+
+  if (!conversation.length) {
+    showEmptyState();
+    return;
+  }
+
+  // Restore conversation
+  conversation.forEach(msg => renderMessage(msg));
+  scrollToBottom();
+
+  // Show suggestions if there's history
+  if (conversation.length >= 2) {
+    showSuggestions('');
+  }
+}
+
+init();
 </script>
 </body>
 </html>

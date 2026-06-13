@@ -327,13 +327,23 @@ const MODULES = [
     file:'lab_results_tracker.html', group:'medlabs',
     getSummary() {
       try {
-        const r=JSON.parse(localStorage.getItem('lab_records_v2')||'[]');
-        if(!r.length) return{val:null,sub:'AI-extracted from portal',since:null};
-        const l=r[r.length-1];
-        const flags=Object.keys(l.flags||{});
-        const count=Object.values(l.values).filter(v=>v!==null).length;
-        return{val:flags.length?`${flags.length} flag${flags.length>1?'s':''}`:'✓ Normal',unit:'',sub:flags.length?flags.slice(0,2).join(', '):`${count} values`,since:daysSince(l.date),alert:flags.some(k=>l.flags[k]==='critical'||l.flags[k]==='high')?'danger':flags.length?'warn':null};
-      } catch(e){return{val:null,sub:'Lab panel not set up',since:null};}
+        const conv  = JSON.parse(localStorage.getItem('lab_conversation_v1')||'[]');
+        const files = JSON.parse(localStorage.getItem('lab_files_v1')||'[]');
+        if (!conv.length) return{val:null,sub:'AI-powered lab assistant',since:null};
+        const lastMsg   = conv[conv.length-1];
+        const lastDate  = lastMsg.timestamp ? lastMsg.timestamp.split('T')[0] : null;
+        const fileCount = files.length;
+        const msgCount  = conv.filter(m=>m.role==='assistant').length;
+        const lastReply = conv.filter(m=>m.role==='assistant').pop();
+        const hasFlags  = lastReply && (lastReply.displayText||'').match(/\bHIGH\b|\bLOW\b/);
+        return{
+          val:  fileCount||msgCount,
+          unit: fileCount ? ' doc' + (fileCount!==1?'s':'') + ' analyzed' : ' exchange' + (msgCount!==1?'s':''),
+          sub:  hasFlags ? '⚠️ Flags in last analysis' : msgCount + ' AI response' + (msgCount!==1?'s':''),
+          since: lastDate ? daysSince(lastDate) : null,
+          alert: hasFlags ? 'warn' : null
+        };
+      } catch(e){return{val:null,sub:'AI-powered lab assistant',since:null};}
     }
   }
 ];
