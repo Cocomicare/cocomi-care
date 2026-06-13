@@ -522,7 +522,7 @@ async function handleMedFile(input) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 1500,
+        max_tokens: 4000,
         system: 'You are a medical document assistant. Extract medication information from documents and return it as clean JSON.',
         messages
       }),
@@ -536,8 +536,20 @@ async function handleMedFile(input) {
     if (data.error) throw new Error(data.error.message || 'Analysis failed');
 
     const text = data.content?.map(c=>c.text||'').join('').trim().replace(/```json|```/g,'').trim();
-    const imported = JSON.parse(text);
-    if (!Array.isArray(imported) || !imported.length) throw new Error('No medications found — try a clearer image');
+
+    // Parse JSON — handle truncated responses by closing open arrays/objects
+    let imported;
+    try {
+      imported = JSON.parse(text);
+    } catch(e) {
+      // Try to recover truncated JSON by finding last complete object
+      const lastClose = text.lastIndexOf('}');
+      if (lastClose > 0) {
+        try { imported = JSON.parse(text.slice(0, lastClose+1) + ']'); } catch(e2) {}
+      }
+      if (!imported) throw new Error('Could not parse medication list — please try again');
+    }
+    if (!Array.isArray(imported) || !imported.length) throw new Error('No medications found — please try again');
 
     const existing = getMeds().filter(m => !m._isDefault);
     imported.forEach(u => {
