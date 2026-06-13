@@ -122,17 +122,43 @@ body {
 .loading-text { font-size: 14px; color: var(--ink3); }
 
 /* ── DASHBOARD (post-login) ── */
-.dashboard-screen { background: var(--bg); }
-.dash-header { background: var(--teal); padding: 20px 20px 24px; color: #fff; }
+.dashboard-screen { background: #F0F4F8; }
+.dash-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px 14px; position: sticky; top: 0; z-index: 50; }
 .dash-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-.dash-app-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; }
-.dash-sub { font-size: 11px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.6px; }
-.dash-greeting { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 6px; }
-.dash-greeting strong { color: #fff; }
-.sign-out-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.dash-app-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); letter-spacing: -0.5px; }
+.dash-sub { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.6px; }
+.dash-greeting { font-size: 13px; color: var(--ink2); margin-top: 6px; }
+.dash-greeting strong { color: var(--ink); font-weight: 600; }
+.sign-out-btn { background: none; border: 1px solid var(--border); color: var(--ink3); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-.dash-body { padding: 20px 16px 40px; max-width: 600px; margin: 0 auto; }
-.dash-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 10px; margin-top: 4px; }
+.dash-body { padding: 16px 16px 40px; max-width: 600px; margin: 0 auto; }
+
+/* ── IMMUNOSUPPRESSION BANNER ── */
+.immuno-banner { background: linear-gradient(135deg, #7B5EA7 0%, #5a3f90 100%); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.immuno-banner:active { transform: scale(0.98); }
+.immuno-banner-icon { font-size: 28px; flex-shrink: 0; }
+.immuno-banner-text { flex: 1; }
+.immuno-banner-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #fff; margin-bottom: 3px; }
+.immuno-banner-sub { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.4; }
+.immuno-banner-arrow { font-size: 22px; color: rgba(255,255,255,0.6); }
+
+/* ── HEALTH INDEX BANNER ── */
+.health-banner { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; border-left: 4px solid #2D9E6B; }
+.health-banner:active { transform: scale(0.98); }
+.health-banner.alert-warn { border-color: var(--warn); background: var(--warn-bg); }
+.health-banner.alert-danger { border-color: var(--danger); background: var(--danger-bg); }
+.health-banner-icon { font-size: 26px; flex-shrink: 0; }
+.health-banner-text { flex: 1; }
+.health-banner-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 3px; }
+.health-banner-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.health-banner-sub { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.health-banner-score { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 500; color: #2D9E6B; line-height: 1; text-align: right; }
+.health-banner-score.warn { color: var(--warn); }
+.health-banner-score.danger { color: var(--danger); }
+.health-banner-score.none { color: var(--ink3); }
+
+.dash-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 10px; margin-top: 4px; display: flex; align-items: center; gap: 10px; }
+.dash-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px 14px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 .tile:active { transform: scale(0.97); }
@@ -143,11 +169,14 @@ body {
 .tile.spiro::before   { background: #6B4FA8; }
 .tile.medlog::before  { background: #C4663B; }
 .tile.labs::before    { background: #0E7490; }
-.tile.checkin::before { background: #6B4FA8; }
+.tile.checkin::before { background: #9B7ABF; }
 .tile.health::before  { background: #2D9E6B; }
+.tile.clinical::before{ background: #0E7490; }
+.tile.meds::before    { background: #6B4FA8; }
 .tile-icon { font-size: 22px; margin-bottom: 8px; display: block; }
 .tile-name { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
 .tile-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1; margin-bottom: 3px; }
+.tile-empty { color: var(--ink3); font-size: 13px; font-style: italic; }
 .tile-sub { font-size: 11px; color: var(--ink3); }
 .tile-since { font-size: 10px; color: var(--ink3); margin-top: 5px; }
 .tile-alert-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); display: none; }
@@ -159,9 +188,11 @@ body {
 
 .global-alert { margin: 0 0 14px; display: none; background: var(--danger-bg); border: 1px solid #f0c0c0; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: var(--danger); font-weight: 500; }
 .global-alert.show { display: block; }
+.dash-footer { text-align: center; padding: 0 20px 40px; font-size: 11px; color: var(--ink3); line-height: 1.6; }
+.dash-footer strong { color: var(--ink2); }
 
 /* ── MODULE VIEW ── */
-#view-module { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
+#view-module { display: none; position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; flex-direction: column; background: var(--bg); z-index: 100; }
 #view-module.active { display: flex; }
 .module-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; gap: 12px; height: 52px; flex-shrink: 0; }
 .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink2); cursor: pointer; background: none; border: none; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
@@ -397,10 +428,13 @@ body {
     <div class="dash-header">
       <div class="dash-header-top">
         <div>
-          <div class="dash-app-name">LTS Care</div>
+          <div class="dash-app-name">Cocomi Care</div>
           <div class="dash-sub">Lung Transplant Surveillance</div>
         </div>
-        <button class="sign-out-btn" onclick="handleSignOut()">Sign out</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:28px">🫁</div>
+          <button class="sign-out-btn" onclick="handleSignOut()">Sign out</button>
+        </div>
       </div>
       <div class="dash-greeting" id="dash-greeting"></div>
     </div>
@@ -408,19 +442,44 @@ body {
     <div class="dash-body">
       <div class="global-alert" id="global-alert"></div>
 
-      <div class="dash-section-label">Pulmonary</div>
-      <div class="tiles-grid" id="tiles-pulmonary"></div>
+      <!-- Immunosuppression Banner -->
+      <div class="immuno-banner" onclick="openModule('immuno')">
+        <div class="immuno-banner-icon">💊</div>
+        <div class="immuno-banner-text">
+          <div class="immuno-banner-title">Immunosuppression Balance</div>
+          <div class="immuno-banner-sub">Rejection risk · Infection risk · Drug toxicity — the balance that drives all surveillance</div>
+        </div>
+        <div class="immuno-banner-arrow">›</div>
+      </div>
 
-      <div class="dash-section-label">Vitals & Labs</div>
-      <div class="tiles-grid" id="tiles-vitals"></div>
+      <!-- Health Index Banner -->
+      <div class="health-banner" id="health-banner" onclick="openModule('health')">
+        <div class="health-banner-icon">📈</div>
+        <div class="health-banner-text">
+          <div class="health-banner-label">Composite Health Index</div>
+          <div class="health-banner-title" id="health-banner-title">How are you doing overall?</div>
+          <div class="health-banner-sub" id="health-banner-sub">8 weighted parameters · Tap to view breakdown</div>
+        </div>
+        <div>
+          <div class="health-banner-score none" id="health-banner-score">—</div>
+          <div style="font-size:10px;color:var(--ink3);text-align:right;margin-top:2px">out of 100</div>
+        </div>
+      </div>
 
-      <div class="dash-section-label">Medications & Symptoms</div>
-      <div class="tiles-grid" id="tiles-meds"></div>
+      <!-- Symptoms & Measurements -->
+      <div class="dash-section-label">Symptoms &amp; Measurements</div>
+      <div class="tiles-grid" id="tiles-measurements"></div>
 
-      <div class="dash-section-label">Wellness</div>
-      <div class="tiles-grid" id="tiles-wellness"></div>
+      <!-- Clinical Assistant & Medications -->
+      <div class="dash-section-label">Clinical Assistant &amp; Medications</div>
+      <div class="tiles-grid" id="tiles-medlabs"></div>
 
       <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:8px" id="last-updated"></div>
+    </div>
+
+    <div class="dash-footer">
+      <strong>Cocomi Care</strong> · Lung Transplant Surveillance Suite<br>
+      Data synced across your devices · For personal wellness tracking only
     </div>
   </div>
 </div>
@@ -487,21 +546,20 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 //  MODULE DEFINITIONS
 // ══════════════════════════════════════════════════
 const MODULES = [
-  { id:'immuno',   name:'Immunosuppression', icon:'💊', file:'cocomi_medication_balance.html', group:'pulmonary', getSummary(){ return { val:null, sub:'Rejection / Infection balance', since:null }; } },
-  { id:'peakflow', name:'Peak Flow',         icon:'📊', file:'peak_flow_tracker.html',         group:'pulmonary', cadence:3,
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]'); if(!r.length) return{val:null,sub:'FEV1 max value',since:null}; const l=r[r.length-1]; return{val:l.best,unit:'mL',sub:'FEV1 max',since:daysSince(l.date)}; }catch(e){return{val:null,sub:'FEV1 max value',since:null};} } },
-  { id:'spiro',    name:'Spirometer',        icon:'🌬️', file:'spirometer_surveillance.html',   group:'pulmonary', cadence:1,
+  { id:'immuno',   name:'Immunosuppression Balance', icon:'💊', file:'cocomi_medication_balance.html', group:null },
+  { id:'health',   name:'Health Index',              icon:'📈', file:'health_index.html',              group:null },
+  { id:'checkin',  name:'Symptom Check-in',  icon:'🧠', file:'symptom_checkin.html',          group:'measurements', cadence:1,
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('symptom_checkins_v1')||'[]'); if(!r.length) return{val:null,sub:'Daily symptom check-in',since:null}; const l=r[r.length-1]; const s=l.wellnessScore; return{val:s,unit:'',sub:s>=85?'Near baseline':s>=70?'Minor deviation':s>=50?'Notable deviation':'Significant deviation',since:daysSince(l.date),alert:s&&s<50?'danger':s&&s<70?'warn':null}; }catch(e){return{val:null,sub:'Daily symptom check-in',since:null};} } },
+  { id:'peakflow', name:'Peak Flow',         icon:'📊', file:'peak_flow_tracker.html',         group:'measurements', cadence:3,
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]'); if(!r.length) return{val:null,sub:'FEV1 max value',since:null}; const l=r[r.length-1]; return{val:l.best,unit:'mL',sub:'FEV1 max value',since:daysSince(l.date)}; }catch(e){return{val:null,sub:'FEV1 max value',since:null};} } },
+  { id:'spiro',    name:'Spirometer',        icon:'🌬️', file:'spirometer_surveillance.html',   group:'measurements', cadence:1,
     getSummary(){ try{ const r=JSON.parse(localStorage.getItem('spiro_records_v1')||'[]'); const s=JSON.parse(localStorage.getItem('spiro_settings_v1')||'{}'); if(!r.length) return{val:null,sub:'Inspiratory volume',since:null}; const l=r[r.length-1]; const pct=s.target?Math.round((l.val/s.target)*100):null; return{val:l.val,unit:'mL',sub:pct?`${pct}% of target`:'inspiratory vol',since:daysSince(l.date),alert:s.target&&l.val<s.target*(s.warnPct||80)/100?'warn':null}; }catch(e){return{val:null,sub:'Inspiratory volume',since:null};} } },
-  { id:'vitals',   name:'Vital Signs',       icon:'❤️', file:'vital_signs_surveillance.html',  group:'vitals',   cadence:7,
-    getSummary(){ try{ const s=JSON.parse(localStorage.getItem('vss_settings_v1')||'{}'); let alerts=[],latestDate=null; ['spo2','hr','bp','wt','temp'].forEach(v=>{ const r=JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]'); if(!r.length) return; const l=r[r.length-1]; if(!latestDate||l.date>latestDate) latestDate=l.date; if(v==='spo2'&&l.val<(s.spo2?.low||92)) alerts.push('SpO₂ low'); if(v==='hr'&&l.val>(s.hr?.high||100)) alerts.push('HR high'); if(v==='temp'&&l.val>=(s.temp?.high||99.5)) alerts.push('Temp elevated'); }); return{val:alerts.length?`${alerts.length} alert${alerts.length>1?'s':''}`:'✓ Normal',unit:'',sub:alerts.length?alerts.slice(0,2).join(', '):'5 vitals tracked',since:latestDate?daysSince(latestDate):null,alert:alerts.length?'danger':null}; }catch(e){return{val:null,sub:'5 vitals tracked',since:null};} } },
-  { id:'labs',     name:'Lab Results',       icon:'🧪', file:'lab_results_tracker.html',       group:'vitals',
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('lab_records_v2')||'[]'); if(!r.length) return{val:null,sub:'AI-extracted from portal',since:null}; const l=r[r.length-1]; const flags=Object.keys(l.flags||{}); return{val:flags.length?`${flags.length} flag${flags.length>1?'s':''}`:'✓ All normal',unit:'',sub:flags.length?flags.slice(0,2).join(', '):`${Object.values(l.values).filter(v=>v!==null).length} values`,since:daysSince(l.date),alert:flags.some(k=>(l.flags[k]==='critical'||l.flags[k]==='high'))?'danger':flags.length?'warn':null}; }catch(e){return{val:null,sub:'Lab panel not set up',since:null};} } },
-  { id:'medlog',   name:'Med & Symptom',     icon:'🔬', file:'med_symptom_tracker.html',       group:'meds',
-    getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('msc_meds_v1')||'[]'); const syms=JSON.parse(localStorage.getItem('msc_syms_v1')||'[]'); const cur=JSON.parse(localStorage.getItem('msc_cur_meds_v1')||'[]').filter(m=>m.active); const all=[...meds,...syms].sort((a,b)=>b.date.localeCompare(a.date)); return{val:cur.length||null,unit:cur.length?' active meds':'',sub:cur.length?`${meds.length} changes · ${syms.length} symptom logs`:'No entries yet',since:all.length?daysSince(all[0].date):null}; }catch(e){return{val:null,sub:'Med changes & symptoms',since:null};} } },
-  { id:'checkin',  name:'Symptom Check-in',  icon:'🧠', file:'symptom_checkin.html',           group:'wellness', cadence:1,
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('symptom_checkins_v1')||'[]'); if(!r.length) return{val:null,sub:'Daily wellness check-in',since:null}; const l=r[r.length-1]; return{val:l.wellnessScore,unit:'',sub:'Wellness score',since:daysSince(l.date),alert:l.wellnessScore&&l.wellnessScore<50?'danger':l.wellnessScore&&l.wellnessScore<70?'warn':null}; }catch(e){return{val:null,sub:'Daily wellness check-in',since:null};} } },
-  { id:'health',   name:'Health Index',      icon:'📈', file:'health_index.html',              group:'wellness',
-    getSummary(){ try{ const h=JSON.parse(localStorage.getItem('chi_history_v1')||'[]'); if(!h.length) return{val:null,sub:'Composite score',since:null}; const l=h[h.length-1]; return{val:l.score,unit:'',sub:'Composite Health Index',since:daysSince(l.date),alert:l.score&&l.score<50?'danger':l.score&&l.score<70?'warn':null}; }catch(e){return{val:null,sub:'Composite score',since:null};} } },
+  { id:'vitals',   name:'Vital Signs',       icon:'❤️', file:'vital_signs_surveillance.html',  group:'measurements', cadence:7,
+    getSummary(){ try{ const s=JSON.parse(localStorage.getItem('vss_settings_v1')||'{}'); let alerts=[],latestDate=null; ['spo2','hr','bp','wt','temp'].forEach(v=>{ const r=JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]'); if(!r.length) return; const l=r[r.length-1]; if(!latestDate||l.date>latestDate) latestDate=l.date; if(v==='spo2'&&l.val<(s.spo2?.low||92)) alerts.push('SpO₂ low'); if(v==='hr'&&l.val>(s.hr?.high||100)) alerts.push('HR high'); if(v==='temp'&&l.val>=(s.temp?.high||99.5)) alerts.push('Temp elevated'); if(v==='bp'&&l.sys>(s.bp?.sysHigh||130)) alerts.push('BP high'); }); return{val:alerts.length?`${alerts.length} alert${alerts.length>1?'s':''}`:'✓ Normal',unit:'',sub:alerts.length?alerts.slice(0,2).join(', '):'5 vitals tracked',since:latestDate?daysSince(latestDate):null,alert:alerts.length?'danger':null}; }catch(e){return{val:null,sub:'5 vitals tracked',since:null};} } },
+  { id:'clinical', name:'Clinical Assistant', icon:'🧬', file:'clinical_assistant.html',        group:'medlabs',
+    getSummary(){ try{ const conv=JSON.parse(localStorage.getItem('clinical_conversation_v1')||'[]'); const files=JSON.parse(localStorage.getItem('clinical_files_v1')||'[]'); if(!conv.length) return{val:null,sub:'Labs · Medications · Trends',since:null}; const lastMsg=conv[conv.length-1]; const lastDate=lastMsg?.timestamp?lastMsg.timestamp.split('T')[0]:null; const lastReply=conv.filter(m=>m.role==='assistant').pop(); const hasFlags=lastReply&&(lastReply.displayText||'').match(/\bHIGH\b|\bLOW\b/); return{val:files.length||conv.filter(m=>m.role==='assistant').length||null,unit:files.length?' docs analyzed':' responses',sub:hasFlags?'⚠️ Flags in last analysis':'Labs · Medications · Trends',since:lastDate?daysSince(lastDate):null,alert:hasFlags?'warn':null}; }catch(e){return{val:null,sub:'Labs · Medications · Trends',since:null};} } },
+  { id:'meds',     name:'Medications',        icon:'💊', file:'medications.html',               group:'medlabs',
+    getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('clinical_meds_v1')||'[]'); const active=meds.filter(m=>m.active); if(!active.length) return{val:null,sub:'Current medication list',since:null}; const lastUpdated=meds.reduce((a,m)=>m.updated>a?m.updated:a,''); return{val:active.length,unit:' active',sub:active.slice(0,2).map(m=>m.name+(m.dose?' '+m.dose:'')).join(', ')+(active.length>2?'…':''),since:lastUpdated?daysSince(lastUpdated.split('T')[0]):null}; }catch(e){return{val:null,sub:'Current medication list',since:null};} } },
 ];
 
 
@@ -718,17 +776,41 @@ function setGreeting() {
 }
 
 function renderDashboard() {
-  const groups = { pulmonary:[], vitals:[], meds:[], wellness:[] };
+  // Health Index banner
+  try {
+    const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
+    const scoreEl = document.getElementById('health-banner-score');
+    const titleEl = document.getElementById('health-banner-title');
+    const subEl   = document.getElementById('health-banner-sub');
+    const banner  = document.getElementById('health-banner');
+    if (hist.length) {
+      const l = hist[hist.length-1]; const s = l.score;
+      scoreEl.textContent = s;
+      scoreEl.className = 'health-banner-score' + (s<50?' danger':s<70?' warn':'');
+      titleEl.textContent = s>=85?'All parameters near baseline':s>=70?'Minor deviation detected':s>=50?'Notable deviation — watch closely':'Significant deviation';
+      subEl.textContent = `Last updated ${daysSince(l.date)===0?'today':daysSince(l.date)+' days ago'} · Tap to view breakdown`;
+      banner.className = 'health-banner' + (s<50?' alert-danger':s<70?' alert-warn':'');
+    } else {
+      scoreEl.textContent = '—'; scoreEl.className = 'health-banner-score none';
+      titleEl.textContent = 'No data yet — log readings to calculate';
+      subEl.textContent = '8 weighted parameters · Tap to open';
+    }
+  } catch(e) {}
+
+  // Tiles
+  const groups = { measurements:[], medlabs:[] };
   let alerts = [];
 
-  MODULES.forEach(mod => {
+  MODULES.filter(m => m.group).forEach(mod => {
     const s = mod.getSummary();
     const days = s.since;
     const overdue = mod.cadence && days !== null && days >= mod.cadence;
     const sinceStr = days === null ? 'Never logged' : days === 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
     const alertCls = s.alert === 'danger' ? 'alert-danger' : s.alert === 'warn' ? 'alert-warn' : '';
     if (s.alert === 'danger') alerts.push(`${mod.icon} ${mod.name}: ${s.sub}`);
-    const valHtml = s.val !== null ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>` : `<div style="color:var(--ink3);font-size:13px;font-style:italic">No data yet</div>`;
+    const valHtml = s.val !== null
+      ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>`
+      : `<div class="tile-empty">No data yet</div>`;
     groups[mod.group].push(`
       <div class="tile ${mod.id} ${alertCls}" onclick="openModule('${mod.id}')">
         <div class="tile-alert-dot"></div>
@@ -736,25 +818,23 @@ function renderDashboard() {
         <div class="tile-name">${mod.name}</div>
         ${valHtml}
         <div class="tile-sub">${s.sub}</div>
-        <div class="tile-since ${overdue?'overdue':''}">${overdue?'⏰ ':''} ${sinceStr}</div>
+        <div class="tile-since ${overdue?'overdue':''}">${overdue?'⏰ ':''}${sinceStr}</div>
       </div>`);
   });
 
-  document.getElementById('tiles-pulmonary').innerHTML = groups.pulmonary.join('');
-  document.getElementById('tiles-vitals').innerHTML    = groups.vitals.join('');
-  document.getElementById('tiles-meds').innerHTML      = groups.meds.join('');
-  document.getElementById('tiles-wellness').innerHTML  = groups.wellness.join('');
+  document.getElementById('tiles-measurements').innerHTML = groups.measurements.join('');
+  document.getElementById('tiles-medlabs').innerHTML      = groups.medlabs.join('');
 
   const alertEl = document.getElementById('global-alert');
-  if (alerts.length) { alertEl.innerHTML = `⚠️ <strong>Alerts:</strong><br>${alerts.join('<br>')}`; alertEl.classList.add('show'); }
+  if (alerts.length) { alertEl.innerHTML = `⚠️ <strong>Alerts requiring attention:</strong><br>${alerts.join('<br>')}`; alertEl.classList.add('show'); }
   else alertEl.classList.remove('show');
 
-  document.getElementById('last-updated').textContent = 'Refreshed ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('last-updated').textContent = 'Refreshed ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
 
 function openModule(id) {
   const mod = MODULES.find(m=>m.id===id); if(!mod) return;
-  document.getElementById('screen-dashboard').classList.remove('active');
+  document.getElementById('screen-dashboard').style.display = 'none';
   document.getElementById('view-module').classList.add('active');
   document.getElementById('module-bar-title').textContent = mod.name;
   document.getElementById('module-iframe').src = mod.file;
@@ -762,7 +842,7 @@ function openModule(id) {
 
 function goHome() {
   document.getElementById('view-module').classList.remove('active');
-  document.getElementById('screen-dashboard').classList.add('active');
+  document.getElementById('screen-dashboard').style.display = '';
   document.getElementById('module-iframe').src = 'about:blank';
   renderDashboard();
 }
