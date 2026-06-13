@@ -329,7 +329,11 @@ Example:
 // ══════════════════════════════════════════════════
 //  CONFIRM SCREEN
 // ══════════════════════════════════════════════════
+// Store pending labs for saveRecord
+let _pendingLabs = [];
+
 function showConfirm(labs) {
+  _pendingLabs = labs;
   const panel   = getPanel();
   const today   = toDateStr(new Date());
   const nowTime = new Date().toTimeString().slice(0,5);
@@ -385,7 +389,7 @@ function showConfirm(labs) {
 
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="cancelConfirm()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveRecord(${JSON.stringify(labs).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026').replace(/'/g,'\\u0027')})">Save Lab Results</button>
+        <button class="btn btn-primary" onclick="saveRecord()">Save Lab Results</button>
       </div>
     </div>`;
 }
@@ -396,7 +400,8 @@ function cancelConfirm() {
   document.getElementById('upload-preview').innerHTML='';
 }
 
-function saveRecord(originalLabs) {
+function saveRecord() {
+  const originalLabs = _pendingLabs;
   const panel   = getPanel();
   const date    = document.getElementById('rec-date')?.value || toDateStr(new Date());
   const time    = document.getElementById('rec-time')?.value || new Date().toTimeString().slice(0,5);
