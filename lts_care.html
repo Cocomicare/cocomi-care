@@ -761,45 +761,55 @@ async function runSyncDebug() {
   el.style.display = 'block';
   el.textContent = 'Running sync debug...\n';
 
-  try {
-    // 1. Check session
-    const { data: { session } } = await sb.auth.getSession();
-    el.textContent += session ? `✅ Session: ${session.user.email}\n` : '❌ No session!\n';
-    if (!session) return;
-
-    const userId = session.user.id;
-    el.textContent += `User ID: ${userId.slice(0,8)}...\n\n`;
-
-    // 2. Check clinical_data in Supabase
-    el.textContent += '── Supabase clinical_data ──\n';
-    const { data: cd, error: cde } = await sb.from('clinical_data').select('data_type, updated_at').eq('user_id', userId);
-    if (cde) { el.textContent += `❌ Error: ${cde.message}\n`; }
-    else if (!cd?.length) { el.textContent += '⚠️ No rows found\n'; }
-    else { cd.forEach(r => { el.textContent += `✅ ${r.data_type} (${r.updated_at?.slice(0,10)})\n`; }); }
-
-    // 3. Check health_records in Supabase
-    el.textContent += '\n── Supabase health_records ──\n';
-    const { data: hr, error: hre } = await sb.from('health_records').select('module').eq('user_id', userId);
-    if (hre) { el.textContent += `❌ Error: ${hre.message}\n`; }
-    else if (!hr?.length) { el.textContent += '⚠️ No rows found\n'; }
-    else {
-      const counts = {};
-      hr.forEach(r => { counts[r.module] = (counts[r.module]||0)+1; });
-      Object.entries(counts).forEach(([m,c]) => { el.textContent += `✅ ${m}: ${c} records\n`; });
-    }
-
-    // 4. localStorage
-    el.textContent += '\n── localStorage ──\n';
-    ['clinical_meds_v1','symptom_checkins_v1','peak_flow_sessions_v1','spiro_records_v1','vss_spo2_v1'].forEach(k => {
-      const val = localStorage.getItem(k);
-      if (!val) { el.textContent += `⚠️ ${k}: empty\n`; }
-      else { try { el.textContent += `✅ ${k}: ${JSON.parse(val).length} items\n`; } catch(e) { el.textContent += `✅ ${k}: exists\n`; } }
-    });
-
-    el.textContent += '\nDone.';
-  } catch(e) {
-    el.textContent += `\n❌ Crashed: ${e.message}`;
+  // Step 1: Check localStorage session directly (no network)
+  el.textContent += '\n── Session check ──\n';
+  const sessionKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (sessionKey) {
+    try {
+      const s = JSON.parse(localStorage.getItem(sessionKey));
+      const tok = s?.access_token || s?.[0]?.access_token;
+      const exp = s?.expires_at || s?.[0]?.expires_at;
+      el.textContent += tok ? `✅ Token found\n` : `❌ No token in session\n`;
+      el.textContent += exp ? `Expires: ${new Date(exp*1000).toLocaleString()}\n` : '';
+      el.textContent += (exp*1000 > Date.now()) ? `✅ Token valid\n` : `❌ Token EXPIRED\n`;
+    } catch(e) { el.textContent += `❌ Could not parse session: ${e.message}\n`; }
+  } else {
+    el.textContent += `❌ No session key in localStorage\n`;
+    el.textContent += `Keys found: ${Object.keys(localStorage).filter(k=>k.startsWith('sb-')).join(', ')||'none'}\n`;
   }
+
+  // Step 2: Check localStorage data
+  el.textContent += '\n── localStorage data ──\n';
+  ['clinical_meds_v1','symptom_checkins_v1','peak_flow_sessions_v1','spiro_records_v1','vss_spo2_v1'].forEach(k => {
+    const val = localStorage.getItem(k);
+    if (!val) { el.textContent += `⚠️ ${k}: empty\n`; }
+    else { try { el.textContent += `✅ ${k}: ${JSON.parse(val).length} items\n`; } catch(e) { el.textContent += `✅ ${k}: exists\n`; } }
+  });
+
+  // Step 3: Try Supabase with timeout
+  el.textContent += '\n── Supabase query (10s timeout) ──\n';
+  try {
+    const result = await Promise.race([
+      sb.auth.getSession(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('Timed out after 10s')), 10000))
+    ]);
+    const session = result?.data?.session;
+    el.textContent += session ? `✅ Session: ${session.user.email}\n` : `❌ No session returned\n`;
+
+    if (session) {
+      const userId = session.user.id;
+      const { data: cd, error: cde } = await Promise.race([
+        sb.from('clinical_data').select('data_type').eq('user_id', userId),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('DB query timed out')), 10000))
+      ]);
+      if (cde) el.textContent += `❌ DB error: ${cde.message}\n`;
+      else el.textContent += cd?.length ? `✅ clinical_data: ${cd.map(r=>r.data_type).join(', ')}\n` : `⚠️ No clinical_data in Supabase\n`;
+    }
+  } catch(e) {
+    el.textContent += `❌ ${e.message}\n`;
+  }
+
+  el.textContent += '\nDone.';
 }
 
 function showDashboard() {
