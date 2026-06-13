@@ -256,28 +256,51 @@ async function callClaude(b64, mime, prompt) {
   const res = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages:[{role:'user',content:[fileBlock,{type:'text',text:prompt}]}]})
+    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,messages:[{role:'user',content:[fileBlock,{type:'text',text:prompt}]}]})
   });
   const data = await res.json();
   if(data.error) throw new Error(data.error.message);
   return data.content.map(c=>c.text||'').join('').trim();
 }
 
+function sanitizeForJSON(str) {
+  // First replace known problem chars
+  str = str.replace(/µ/g,'u')   // µ -> u
+           .replace(/μ/g,'u')   // μ -> u
+           .replace(/×/g,'x')   // × -> x
+           .replace(/—/g,'-')   // em dash -> -
+           .replace(/–/g,'-')   // en dash -> -
+           .replace(/±/g,'+/-') // ± -> +/-
+           .replace(/≥/g,'>=')  // ≥ -> >=
+           .replace(/≤/g,'<='); // ≤ -> <=
+  // Now remove any remaining non-ASCII, keeping only safe JSON chars
+  let result = '';
+  for(let i=0;i<str.length;i++){
+    const c=str.charCodeAt(i);
+    if((c>=32&&c<=126)||c===10||c===13||c===9) result+=str[i];
+  }
+  return result;
+}
+
 function parseJSON(text) {
-  let clean = text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  // Sanitize the entire response first
+  let clean = sanitizeForJSON(text);
+  // Strip markdown fences
+  clean = clean.replace(/```json/gi,'').replace(/```/g,'').trim();
+  // Extract JSON array/object
   const s = clean.indexOf('[')!==-1?clean.indexOf('['):clean.indexOf('{');
   const e = Math.max(clean.lastIndexOf(']'),clean.lastIndexOf('}'));
   if(s!==-1&&e!==-1&&e>s) clean=clean.substring(s,e+1);
-  // Replace known non-ASCII characters
-  clean = clean.replace(/µ/g,'u').replace(/μ/g,'u').replace(/×/g,'x');
-  // Remove remaining non-ASCII
-  let result = '';
-  for(let i=0;i<clean.length;i++){const c=clean.charCodeAt(i);if(c>=32&&c<=126||c===10||c===13||c===9)result+=clean[i];}
-  clean = result;
   // Fix trailing commas
-  clean = clean.replace(/,(\s*[\}\]])/g,'$1');
-  try { return JSON.parse(clean); }
-  catch(e) { throw new Error('JSON parse failed: ' + e.message); }
+  clean = clean.replace(/,(\s*[}\]])/g,'$1');
+  try {
+    return JSON.parse(clean);
+  } catch(err) {
+    // Last resort: try to find and fix the problem position
+    console.error('JSON parse error:', err.message);
+    console.error('Clean text sample:', clean.substring(0,200));
+    throw new Error('JSON parse failed: ' + err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════
