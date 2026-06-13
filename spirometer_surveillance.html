@@ -407,7 +407,11 @@ function getRecords() {
 }
 function saveRecords(r) {
   localStorage.setItem(REC_KEY, JSON.stringify(r));
-  syncSaveClinical('spirometer', r).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  r.forEach(rec => {
+    const ts = rec.date ? rec.date + 'T00:00:00Z' : new Date().toISOString();
+    syncSaveHealthRecord('spirometer', ts, rec).catch(()=>syncShowStatus('error'));
+  });
+  syncShowStatus('synced');
 }
 
 const DEFAULT_SETTINGS = { target: null, warnPct: 80, cadence: 1 };
@@ -834,11 +838,16 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 //  INIT
 // ══════════════════════════════════════════════════
 (async()=>{
-  const remote = await syncLoadClinical('spirometer');
-  if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  const rows = await syncLoadHealthRecords('spirometer');
+  if(rows&&rows.length){
+    const remote = rows.map(r=>r.data);
+    localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  }
   clearLog();
   loadSettings();
   updateLastLogged();
+  renderHistory();
+  renderTrends();
 })();
 
 

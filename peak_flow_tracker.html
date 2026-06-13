@@ -492,7 +492,11 @@ function getSessions() {
 }
 function saveSessions(s) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  syncSaveClinical('peak_flow', s).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  s.forEach(session => {
+    const ts = session.date ? session.date + 'T' + (session.time||'00:00') + ':00Z' : new Date().toISOString();
+    syncSaveHealthRecord('peak_flow', ts, session).catch(()=>syncShowStatus('error'));
+  });
+  syncShowStatus('synced');
 }
 
 // ══════════════════════════════════════════════════
@@ -905,7 +909,17 @@ function initDateTime() {
 
 initDateTime();
 
-
-</script>
+// ══════════════════════════════════════════════════
+//  INIT — pull data from Supabase on load
+// ══════════════════════════════════════════════════
+(async()=>{
+  const rows = await syncLoadHealthRecords('peak_flow');
+  if(rows&&rows.length){
+    const remote = rows.map(r=>r.data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+    renderHistory();
+    renderTrends();
+  }
+})();
 </body>
 </html>

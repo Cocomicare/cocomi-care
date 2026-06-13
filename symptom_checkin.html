@@ -456,7 +456,12 @@ const REC_KEY = 'symptom_checkins_v1';
 function getRecords() { try { return JSON.parse(localStorage.getItem(REC_KEY)||'[]'); } catch(e) { return []; } }
 function saveRecords(r) {
   localStorage.setItem(REC_KEY, JSON.stringify(r));
-  syncSaveClinical('symptoms', r).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  // Save each record individually as a health record
+  r.forEach(rec => {
+    const ts = rec.date ? rec.date + 'T00:00:00Z' : new Date().toISOString();
+    syncSaveHealthRecord('symptoms', ts, rec).catch(()=>syncShowStatus('error'));
+  });
+  syncShowStatus('synced');
 }
 
 // ══════════════════════════════════════════════════
@@ -899,10 +904,12 @@ function showToast(msg,type=''){const el=document.getElementById('toast');el.tex
 })();
 // Pull from Supabase after init
 (async()=>{
-  const remote = await syncLoadClinical('symptoms');
-  if(remote&&Array.isArray(remote)&&remote.length){
+  const rows = await syncLoadHealthRecords('symptoms');
+  if(rows&&rows.length){
+    const remote = rows.map(r=>r.data);
     localStorage.setItem(REC_KEY, JSON.stringify(remote));
     updateNudge(); updateBaselineNotice(); updateWellnessPreview();
+    renderHistory(); renderTrends();
   }
 })();
 </script>
