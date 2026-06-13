@@ -386,12 +386,11 @@ function showToast(msg,type=''){const e=document.getElementById('toast');e.textC
 
 // ── INIT ──
 function resetToDefaults() {
-  if(!confirm('Reset to default medication list? This will overwrite your current list.')) return;
+  if(!confirm('Clear the medication list? You can then upload a document to repopulate it.')) return;
   localStorage.removeItem(MEDS_KEY);
   localStorage.removeItem('clinical_meds_imported');
-  initKnownMeds();
   render();
-  showToast('Reset to defaults ✓','success');
+  showToast('Medication list cleared ✓','success');
 }
 
 function initKnownMeds() {
@@ -462,15 +461,10 @@ function initKnownMeds() {
 }
 
 (async () => {
-  // Pull from Supabase first
   const remote = await syncLoadClinical('medications');
-  if (remote && Array.isArray(remote) && remote.length) {
+  if (remote && Array.isArray(remote) && remote.length && remote.some(m => !m._isDefault)) {
     localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
-    localStorage.setItem('clinical_meds_imported', '1'); // mark as real data
-  }
-  // Only load hardcoded defaults if no real data has ever been imported
-  if (!localStorage.getItem('clinical_meds_imported')) {
-    initKnownMeds();
+    localStorage.setItem('clinical_meds_imported', '1');
   }
   render();
 })();
