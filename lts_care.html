@@ -754,7 +754,6 @@ async function handleSignOut() {
 // ══════════════════════════════════════════════════
 function showDashboard() {
   showScreen('screen-dashboard');
-  // Load display name from Supabase if not cached
   if (currentUser && !localStorage.getItem('lts_display_name')) {
     sb.from('profiles').select('display_name').eq('id', currentUser.id).single()
       .then(({ data }) => {
@@ -766,8 +765,10 @@ function showDashboard() {
   }
   setGreeting();
   renderDashboard();
-  // Pull all data from Supabase then re-render tiles with fresh data
-  syncPullAll().then(() => renderDashboard());
+  // Pull data from Supabase in background — never block the dashboard
+  try {
+    syncPullAll().then(() => renderDashboard()).catch(() => {});
+  } catch(e) {}
 }
 
 function setGreeting() {
