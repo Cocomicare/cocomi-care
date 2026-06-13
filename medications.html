@@ -211,6 +211,7 @@ const CAT_ORDER = ['Immunosuppression','Antiviral','Antifungal','Antibiotic','Ca
 function getMeds()    { try{return JSON.parse(localStorage.getItem(MEDS_KEY)||'[]');}catch(e){return[];} }
 function saveMeds(d) {
   localStorage.setItem(MEDS_KEY, JSON.stringify(d));
+  localStorage.setItem('clinical_meds_imported', '1'); // real data — never fall back to defaults
   syncSaveClinical('medications', d).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
 }
 
@@ -377,13 +378,13 @@ function showToast(msg,type=''){const e=document.getElementById('toast');e.textC
 function resetToDefaults() {
   if(!confirm('Reset to default medication list? This will overwrite your current list.')) return;
   localStorage.removeItem(MEDS_KEY);
+  localStorage.removeItem('clinical_meds_imported');
   initKnownMeds();
   render();
   showToast('Reset to defaults ✓','success');
 }
 
 function initKnownMeds() {
-  if(getMeds().length) return; // Already set up
   const now = new Date().toISOString();
   const known = [
     {name:'Tacrolimus',     dose:'2mg',  freq:'twice daily',  timing:'Morning and evening',
@@ -451,12 +452,16 @@ function initKnownMeds() {
 }
 
 (async () => {
+  // Pull from Supabase first
   const remote = await syncLoadClinical('medications');
   if (remote && Array.isArray(remote) && remote.length) {
     localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
+    localStorage.setItem('clinical_meds_imported', '1'); // mark as real data
   }
-  // Only load defaults if list is truly empty
-  if (!getMeds().length) initKnownMeds();
+  // Only load hardcoded defaults if no real data has ever been imported
+  if (!localStorage.getItem('clinical_meds_imported')) {
+    initKnownMeds();
+  }
   render();
 })();
 
