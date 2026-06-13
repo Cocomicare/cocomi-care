@@ -897,6 +897,30 @@ async function runSyncDebug() {
       el.textContent += `✅ peak_flow pushed (${recs.length})\n`; pushed++;
     }
 
+    // Push spirometer
+    const spiro = localStorage.getItem('spiro_records_v1');
+    if (spiro) {
+      const recs = JSON.parse(spiro);
+      for (const rec of recs) {
+        const ts = rec.date ? rec.date+'T00:00:00Z' : new Date().toISOString();
+        await sb.from('health_records').upsert(
+          { user_id:uid, module:'spirometer', recorded_at:ts, data:rec },
+          { onConflict:'user_id,module,recorded_at' }
+        );
+      }
+      el.textContent += `✅ spirometer pushed (${recs.length})\n`; pushed++;
+    }
+
+    // Push clinical conversation
+    const conv = localStorage.getItem('clinical_conversation_v1');
+    if (conv) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'conversation', data:JSON.parse(conv), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ conversation pushed\n`; pushed++; }
+    }
+
     // Push vitals
     for (const v of ['spo2','hr','bp','wt','temp']) {
       const raw = localStorage.getItem(`vss_${v}_v1`);
