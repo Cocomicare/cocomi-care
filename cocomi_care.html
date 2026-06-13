@@ -2,6 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+
+<!-- ══ AUTH GATE — must be first, synchronous, before any other script ══ -->
+<script>
+(function() {
+  // Hide the page instantly — nothing renders until auth is confirmed
+  document.documentElement.style.visibility = 'hidden';
+
+  function redirect() {
+    window.location.replace('lts_care.html');
+  }
+
+  try {
+    // Supabase stores the session in localStorage under a key like:
+    // sb-<project-ref>-auth-token
+    const KEY = 'sb-nrurfusjkvuudfzgfsww-auth-token';
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return redirect();
+
+    const session = JSON.parse(raw);
+    const token   = session && (session.access_token || (session[0] && session[0].access_token));
+    const expiry  = session && (session.expires_at   || (session[0] && session[0].expires_at));
+
+    if (!token || !expiry) return redirect();
+
+    // expires_at is in seconds
+    if (expiry * 1000 < Date.now()) return redirect();
+
+    // ✅ Valid session — show the page
+    document.documentElement.style.visibility = 'visible';
+  } catch(e) {
+    redirect();
+  }
+})();
+</script>
+<!-- ══ END AUTH GATE ══ -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -490,6 +526,28 @@ function goHome() {
 // ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
+
+// Secondary auth check via Supabase SDK (belt-and-suspenders)
+// Handles edge cases: expired token, revoked session, etc.
+(async function verifySession() {
+  try {
+    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.replace('lts_care.html');
+      return;
+    }
+    // Session confirmed valid — listen for sign-out
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') window.location.replace('lts_care.html');
+    });
+  } catch(e) {
+    window.location.replace('lts_care.html');
+  }
+})();
+
 renderDashboard();
 setInterval(renderDashboard, 60000);
 </script>
