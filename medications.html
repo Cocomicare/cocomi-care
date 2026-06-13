@@ -171,7 +171,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   <div class="add-bar">
     <div class="add-row">
       <button class="attach-btn" onclick="document.getElementById('med-file-input').click()" title="Upload medication document">📎</button>
-      <input class="add-input" id="quick-add" placeholder="Add medication manually, or tap 📎 to upload a document" onkeydown="if(event.key==='Enter')quickAdd()">
+      <button class="attach-btn" onclick="pasteFromClipboard()" title="Paste screenshot from clipboard">📋</button>
+      <input class="add-input" id="quick-add" placeholder="Add medication manually, or tap 📎 📋 to upload" onkeydown="if(event.key==='Enter')quickAdd()">
       <button class="add-btn" onclick="quickAdd()">+ Add</button>
     </div>
   </div>
@@ -486,6 +487,10 @@ function initKnownMeds() {
 // ══════════════════════════════════════════════════
 async function handleMedFile(input) {
   const file = input.files?.[0]; if (!file) return; input.value = '';
+  await processMedFile(file);
+}
+
+async function processMedFile(file) {
 
   const bar    = document.getElementById('analyzing-bar');
   const status = document.getElementById('analyzing-status');
@@ -614,6 +619,37 @@ Use the dose/freq/timing from the extracted list. Fill in purpose, sideEffects, 
     setTimeout(() => bar.classList.remove('show'), 6000);
   }
 }
+
+// ── CLIPBOARD PASTE ──
+async function pasteFromClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imageType = item.types.find(t => t.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], 'paste.png', { type: imageType });
+        await processMedFile(file);
+        return;
+      }
+    }
+    showToast('No image found on clipboard — copy a screenshot first', '');
+  } catch(e) {
+    showToast('Paste failed — try the 📎 upload button instead', '');
+  }
+}
+
+// Also support Ctrl+V / Cmd+V anywhere on the page
+document.addEventListener('paste', async (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const blob = item.getAsFile();
+      if (blob) { await processMedFile(blob); return; }
+    }
+  }
+});
 
 function toBase64(file) {
   return new Promise((res, rej) => {
