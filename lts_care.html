@@ -932,10 +932,35 @@ function showDashboard() {
   }
   setGreeting();
   renderDashboard();
-  // Pull data from Supabase in background — never block the dashboard
-  try {
-    syncPullAll().then(() => renderDashboard()).catch(() => {});
-  } catch(e) {}
+  // Pull data from Supabase in background
+  (async () => {
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+      const uid = session.user.id;
+
+      // Pull clinical data
+      const typeMap = { medications:'clinical_meds_v1', conversation:'clinical_conversation_v1', files:'clinical_files_v1' };
+      for (const [type, key] of Object.entries(typeMap)) {
+        const { data } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', type).single();
+        if (data?.data) localStorage.setItem(key, JSON.stringify(data.data));
+      }
+
+      // Pull health records
+      const modMap = {
+        symptoms:'symptom_checkins_v1', peak_flow:'peak_flow_sessions_v1',
+        spirometer:'spiro_records_v1', vitals_spo2:'vss_spo2_v1',
+        vitals_hr:'vss_hr_v1', vitals_bp:'vss_bp_v1',
+        vitals_wt:'vss_wt_v1', vitals_temp:'vss_temp_v1'
+      };
+      for (const [module, key] of Object.entries(modMap)) {
+        const { data } = await sb.from('health_records').select('data').eq('user_id', uid).eq('module', module).order('recorded_at');
+        if (data?.length) localStorage.setItem(key, JSON.stringify(data.map(r => r.data)));
+      }
+
+      renderDashboard();
+    } catch(e) {}
+  })();
 }
 
 function setGreeting() {
