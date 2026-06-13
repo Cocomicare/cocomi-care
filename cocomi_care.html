@@ -248,17 +248,26 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 // ══════════════════════════════════════════════════
 //  AUTH GATE — redirect to login if not authenticated
 // ══════════════════════════════════════════════════
+// Hide body until auth check completes to prevent flash
+document.documentElement.style.visibility = 'hidden';
+
 (async function() {
-  const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
+  try {
+    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (error || !session) {
+      window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
+      return;
+    }
+    // Auth passed — show page and sync
+    document.documentElement.style.visibility = 'visible';
+    await syncPullAll();
+  } catch(e) {
+    // If anything fails, redirect to login to be safe
     window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
-    return;
   }
-  // Pull latest data from Supabase into localStorage
-  await syncPullAll();
 })();
 
 // ══════════════════════════════════════════════════
