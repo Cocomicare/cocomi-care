@@ -474,14 +474,22 @@ const PARAMS = [
     key:        'peakflow',
     name:       'Peak Flow',
     icon:       '📊',
-    unit:       '',
+    unit:       'L/min',
     weight:     18,
     maxAgeDays: 2,
     storageKey: 'peak_flow_sessions_v1',
     direction:  'higher_better',
-    getLatest(recs) { return recs.length ? recs[recs.length-1].avg : null; },
+    getLatest(recs) {
+      if (!recs.length) return null;
+      const l = recs[recs.length-1];
+      // Prefer FEV1 for scoring (more sensitive), fall back to PEF
+      return l.fev1 != null ? l.fev1 : (l.avg ?? l.best ?? null);
+    },
     getBaseline(recs) {
-      return rollingBaseline(recs, r=>r.avg, getBaselineDays());
+      // Use FEV1 if available, else PEF
+      const hasFev1 = recs.some(r=>r.fev1!=null);
+      if (hasFev1) return rollingBaseline(recs.filter(r=>r.fev1!=null), r=>r.fev1, getBaselineDays());
+      return rollingBaseline(recs, r=>r.avg??r.best, getBaselineDays());
     }
   },
   {
