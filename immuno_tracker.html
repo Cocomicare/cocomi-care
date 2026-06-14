@@ -176,7 +176,7 @@
   <!-- Main chart -->
   <div class="chart-card">
     <div class="chart-card-title">Immunosuppression & Immune Lab Timeline</div>
-    <div class="chart-card-sub">Step lines = drug doses (left axis) · Dots = lab values & trough (right axis)</div>
+    <div class="chart-card-sub">All values normalized to 0–100% of typical range · hover for actual values</div>
     <div class="chart-wrap">
       <canvas id="main-chart"></canvas>
     </div>
@@ -346,7 +346,29 @@ const TYPES = {
   ivig_infusion: { label:'IVIG Infusion', unit:'g', color:'var(--ivig)', cls:'tag-ivig', axis:'right', stepped:false },
 };
 
-// ── Storage ──
+// ── Normalization ranges (for chart display only — tooltips show real values) ──
+const RANGES = {
+  tac:    { min:0, max:20 },    // mg/day
+  mmc:    { min:0, max:3000 },  // mg/day
+  pred:   { min:0, max:60 },    // mg/day
+  trough: { min:0, max:20 },    // ng/mL
+  igg:    { min:0, max:1500 },  // mg/dL
+  iga:    { min:0, max:200 },   // mg/dL
+  igm:    { min:0, max:200 },   // mg/dL
+  ivig:   { min:0, max:100 },   // grams
+};
+
+function normalize(key, val) {
+  const r = RANGES[key];
+  if (!r) return val;
+  return Math.round(((val - r.min) / (r.max - r.min)) * 100);
+}
+
+function denormalize(key, pct) {
+  const r = RANGES[key];
+  if (!r) return pct;
+  return (pct / 100) * (r.max - r.min) + r.min;
+}
 function getData() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e) { return []; }
 }
@@ -421,16 +443,16 @@ function getSeriesColor(key) {
 function buildDatasets(entries) {
   const datasets = [];
   Object.entries(TYPES).forEach(([key, cfg]) => {
+    if (key === 'ivig_infusion') return;
     const typeEntries = entries.filter(e=>e.type===key).sort((a,b)=>a.date.localeCompare(b.date));
     if (!typeEntries.length) return;
     const color = getSeriesColor(key);
     if (cfg.stepped) {
       const pts = [];
-      typeEntries.forEach(e => pts.push({ x: e.date, y: parseFloat(e.value) }));
-      // Always add today to extend the step line, even for single points
+      typeEntries.forEach(e => pts.push({ x: e.date, y: normalize(key, parseFloat(e.value)), _real: parseFloat(e.value) }));
       const todayStr = today();
       if (pts.length && pts[pts.length-1].x !== todayStr) {
-        pts.push({ x: todayStr, y: pts[pts.length-1].y });
+        pts.push({ x: todayStr, y: pts[pts.length-1].y, _real: pts[pts.length-1]._real });
       }
       datasets.push({
         label: cfg.label,
@@ -441,16 +463,16 @@ function buildDatasets(entries) {
         stepped: 'before',
         tension: 0,
         borderWidth: 2.5,
-        pointRadius: pts.map((_, i) => i < pts.length - 1 ? 4 : 0), // hide today extension point
+        pointRadius: pts.map((_, i) => i < pts.length - 1 ? 4 : 0),
         pointHoverRadius: 6,
-        yAxisID: cfg.axis === 'left' ? 'yLeft' : 'yRight',
+        yAxisID: 'yNorm',
         hidden: hidden.has(key),
         seriesKey: key,
       });
     } else {
       datasets.push({
         label: cfg.label,
-        data: typeEntries.map(e => ({ x: e.date, y: parseFloat(e.value) })),
+        data: typeEntries.map(e => ({ x: e.date, y: normalize(key, parseFloat(e.value)), _real: parseFloat(e.value) })),
         borderColor: color,
         backgroundColor: color,
         fill: false,
@@ -458,7 +480,7 @@ function buildDatasets(entries) {
         borderWidth: 2,
         pointRadius: 5,
         pointHoverRadius: 7,
-        yAxisID: cfg.axis === 'left' ? 'yLeft' : 'yRight',
+        yAxisID: 'yNorm',
         hidden: hidden.has(key),
         seriesKey: key,
       });
@@ -534,7 +556,8 @@ function updateChart() {
             label: item => {
               const key = item.dataset.seriesKey;
               const cfg = TYPES[key];
-              return ` ${cfg?.label}: ${item.raw.y} ${cfg?.unit||''}`;
+              const realVal = item.raw._real ?? item.raw.y;
+              return ` ${cfg?.label}: ${realVal} ${cfg?.unit||''}`;
             }
           }
         }
@@ -546,21 +569,18 @@ function updateChart() {
           grid: { color: '#E8EAF0' },
           ticks: { color: '#9396A8', font: { size: 11 }, maxTicksLimit: 8 },
         },
-        yLeft: {
+        yNorm: {
           type: 'linear',
           position: 'left',
-          title: { display: true, text: 'Drug Dose (mg/day)', color: '#9396A8', font: { size: 11 } },
+          min: 0,
+          max: 100,
+          title: { display: true, text: '← Normalized scale (hover for real values)', color: '#9396A8', font: { size: 10 } },
           grid: { color: '#E8EAF0' },
-          ticks: { color: '#9396A8', font: { size: 11 } },
-          beginAtZero: true,
-        },
-        yRight: {
-          type: 'linear',
-          position: 'right',
-          title: { display: true, text: 'Lab Values', color: '#9396A8', font: { size: 11 } },
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#9396A8', font: { size: 11 } },
-          beginAtZero: true,
+          ticks: {
+            color: '#9396A8', font: { size: 10 },
+            callback: v => v === 0 ? 'Low' : v === 50 ? 'Mid' : v === 100 ? 'High' : '',
+            maxTicksLimit: 5,
+          },
         }
       }
     }
