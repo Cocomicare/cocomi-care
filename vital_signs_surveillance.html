@@ -663,10 +663,11 @@ function getRecords(vital) {
 }
 function saveRecords(vital, data) {
   localStorage.setItem(SK(vital), JSON.stringify(data));
-  // Save each record individually to health_records table
   const module = 'vitals_' + vital;
   data.forEach(rec => {
-    const ts = rec.date ? rec.date + 'T' + (rec.time||'00:00') + ':00Z' : new Date().toISOString();
+    // Normalize time to HH:MM only (strip seconds if present)
+    const timeStr = (rec.time || '00:00').slice(0, 5);
+    const ts = rec.date ? rec.date + 'T' + timeStr + ':00Z' : new Date().toISOString();
     syncSaveHealthRecord(module, ts, rec).catch(()=>syncShowStatus('error'));
   });
   syncShowStatus('synced');

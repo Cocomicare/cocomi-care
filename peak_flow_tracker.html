@@ -493,7 +493,8 @@ function getSessions() {
 function saveSessions(s) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   s.forEach(session => {
-    const ts = session.date ? session.date + 'T' + (session.time||'00:00') + ':00Z' : new Date().toISOString();
+    const timeStr = (session.time||'00:00').slice(0,5);
+    const ts = session.date ? session.date + 'T' + timeStr + ':00Z' : new Date().toISOString();
     syncSaveHealthRecord('peak_flow', ts, session).catch(()=>syncShowStatus('error'));
   });
   syncShowStatus('synced');
