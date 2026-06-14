@@ -922,6 +922,16 @@ async function runSyncDebug() {
       if (!error) { el.textContent += `✅ conversation pushed\n`; pushed++; }
     }
 
+    // Push clinical files metadata
+    const files = localStorage.getItem('clinical_files_v1');
+    if (files) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'files', data:JSON.parse(files), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ files metadata pushed\n`; pushed++; }
+    }
+
     // Push vitals
     for (const v of ['spo2','hr','bp','wt','temp']) {
       const raw = localStorage.getItem(`vss_${v}_v1`);
