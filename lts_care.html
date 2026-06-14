@@ -889,7 +889,10 @@ function renderDashboard() {
     const NONNEGOTIABLES = [
       { key:'symptom_checkins_v1', name:'Symptom Check-in', days:2 },
       { key:'vss_spo2_v1',         name:'SpO₂',            days:2 },
-      { key:'peak_flow_sessions_v1',name:'Peak Flow',       days:2 },
+      { key:'peak_flow_sessions_v1', name:'FEV1', days:2,
+        hasRecent(recs) { return recs.some(r=>r.fev1!=null && Math.floor((new Date()-new Date(r.date+'T12:00:00'))/86400000)<=2); } },
+      { key:'peak_flow_sessions_v1', name:'PEF', days:2,
+        hasRecent(recs) { return recs.some(r=>r.pef!=null && Math.floor((new Date()-new Date(r.date+'T12:00:00'))/86400000)<=2); } },
       { key:'vss_hr_v1',           name:'Heart Rate',       days:2 },
     ];
 
@@ -898,6 +901,8 @@ function renderDashboard() {
       try {
         const recs = JSON.parse(localStorage.getItem(n.key)||'[]');
         if (!recs.length) return true;
+        // Use custom hasRecent if defined (e.g. FEV1/PEF check specific fields)
+        if (n.hasRecent) return !n.hasRecent(recs);
         const last = recs[recs.length-1];
         const lastDate = new Date(last.date||last.recorded_at||'');
         if (isNaN(lastDate)) return true;

@@ -471,25 +471,37 @@ const PARAMS = [
     }
   },
   {
-    key:        'peakflow',
-    name:       'Peak Flow',
+    key:        'fev1',
+    name:       'FEV1',
     icon:       '📊',
-    unit:       'L/min',
-    weight:     18,
+    unit:       'L',
+    weight:     15,
     maxAgeDays: 2,
     storageKey: 'peak_flow_sessions_v1',
     direction:  'higher_better',
     getLatest(recs) {
-      if (!recs.length) return null;
-      const l = recs[recs.length-1];
-      // Prefer FEV1 for scoring (more sensitive), fall back to PEF
-      return l.fev1 != null ? l.fev1 : (l.avg ?? l.best ?? null);
+      const r = recs.filter(s=>s.fev1!=null);
+      return r.length ? r[r.length-1].fev1 : null;
     },
     getBaseline(recs) {
-      // Use FEV1 if available, else PEF
-      const hasFev1 = recs.some(r=>r.fev1!=null);
-      if (hasFev1) return rollingBaseline(recs.filter(r=>r.fev1!=null), r=>r.fev1, getBaselineDays());
-      return rollingBaseline(recs, r=>r.avg??r.best, getBaselineDays());
+      return rollingBaseline(recs.filter(s=>s.fev1!=null), r=>r.fev1, getBaselineDays());
+    }
+  },
+  {
+    key:        'pef',
+    name:       'PEF',
+    icon:       '💨',
+    unit:       'L/min',
+    weight:     10,
+    maxAgeDays: 2,
+    storageKey: 'peak_flow_sessions_v1',
+    direction:  'higher_better',
+    getLatest(recs) {
+      const r = recs.filter(s=>s.pef!=null);
+      return r.length ? r[r.length-1].pef : null;
+    },
+    getBaseline(recs) {
+      return rollingBaseline(recs.filter(s=>s.pef!=null), r=>r.pef, getBaselineDays());
     }
   },
   {
@@ -714,7 +726,7 @@ function computeParamScore(param, latest, baseline, recCount) {
 }
 
 // Parameters that MUST have fresh data for a valid score
-const NONNEGOTIABLES = ['symptoms', 'spo2', 'peakflow', 'hr'];
+const NONNEGOTIABLES = ['symptoms', 'spo2', 'fev1', 'pef', 'hr'];
 
 function computeScore() {
   const weights = getWeights();
