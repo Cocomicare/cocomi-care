@@ -399,8 +399,21 @@ function showToast(msg,type='') { const e=document.getElementById('toast'); e.te
     syncLoadClinical('conversation'),
     syncLoadClinical('medications')
   ]);
-  if (remoteConv) save(CONV_KEY, remoteConv);
-  if (remoteMeds) save(MEDS_KEY, remoteMeds);
+
+  // For conversation: keep whichever version has more messages
+  if (remoteConv && Array.isArray(remoteConv)) {
+    const localConv = load(CONV_KEY);
+    if (remoteConv.length > localConv.length) {
+      save(CONV_KEY, remoteConv);
+    } else if (localConv.length > remoteConv.length) {
+      // Local has more — push local up to Supabase
+      syncSaveClinical('conversation', localConv);
+    }
+  }
+
+  if (remoteMeds && Array.isArray(remoteMeds) && remoteMeds.length) {
+    save(MEDS_KEY, remoteMeds);
+  }
 
   conv = load(CONV_KEY);
   if(!conv.length) {
