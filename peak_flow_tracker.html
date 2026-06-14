@@ -492,10 +492,11 @@ function getSessions() {
 }
 function saveSessions(s) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  // Use postMessage to parent lts_care which has guaranteed Supabase session
   s.forEach(session => {
     const timeStr = (session.time||'00:00').slice(0,5);
     const ts = session.date ? session.date + 'T' + timeStr + ':00Z' : new Date().toISOString();
-    syncSaveHealthRecord('peak_flow', ts, session).catch(()=>syncShowStatus('error'));
+    window.parent.postMessage({ type:'SYNC_SAVE_HEALTH_RECORD', module:'peak_flow', recordedAt:ts, data:session }, '*');
   });
   syncShowStatus('synced');
 }
@@ -545,14 +546,13 @@ function saveSession() {
 }
 
 function clearForm() {
-  document.getElementById('sessionDate').value = '';
-  document.getElementById('sessionTime').value = '';
-  document.getElementById('timeDisplayText').textContent = 'Tap to set time';
-  document.getElementById('sessionNotes').value = '';
-  const inp = document.getElementById('blow1');
-  if (inp) { inp.value = ''; inp.classList.remove('filled','best'); }
-  document.getElementById('saveBtn').disabled = true;
   initDateTime();
+  const blow1 = document.getElementById('blow1');
+  if (blow1) { blow1.value=''; blow1.classList.remove('filled'); }
+  const notes = document.getElementById('sessionNotes');
+  if (notes) notes.value='';
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.disabled=true;
 }
 
 // ══════════════════════════════════════════════════
@@ -609,7 +609,7 @@ function deleteSession(id) {
   if (session) {
     const timeStr = (session.time||'00:00').slice(0,5);
     const ts = session.date ? session.date + 'T' + timeStr + ':00Z' : null;
-    if (ts) syncDeleteHealthRecord('peak_flow', ts);
+    if (ts) window.parent.postMessage({ type:'SYNC_DELETE_HEALTH_RECORD', module:'peak_flow', recordedAt:ts }, '*');
   }
   saveSessions(sessions.filter(s => s.id !== id));
   renderHistory();
@@ -908,11 +908,14 @@ function showToast(msg,type='') {
 function initDateTime() {
   const now = new Date();
   const yyyy=now.getFullYear(), mm=String(now.getMonth()+1).padStart(2,'0'), dd=String(now.getDate()).padStart(2,'0');
-  document.getElementById('sessionDate').value=`${yyyy}-${mm}-${dd}`;
+  const dateEl = document.getElementById('sessionDate');
+  if (dateEl) dateEl.value=`${yyyy}-${mm}-${dd}`;
   const hh=now.getHours(), min=String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('sessionTime').value=String(hh).padStart(2,'0')+':'+min;
+  const timeEl = document.getElementById('sessionTime');
+  if (timeEl) timeEl.value=String(hh).padStart(2,'0')+':'+min;
   const h12=hh%12||12, ampm=hh>=12?'PM':'AM';
-  document.getElementById('timeDisplayText').textContent=String(h12).padStart(2,'0')+':'+min+' '+ampm;
+  const displayEl = document.getElementById('timeDisplayText');
+  if (displayEl) displayEl.textContent=String(h12).padStart(2,'0')+':'+min+' '+ampm;
 }
 
 initDateTime();
