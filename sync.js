@@ -146,10 +146,21 @@ function syncShowStatus(status) {
   if (!el) {
     el = document.createElement('div');
     el.id = 'sync-status';
-    el.style.cssText = 'position:fixed;bottom:12px;left:12px;font-size:11px;padding:4px 10px;border-radius:20px;font-family:DM Sans,sans-serif;z-index:999;transition:all .3s;pointer-events:none';
+    el.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;padding:7px 18px;border-radius:20px;font-family:DM Sans,sans-serif;z-index:9999;transition:opacity .4s;pointer-events:none;white-space:nowrap';
     document.body.appendChild(el);
   }
-  if (status === 'syncing') { el.style.background='#E8F1FA'; el.style.color='#3B82C4'; el.textContent='⟳ Syncing'; }
-  else if (status === 'synced') { el.style.background='#E8F7F1'; el.style.color='#2D9E6B'; el.textContent='✓ Synced'; setTimeout(()=>el.style.opacity='0',2000); setTimeout(()=>{ el.style.opacity='1'; el.textContent=''; },3000); }
-  else if (status === 'error') { el.style.background='#FAEAEA'; el.style.color='#C94040'; el.textContent='⚠ Sync error'; }
+  clearTimeout(el._timeout);
+  el.style.opacity = '1';
+  if (status === 'syncing') {
+    el.style.background='#E8F1FA'; el.style.color='#3B82C4';
+    el.textContent='⟳ Syncing to cloud…';
+  } else if (status === 'synced') {
+    el.style.background='#E8F7F1'; el.style.color='#2D9E6B';
+    el.textContent='✓ Saved & synced';
+    el._timeout = setTimeout(() => { el.style.opacity='0'; }, 3000);
+  } else if (status === 'error') {
+    el.style.background='#FAEAEA'; el.style.color='#C94040';
+    el.textContent='⚠ Sync failed — will retry';
+    el._timeout = setTimeout(() => { el.style.opacity='0'; }, 5000);
+  }
 }
