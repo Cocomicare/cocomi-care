@@ -23,11 +23,11 @@
     --radius: 14px; --radius-sm: 8px;
     /* Drug colors */
     --tac: #6B46C1;   /* Tacrolimus - purple */
-    --mmc: #0D9488;   /* CellCept - teal */
+    --mmc: #EA580C;   /* CellCept - orange-red */
     --pred: #D97706;  /* Prednisone - amber */
     --trough: #9333EA; /* Tacrolimus trough - violet */
     /* Lab colors */
-    --igg: #2563EB;   /* IgG - blue */
+    --igg: #1D4ED8;   /* IgG - deep blue */
     --iga: #16A34A;   /* IgA - green */
     --igm: #DC2626;   /* IgM - red */
     --ivig: #0891B2;  /* IVIG - cyan */
@@ -99,7 +99,7 @@
 
   /* ── Type colors ── */
   .tag-tac    { background: #EDE9F8; color: #6B46C1; }
-  .tag-mmc    { background: #CCFBF1; color: #0D9488; }
+  .tag-mmc    { background: #FEF0E7; color: #EA580C; }
   .tag-pred   { background: #FEF3C7; color: #D97706; }
   .tag-trough { background: #F3E8FF; color: #9333EA; }
   .tag-igg    { background: #DBEAFE; color: #2563EB; }
@@ -248,6 +248,9 @@
       <button class="btn btn-primary btn-sm" onclick="saveIvigEntry()">Log Infusion</button>
     </div>
   </div>
+
+  <div class="entry-card">
+    <div class="entry-title">Log a Lab Value or Trough</div>
     <div class="form-grid">
       <div class="form-group">
         <div class="form-label">Date</div>
@@ -399,7 +402,17 @@ let chart = null;
 const hidden = new Set();
 
 function getSeriesColor(key) {
-  const map = { tac:'#6B46C1', mmc:'#0D9488', pred:'#D97706', trough:'#9333EA', igg:'#2563EB', iga:'#16A34A', igm:'#DC2626', ivig:'#0891B2' };
+  const map = {
+    tac:    '#6B46C1', // purple
+    mmc:    '#EA580C', // orange-red (distinct from teal IgG)
+    pred:   '#D97706', // amber
+    trough: '#9333EA', // violet
+    igg:    '#1D4ED8', // deep blue
+    iga:    '#16A34A', // green
+    igm:    '#DC2626', // red
+    ivig:   '#0891B2', // cyan
+    ivig_infusion: '#0891B2',
+  };
   return map[key] || '#888';
 }
 
@@ -509,7 +522,13 @@ function updateChart() {
           backgroundColor: '#1A1D2E',
           padding: 10,
           callbacks: {
-            title: items => fmtDate(items[0]?.label || items[0]?.raw?.x),
+            title: items => {
+              const raw = items[0]?.raw?.x || items[0]?.label;
+              if (!raw) return '';
+              // Handle YYYY-MM-DD string directly
+              const d = typeof raw === 'string' ? new Date(raw + 'T12:00:00') : new Date(raw);
+              return isNaN(d) ? raw : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            },
             label: item => {
               const key = item.dataset.seriesKey;
               const cfg = TYPES[key];
