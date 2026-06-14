@@ -1118,20 +1118,14 @@ async function syncSettings() {
       syncLoadClinical('health_index_history')
     ]);
 
-    if (remoteSettings && typeof remoteSettings === 'object') {
-      const localSavedAt  = localStorage.getItem('chi_settings_saved_at') || '';
-      const remoteSavedAt = remoteSettings.savedAt || '';
-      // Remote wins if it was saved more recently, OR if local has no timestamp
-      if (remoteSavedAt > localSavedAt || !localSavedAt) {
-        if (remoteSettings.weights    && Object.keys(remoteSettings.weights).length > 0)
-          localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
-        if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
-          localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
-        if (remoteSettings.windows    && Object.keys(remoteSettings.windows).length > 0)
-          localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
-        if (remoteSavedAt)
-          localStorage.setItem('chi_settings_saved_at', remoteSavedAt);
-      }
+    if (remoteSettings && typeof remoteSettings === 'object' && remoteSettings.weights && Object.keys(remoteSettings.weights).length > 0) {
+      // Remote always wins — it's the source of truth
+      localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
+      localStorage.setItem('chi_settings_saved_at', remoteSettings.savedAt || '');
+      if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
+        localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+      if (remoteSettings.windows && Object.keys(remoteSettings.windows).length > 0)
+        localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
     }
 
     if (remoteHistory && Array.isArray(remoteHistory) && remoteHistory.length) {
@@ -1160,13 +1154,13 @@ async function refreshScore() {
       syncLoadClinical('health_index_history')
     ]);
     if (remoteSettings?.weights && Object.keys(remoteSettings.weights).length > 0) {
-      localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
+      localStorage.setItem(WEIGHTS_KEY, JSON.stringify(remoteSettings.weights));
       localStorage.setItem('chi_settings_saved_at', remoteSettings.savedAt || '');
+      if (remoteSettings?.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
+        localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+      if (remoteSettings?.windows && Object.keys(remoteSettings.windows).length > 0)
+        localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
     }
-    if (remoteSettings?.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
-      localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
-    if (remoteSettings?.windows && Object.keys(remoteSettings.windows).length > 0)
-      localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
     if (remoteHistory?.length) {
       const local = getHistory();
       const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
