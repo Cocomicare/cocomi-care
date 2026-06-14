@@ -408,11 +408,13 @@ function buildDatasets(entries) {
     if (!typeEntries.length) return;
     const color = getSeriesColor(key);
     if (cfg.stepped) {
-      // Step chart — extend last value to today
       const pts = [];
       typeEntries.forEach(e => pts.push({ x: e.date, y: parseFloat(e.value) }));
-      // Add a point for today to extend the last step
-      if (pts.length) pts.push({ x: today(), y: pts[pts.length-1].y });
+      // Always add today to extend the step line, even for single points
+      const todayStr = today();
+      if (pts.length && pts[pts.length-1].x !== todayStr) {
+        pts.push({ x: todayStr, y: pts[pts.length-1].y });
+      }
       datasets.push({
         label: cfg.label,
         data: pts,
@@ -422,7 +424,7 @@ function buildDatasets(entries) {
         stepped: 'before',
         tension: 0,
         borderWidth: 2.5,
-        pointRadius: pts.slice(0,-1).map(()=>4),
+        pointRadius: pts.map((_, i) => i < pts.length - 1 ? 4 : 0), // hide today extension point
         pointHoverRadius: 6,
         yAxisID: cfg.axis === 'left' ? 'yLeft' : 'yRight',
         hidden: hidden.has(key),
@@ -450,7 +452,9 @@ function buildDatasets(entries) {
 
 function updateChart() {
   const entries = getData();
-  const empty = entries.length === 0;
+  // Count non-ivig_infusion entries for empty check
+  const dataEntries = entries.filter(e => e.type !== 'ivig_infusion');
+  const empty = dataEntries.length === 0;
   document.getElementById('chart-empty').style.display = empty ? 'block' : 'none';
   document.querySelector('.chart-wrap').style.display = empty ? 'none' : 'block';
 
@@ -738,6 +742,7 @@ function saveExtracted() {
   saveData(entries);
   closeModal();
   showToast(`${count} value${count>1?'s':''} saved ✓`);
+  showTab('timeline');
   updateChart();
   updateSummaryChips();
 }
