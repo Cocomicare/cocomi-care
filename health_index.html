@@ -1101,10 +1101,11 @@ async function syncSettings() {
       savedAt:    new Date().toISOString(),
     };
     if (Object.keys(settings.weights).length > 0) {
-      await syncSaveClinical('health_index_settings', settings);
-      syncShowStatus('synced');
+      const result = await syncSaveClinical('health_index_settings', settings);
+      showToast('Settings synced to Supabase ✓', 'success');
+      console.log('Synced weights:', JSON.stringify(settings.weights));
     }
-  } catch(e) { syncShowStatus('error'); }
+  } catch(e) { showToast('Sync failed: ' + e.message, ''); console.error(e); }
 }
 
 // ══════════════════════════════════════════════════
@@ -1160,6 +1161,9 @@ async function refreshScore() {
         localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
       if (remoteSettings?.windows && Object.keys(remoteSettings.windows).length > 0)
         localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
+      showToast('Pulled weights: ' + JSON.stringify(remoteSettings.weights), '');
+    } else {
+      showToast('No weights in Supabase!', '');
     }
     if (remoteHistory?.length) {
       const local = getHistory();
