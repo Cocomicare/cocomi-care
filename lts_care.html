@@ -768,6 +768,8 @@ window.addEventListener('message', async (e) => {
       if (e.data.settings.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(e.data.settings.thresholds));
       if (e.data.settings.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(e.data.settings.windows));
       if (e.data.settings.savedAt)    localStorage.setItem('chi_settings_saved_at', e.data.settings.savedAt);
+      // Mark as saved so dashboard pull doesn't overwrite
+      sessionStorage.setItem('chi_settings_pulled', '1');
     } catch(err) { console.error('Failed to save health index settings:', err); }
   }
 });
@@ -799,13 +801,17 @@ function showDashboard() {
         if (data?.data) localStorage.setItem(key, JSON.stringify(data.data));
       }
 
-      // Pull health index settings (weights, windows, thresholds)
-      const { data: hiSettings } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_settings').single();
-      if (hiSettings?.data) {
-        if (hiSettings.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(hiSettings.data.weights));
-        if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
-        if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
-        if (hiSettings.data.savedAt)    localStorage.setItem('chi_settings_saved_at', hiSettings.data.savedAt);
+      // Pull health index settings — only on first login per session, not every dashboard visit
+      // (postMessage from health_index iframe handles saves, pulling every time overwrites local changes)
+      if (!sessionStorage.getItem('chi_settings_pulled')) {
+        const { data: hiSettings } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_settings').single();
+        if (hiSettings?.data) {
+          if (hiSettings.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(hiSettings.data.weights));
+          if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
+          if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
+          if (hiSettings.data.savedAt)    localStorage.setItem('chi_settings_saved_at', hiSettings.data.savedAt);
+        }
+        sessionStorage.setItem('chi_settings_pulled', '1');
       }
 
       // Pull health index history
