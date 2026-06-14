@@ -257,7 +257,7 @@ header {
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙️ Settings</button>
-    <button class="btn btn-primary btn-sm" onclick="computeScore()">↻ Refresh</button>
+    <button class="btn btn-primary btn-sm" onclick="refreshScore()">↻ Refresh</button>
   </div>
 </header>
 
@@ -1143,7 +1143,42 @@ async function syncSettings() {
   } catch(e) {}
 
   computeScore();
+  // If settings tab is open, rebuild rows with synced values
+  if (document.getElementById('tab-settings')?.classList.contains('active')) {
+    buildWeightRows();
+    buildWindowRows();
+  }
 })();
+
+// Refresh button — re-pull from Supabase then recompute
+async function refreshScore() {
+  const btn = document.querySelector('[onclick="refreshScore()"]');
+  if (btn) btn.textContent = '⟳ Syncing…';
+  try {
+    const [remoteSettings, remoteHistory] = await Promise.all([
+      syncLoadClinical('health_index_settings'),
+      syncLoadClinical('health_index_history')
+    ]);
+    if (remoteSettings?.weights && Object.keys(remoteSettings.weights).length > 0) {
+      localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
+      localStorage.setItem('chi_settings_saved_at', remoteSettings.savedAt || '');
+    }
+    if (remoteSettings?.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
+      localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+    if (remoteSettings?.windows && Object.keys(remoteSettings.windows).length > 0)
+      localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
+    if (remoteHistory?.length) {
+      const local = getHistory();
+      const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(Object.values(merged).sort((a,b)=>a.date.localeCompare(b.date)).slice(-90)));
+    }
+  } catch(e) {}
+  computeScore();
+  buildWeightRows();
+  buildWindowRows();
+  if (btn) btn.textContent = '↻ Refresh';
+  showToast('Refreshed ✓', 'success');
+}
 </script>
 </body>
 </html>
