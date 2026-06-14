@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immunosuppression Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F8FA; --surface: #FFFFFF; --border: #E8EAF0;
+    --ink: #1A1D2E; --ink2: #4A4E6A; --ink3: #9396A8;
+    --purple: #6B46C1; --purple-light: #EDE9F8;
+    --teal: #0D9488; --teal-light: #CCFBF1;
+    --amber: #D97706; --amber-light: #FEF3C7;
+    --red: #DC2626; --red-light: #FEE2E2;
+    --green: #16A34A; --green-light: #DCFCE7;
+    --blue: #2563EB; --blue-light: #DBEAFE;
+    --radius: 14px; --radius-sm: 8px;
+    /* Drug colors */
+    --tac: #6B46C1;   /* Tacrolimus - purple */
+    --mmc: #0D9488;   /* CellCept - teal */
+    --pred: #D97706;  /* Prednisone - amber */
+    --trough: #9333EA; /* Tacrolimus trough - violet */
+    /* Lab colors */
+    --igg: #2563EB;   /* IgG - blue */
+    --iga: #16A34A;   /* IgA - green */
+    --igm: #DC2626;   /* IgM - red */
+    --ivig: #0891B2;  /* IVIG - cyan */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); font-size: 14px; }
+
+  /* ── Header ── */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 50; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink); }
+  .header-sub { font-size: 10px; color: var(--ink3); text-transform: uppercase; letter-spacing: .08em; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .btn-primary { background: var(--purple); color: #fff; }
+  .btn-ghost { background: none; border: 1.5px solid var(--border); color: var(--ink2); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 16px; position: sticky; top: 52px; z-index: 40; }
+  .tab { padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--ink3); cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  /* ── Content ── */
+  .content { padding: 16px; max-width: 900px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Chart card ── */
+  .chart-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
+  .chart-card-title { font-size: 11px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .chart-card-sub { font-size: 12px; color: var(--ink3); margin-bottom: 14px; }
+  .chart-wrap { position: relative; height: 320px; }
+
+  /* ── Legend ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--border); cursor: pointer; font-size: 11px; font-weight: 500; transition: all .15s; user-select: none; }
+  .legend-item.hidden { opacity: 0.35; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dash { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Entry form ── */
+  .entry-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
+  .entry-title { font-weight: 600; font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: .06em; }
+  .form-input { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--bg); color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
+  .form-input:focus { border-color: var(--purple); }
+  select.form-input { cursor: pointer; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* ── History table ── */
+  .history-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
+  .history-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .history-title { font-weight: 600; font-size: 13px; }
+  .history-row { padding: 11px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .history-row:last-child { border-bottom: none; }
+  .history-date { font-size: 12px; color: var(--ink3); font-family: 'DM Mono', monospace; white-space: nowrap; min-width: 80px; }
+  .history-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .history-val { font-size: 14px; font-weight: 600; color: var(--ink); margin-left: auto; font-family: 'DM Mono', monospace; }
+  .history-note { font-size: 11px; color: var(--ink3); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .del-btn { background: none; border: none; color: var(--ink3); cursor: pointer; padding: 4px; font-size: 14px; flex-shrink: 0; }
+  .del-btn:hover { color: var(--red); }
+  .empty-state { padding: 32px 16px; text-align: center; color: var(--ink3); font-size: 13px; }
+
+  /* ── Upload bar ── */
+  .upload-bar { display: flex; gap: 8px; align-items: center; padding: 12px 16px; background: var(--purple-light); border-radius: var(--radius-sm); margin-bottom: 16px; }
+  .upload-bar-text { font-size: 12px; color: var(--purple); flex: 1; }
+
+  /* ── Type colors ── */
+  .tag-tac    { background: #EDE9F8; color: #6B46C1; }
+  .tag-mmc    { background: #CCFBF1; color: #0D9488; }
+  .tag-pred   { background: #FEF3C7; color: #D97706; }
+  .tag-trough { background: #F3E8FF; color: #9333EA; }
+  .tag-igg    { background: #DBEAFE; color: #2563EB; }
+  .tag-iga    { background: #DCFCE7; color: #16A34A; }
+  .tag-igm    { background: #FEE2E2; color: #DC2626; }
+  .tag-ivig   { background: #CFFAFE; color: #0891B2; }
+
+  /* ── Summary chips ── */
+  .summary-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .summary-chip { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; flex: 1; min-width: 100px; }
+  .chip-label { font-size: 10px; color: var(--ink3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+  .chip-val { font-size: 17px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--ink); }
+  .chip-unit { font-size: 10px; color: var(--ink3); }
+  .chip-date { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+
+  /* ── Loading ── */
+  .loading { text-align: center; padding: 40px; color: var(--ink3); font-size: 13px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .summary-chip { min-width: 80px; }
+    .chart-wrap { height: 240px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Immunosuppression</div>
+    <div class="header-sub">Drug & Immune Lab Timeline</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('upload-input').click()">📎 Upload</button>
+    <input type="file" id="upload-input" accept="image/*,.pdf" style="display:none" onchange="handleUpload(this)">
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('timeline')" id="tab-timeline">Timeline</button>
+  <button class="tab" onclick="showTab('log')" id="tab-log">Log Entry</button>
+  <button class="tab" onclick="showTab('history')" id="tab-history">History</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  TIMELINE TAB -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="content">
+<div class="tab-panel active" id="panel-timeline">
+
+  <!-- Summary chips -->
+  <div class="summary-row" id="summary-chips">
+    <div class="summary-chip"><div class="chip-label">Tacrolimus</div><div class="chip-val" id="chip-tac">—</div><div class="chip-unit">mg/day</div><div class="chip-date" id="chip-tac-date"></div></div>
+    <div class="summary-chip"><div class="chip-label">CellCept</div><div class="chip-val" id="chip-mmc">—</div><div class="chip-unit">mg/day</div><div class="chip-date" id="chip-mmc-date"></div></div>
+    <div class="summary-chip"><div class="chip-label">Prednisone</div><div class="chip-val" id="chip-pred">—</div><div class="chip-unit">mg/day</div><div class="chip-date" id="chip-pred-date"></div></div>
+    <div class="summary-chip"><div class="chip-label">Trough</div><div class="chip-val" id="chip-trough">—</div><div class="chip-unit">ng/mL</div><div class="chip-date" id="chip-trough-date"></div></div>
+    <div class="summary-chip"><div class="chip-label">IgG</div><div class="chip-val" id="chip-igg">—</div><div class="chip-unit">mg/dL</div><div class="chip-date" id="chip-igg-date"></div></div>
+  </div>
+
+  <!-- Legend toggles -->
+  <div class="legend" id="chart-legend">
+    <div class="legend-item" data-series="tac"    onclick="toggleSeries('tac')">    <div class="legend-dash" style="background:var(--tac)"></div>Tacrolimus dose</div>
+    <div class="legend-item" data-series="mmc"    onclick="toggleSeries('mmc')">    <div class="legend-dash" style="background:var(--mmc)"></div>CellCept dose</div>
+    <div class="legend-item" data-series="pred"   onclick="toggleSeries('pred')">   <div class="legend-dash" style="background:var(--pred)"></div>Prednisone dose</div>
+    <div class="legend-item" data-series="trough" onclick="toggleSeries('trough')"> <div class="legend-dot" style="background:var(--trough)"></div>Tac trough</div>
+    <div class="legend-item" data-series="igg"    onclick="toggleSeries('igg')">    <div class="legend-dot" style="background:var(--igg)"></div>IgG</div>
+    <div class="legend-item" data-series="iga"    onclick="toggleSeries('iga')">    <div class="legend-dot" style="background:var(--iga)"></div>IgA</div>
+    <div class="legend-item" data-series="igm"    onclick="toggleSeries('igm')">    <div class="legend-dot" style="background:var(--igm)"></div>IgM</div>
+    <div class="legend-item" data-series="ivig"   onclick="toggleSeries('ivig')">   <div class="legend-dot" style="background:var(--ivig)"></div>IVIG dose</div>
+  </div>
+
+  <!-- Main chart -->
+  <div class="chart-card">
+    <div class="chart-card-title">Immunosuppression & Immune Lab Timeline</div>
+    <div class="chart-card-sub">Step lines = drug doses (left axis) · Dots = lab values & trough (right axis)</div>
+    <div class="chart-wrap">
+      <canvas id="main-chart"></canvas>
+    </div>
+    <div id="chart-empty" class="empty-state" style="display:none">
+      No data yet — log your first entry or upload a lab/medication document
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  LOG ENTRY TAB -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-log">
+
+  <div class="upload-bar">
+    <span class="upload-bar-text">📎 Upload a lab report or medication document to auto-extract values</span>
+    <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="document.getElementById('upload-input').click()">Upload</button>
+  </div>
+
+  <div class="entry-card">
+    <div class="entry-title">Log a Drug Dose Change</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <div class="form-label">Date</div>
+        <input type="date" class="form-input" id="drug-date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Drug</div>
+        <select class="form-input" id="drug-type">
+          <option value="tac">Tacrolimus</option>
+          <option value="mmc">CellCept (MMF)</option>
+          <option value="pred">Prednisone</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Dose (mg/day)</div>
+        <input type="number" class="form-input" id="drug-dose" placeholder="e.g. 4" step="0.5" min="0" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Notes (optional)</div>
+        <input type="text" class="form-input" id="drug-note" placeholder="e.g. reduced due to high trough" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="clearDrugForm()">Clear</button>
+      <button class="btn btn-primary btn-sm" onclick="saveDrugEntry()">Save Dose Change</button>
+    </div>
+  </div>
+
+  <div class="entry-card">
+    <div class="entry-title">Log an IVIG Infusion</div>
+    <div style="font-size:12px;color:var(--ink3);margin:-8px 0 14px">Each infusion appears as a vertical marker on the timeline so you can correlate with IgG recovery.</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <div class="form-label">Infusion Date</div>
+        <input type="date" class="form-input" id="ivig-date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Dose (grams)</div>
+        <input type="number" class="form-input" id="ivig-dose" placeholder="e.g. 30" step="5" min="0" />
+      </div>
+      <div class="form-group full">
+        <div class="form-label">Notes (optional)</div>
+        <input type="text" class="form-input" id="ivig-note" placeholder="e.g. pre-infusion IgG 320, tolerated well" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="clearIvigForm()">Clear</button>
+      <button class="btn btn-primary btn-sm" onclick="saveIvigEntry()">Log Infusion</button>
+    </div>
+  </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <div class="form-label">Date</div>
+        <input type="date" class="form-input" id="lab-date" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Type</div>
+        <select class="form-input" id="lab-type">
+          <option value="trough">Tacrolimus Trough (ng/mL)</option>
+          <option value="igg">IgG (mg/dL)</option>
+          <option value="iga">IgA (mg/dL)</option>
+          <option value="igm">IgM (mg/dL)</option>
+          <option value="ivig">IVIG Dose (g)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Value</div>
+        <input type="number" class="form-input" id="lab-value" placeholder="e.g. 8.2" step="0.1" min="0" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Notes (optional)</div>
+        <input type="text" class="form-input" id="lab-note" placeholder="e.g. pre-IVIG infusion" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="clearLabForm()">Clear</button>
+      <button class="btn btn-primary btn-sm" onclick="saveLabEntry()">Save Lab Value</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  HISTORY TAB -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-history">
+
+  <div class="history-card">
+    <div class="history-header">
+      <div class="history-title">All Entries</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="form-input btn-sm" id="filter-type" onchange="renderHistory()" style="padding:4px 8px;font-size:11px;border-radius:20px">
+          <option value="">All types</option>
+          <option value="tac">Tacrolimus</option>
+          <option value="mmc">CellCept</option>
+          <option value="pred">Prednisone</option>
+          <option value="trough">Tac Trough</option>
+          <option value="igg">IgG</option>
+          <option value="iga">IgA</option>
+          <option value="igm">IgM</option>
+          <option value="ivig">IVIG</option>
+          <option value="ivig_infusion">IVIG Infusion</option>
+        </select>
+      </div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+</div><!-- end content -->
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--  AI EXTRACTION MODAL -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="extract-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:440px;max-height:80vh;overflow-y:auto">
+    <div style="font-weight:600;font-size:15px;margin-bottom:8px">📄 Extracted Values</div>
+    <div id="extract-status" style="color:var(--ink3);font-size:13px;margin-bottom:12px"></div>
+    <div id="extract-items"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveExtracted()">Save All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'immuno_tracker_v1';
+const CLAUDE_PROXY = 'https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy';
+
+// ── Data types config ──
+const TYPES = {
+  tac:    { label:'Tacrolimus', unit:'mg/day', color:'var(--tac)',    cls:'tag-tac',    axis:'left',  stepped:true },
+  mmc:    { label:'CellCept',   unit:'mg/day', color:'var(--mmc)',    cls:'tag-mmc',    axis:'left',  stepped:true },
+  pred:   { label:'Prednisone', unit:'mg/day', color:'var(--pred)',   cls:'tag-pred',   axis:'left',  stepped:true },
+  trough: { label:'Tac Trough', unit:'ng/mL',  color:'var(--trough)', cls:'tag-trough', axis:'right', stepped:false },
+  igg:    { label:'IgG',        unit:'mg/dL',  color:'var(--igg)',    cls:'tag-igg',    axis:'right', stepped:false },
+  iga:    { label:'IgA',        unit:'mg/dL',  color:'var(--iga)',    cls:'tag-iga',    axis:'right', stepped:false },
+  igm:    { label:'IgM',        unit:'mg/dL',  color:'var(--igm)',    cls:'tag-igm',    axis:'right', stepped:false },
+  ivig:   { label:'IVIG Dose',  unit:'g',      color:'var(--ivig)',   cls:'tag-ivig',   axis:'right', stepped:false },
+  ivig_infusion: { label:'IVIG Infusion', unit:'g', color:'var(--ivig)', cls:'tag-ivig', axis:'right', stepped:false },
+};
+
+// ── Storage ──
+function getData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e) { return []; }
+}
+function saveData(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  syncSaveClinical('immuno_tracker', entries).catch(()=>{});
+}
+
+// ── Tab switching ──
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'history') renderHistory();
+  if (name === 'timeline') { updateChart(); updateSummaryChips(); }
+}
+
+// ── Toast ──
+function showToast(msg, type='success') {
+  let el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id='toast'; el.style.cssText='position:fixed;bottom:60px;left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:999;pointer-events:none;transition:opacity .3s;white-space:nowrap'; document.body.appendChild(el); }
+  el.style.background = type==='success'?'#E8F7F1':type==='error'?'#FEE2E2':'#EDE9F8';
+  el.style.color = type==='success'?'#16A34A':type==='error'?'#DC2626':'#6B46C1';
+  el.textContent = msg; el.style.opacity='1';
+  clearTimeout(el._t); el._t = setTimeout(()=>el.style.opacity='0', 2500);
+}
+
+// ── Date helpers ──
+function today() { return new Date().toISOString().slice(0,10); }
+function fmtDate(d) { if(!d) return '—'; const dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}); }
+function daysSinceStr(d) { if(!d) return ''; const days=Math.floor((new Date()-new Date(d+'T12:00:00'))/86400000); if(days===0) return 'today'; if(days===1) return 'yesterday'; return days+'d ago'; }
+
+// ── Summary chips ──
+function updateSummaryChips() {
+  const data = getData();
+  const chips = [
+    { id:'tac',    key:'tac',    label:'chip-tac',    date:'chip-tac-date' },
+    { id:'mmc',    key:'mmc',    label:'chip-mmc',    date:'chip-mmc-date' },
+    { id:'pred',   key:'pred',   label:'chip-pred',   date:'chip-pred-date' },
+    { id:'trough', key:'trough', label:'chip-trough', date:'chip-trough-date' },
+    { id:'igg',    key:'igg',    label:'chip-igg',    date:'chip-igg-date' },
+  ];
+  chips.forEach(c => {
+    const entries = data.filter(e=>e.type===c.key).sort((a,b)=>a.date.localeCompare(b.date));
+    const last = entries[entries.length-1];
+    document.getElementById(c.label).textContent = last ? last.value : '—';
+    document.getElementById(c.date).textContent = last ? daysSinceStr(last.date) : '';
+  });
+}
+
+// ── Chart ──
+let chart = null;
+const hidden = new Set();
+
+function getSeriesColor(key) {
+  const map = { tac:'#6B46C1', mmc:'#0D9488', pred:'#D97706', trough:'#9333EA', igg:'#2563EB', iga:'#16A34A', igm:'#DC2626', ivig:'#0891B2' };
+  return map[key] || '#888';
+}
+
+function buildDatasets(entries) {
+  const datasets = [];
+  Object.entries(TYPES).forEach(([key, cfg]) => {
+    const typeEntries = entries.filter(e=>e.type===key).sort((a,b)=>a.date.localeCompare(b.date));
+    if (!typeEntries.length) return;
+    const color = getSeriesColor(key);
+    if (cfg.stepped) {
+      // Step chart — extend last value to today
+      const pts = [];
+      typeEntries.forEach(e => pts.push({ x: e.date, y: parseFloat(e.value) }));
+      // Add a point for today to extend the last step
+      if (pts.length) pts.push({ x: today(), y: pts[pts.length-1].y });
+      datasets.push({
+        label: cfg.label,
+        data: pts,
+        borderColor: color,
+        backgroundColor: color + '18',
+        fill: false,
+        stepped: 'before',
+        tension: 0,
+        borderWidth: 2.5,
+        pointRadius: pts.slice(0,-1).map(()=>4),
+        pointHoverRadius: 6,
+        yAxisID: cfg.axis === 'left' ? 'yLeft' : 'yRight',
+        hidden: hidden.has(key),
+        seriesKey: key,
+      });
+    } else {
+      datasets.push({
+        label: cfg.label,
+        data: typeEntries.map(e => ({ x: e.date, y: parseFloat(e.value) })),
+        borderColor: color,
+        backgroundColor: color,
+        fill: false,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        yAxisID: cfg.axis === 'left' ? 'yLeft' : 'yRight',
+        hidden: hidden.has(key),
+        seriesKey: key,
+      });
+    }
+  });
+  return datasets;
+}
+
+function updateChart() {
+  const entries = getData();
+  const empty = entries.length === 0;
+  document.getElementById('chart-empty').style.display = empty ? 'block' : 'none';
+  document.querySelector('.chart-wrap').style.display = empty ? 'none' : 'block';
+
+  const datasets = buildDatasets(entries);
+  const ivigDates = entries.filter(e=>e.type==='ivig_infusion').map(e=>({ date:e.date, dose:e.value }));
+  const ctx = document.getElementById('main-chart').getContext('2d');
+
+  if (chart) { chart.destroy(); chart = null; }
+  if (empty || !datasets.length) return;
+
+  // Custom plugin for IVIG vertical lines
+  const ivigPlugin = {
+    id: 'ivigLines',
+    afterDraw(chart) {
+      if (!ivigDates.length) return;
+      const { ctx, chartArea, scales } = chart;
+      ivigDates.forEach(({ date, dose }) => {
+        const x = scales.x.getPixelForValue(date);
+        if (x < chartArea.left || x > chartArea.right) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.strokeStyle = '#0891B2';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Label
+        ctx.fillStyle = '#0891B2';
+        ctx.font = '10px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`💉 ${dose}g`, x, chartArea.top + 10);
+        ctx.restore();
+      });
+    }
+  };
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    plugins: [ivigPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1A1D2E',
+          padding: 10,
+          callbacks: {
+            title: items => fmtDate(items[0]?.label || items[0]?.raw?.x),
+            label: item => {
+              const key = item.dataset.seriesKey;
+              const cfg = TYPES[key];
+              return ` ${cfg?.label}: ${item.raw.y} ${cfg?.unit||''}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'month', tooltipFormat: 'MMM d, yyyy', displayFormats: { month: 'MMM yy' } },
+          grid: { color: '#E8EAF0' },
+          ticks: { color: '#9396A8', font: { size: 11 } },
+        },
+        yLeft: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: 'Drug Dose (mg/day)', color: '#9396A8', font: { size: 11 } },
+          grid: { color: '#E8EAF0' },
+          ticks: { color: '#9396A8', font: { size: 11 } },
+          beginAtZero: true,
+        },
+        yRight: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: 'Lab Values', color: '#9396A8', font: { size: 11 } },
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#9396A8', font: { size: 11 } },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+function toggleSeries(key) {
+  if (hidden.has(key)) hidden.delete(key);
+  else hidden.add(key);
+  // Update legend item appearance
+  document.querySelector(`[data-series="${key}"]`)?.classList.toggle('hidden', hidden.has(key));
+  // Toggle on chart
+  if (chart) {
+    chart.data.datasets.forEach(ds => {
+      if (ds.seriesKey === key) ds.hidden = hidden.has(key);
+    });
+    chart.update();
+  }
+}
+
+// ── Save IVIG infusion ──
+function saveIvigEntry() {
+  const date  = document.getElementById('ivig-date').value;
+  const dose  = document.getElementById('ivig-dose').value;
+  const note  = document.getElementById('ivig-note').value;
+  if (!date) { showToast('Date is required','error'); return; }
+  const entries = getData();
+  entries.push({ id: Date.now(), date, type:'ivig_infusion', value: dose ? parseFloat(dose) : 0, note: note||'IVIG infusion', created: new Date().toISOString() });
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData(entries);
+  clearIvigForm();
+  showToast('IVIG infusion logged ✓');
+  updateChart();
+  updateSummaryChips();
+}
+
+function clearIvigForm() {
+  document.getElementById('ivig-date').value = today();
+  document.getElementById('ivig-dose').value = '';
+  document.getElementById('ivig-note').value = '';
+}
+
+// ── Save drug entry ──
+function saveDrugEntry() {
+  const date = document.getElementById('drug-date').value;
+  const type = document.getElementById('drug-type').value;
+  const dose = document.getElementById('drug-dose').value;
+  const note = document.getElementById('drug-note').value;
+  if (!date || !dose) { showToast('Date and dose are required','error'); return; }
+  const entries = getData();
+  entries.push({ id: Date.now(), date, type, value: parseFloat(dose), note, created: new Date().toISOString() });
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData(entries);
+  clearDrugForm();
+  showToast('Dose change saved ✓');
+  updateChart();
+  updateSummaryChips();
+}
+
+function clearDrugForm() {
+  document.getElementById('drug-date').value = today();
+  document.getElementById('drug-dose').value = '';
+  document.getElementById('drug-note').value = '';
+}
+
+// ── Save lab entry ──
+function saveLabEntry() {
+  const date  = document.getElementById('lab-date').value;
+  const type  = document.getElementById('lab-type').value;
+  const value = document.getElementById('lab-value').value;
+  const note  = document.getElementById('lab-note').value;
+  if (!date || !value) { showToast('Date and value are required','error'); return; }
+  const entries = getData();
+  entries.push({ id: Date.now(), date, type, value: parseFloat(value), note, created: new Date().toISOString() });
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData(entries);
+  clearLabForm();
+  showToast('Lab value saved ✓');
+  updateChart();
+  updateSummaryChips();
+}
+
+function clearLabForm() {
+  document.getElementById('lab-date').value = today();
+  document.getElementById('lab-value').value = '';
+  document.getElementById('lab-note').value = '';
+}
+
+// ── History ──
+function renderHistory() {
+  const filter = document.getElementById('filter-type').value;
+  let entries = getData().filter(e => !filter || e.type === filter);
+  entries = entries.slice().reverse(); // newest first
+  const el = document.getElementById('history-list');
+  if (!entries.length) { el.innerHTML = `<div class="empty-state">No entries yet${filter?' for this type':''}. Log a dose change or lab value.</div>`; return; }
+  el.innerHTML = entries.map(e => {
+    const cfg = TYPES[e.type];
+    return `<div class="history-row">
+      <div class="history-date">${fmtDate(e.date)}</div>
+      <div class="history-tag ${cfg?.cls||''}">${cfg?.label||e.type}</div>
+      <div class="history-note">${e.note||''}</div>
+      <div class="history-val">${e.value} <span style="font-size:10px;color:var(--ink3)">${cfg?.unit||''}</span></div>
+      <button class="del-btn" onclick="deleteEntry(${e.id})" title="Delete">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  const entries = getData().filter(e => e.id !== id);
+  saveData(entries);
+  renderHistory();
+  updateChart();
+  updateSummaryChips();
+  showToast('Deleted');
+}
+
+// ── Upload & Claude extraction ──
+let extractedData = [];
+
+async function handleUpload(input) {
+  const file = input.files?.[0]; if (!file) return; input.value='';
+  showModal('Analyzing document with AI…');
+  try {
+    const b64 = await toBase64(file);
+    const mime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+    const isImage = mime.startsWith('image/');
+
+    const prompt = `You are analyzing a medical document for a lung transplant patient.
+Extract ALL of these values if present:
+- Tacrolimus dose (mg/day total daily dose)
+- Tacrolimus trough level (ng/mL) — labeled as "FK level", "tacrolimus level", or "trough"
+- CellCept / Mycophenolate Mofetil (MMF) dose (mg/day)
+- Prednisone dose (mg/day)
+- IgG (mg/dL)
+- IgA (mg/dL)
+- IgM (mg/dL)
+- IVIG dose (grams administered)
+
+Return ONLY a JSON array with objects like:
+[{"type":"tac","value":4,"unit":"mg/day","date":"2026-06-14","confidence":"high"},...]
+
+Types: tac, mmc, pred, trough, igg, iga, igm, ivig
+If no date found in document, use today: ${today()}
+If a value is not present, omit it entirely.
+Return ONLY the JSON array, no explanation.`;
+
+    const msgContent = isImage
+      ? [{ type:'image', source:{ type:'base64', media_type:mime, data:b64 } }, { type:'text', text:prompt }]
+      : [{ type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } }, { type:'text', text:prompt }];
+
+    const resp = await fetch(CLAUDE_PROXY, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, messages:[{ role:'user', content:msgContent }] })
+    });
+    const result = await resp.json();
+    const text = result.content?.map(c=>c.text||'').join('') || '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    extractedData = JSON.parse(clean);
+
+    if (!extractedData.length) { showModal('No immunosuppression data found in this document.'); return; }
+    showExtractedItems(extractedData);
+  } catch(e) {
+    showModal(`Could not extract data: ${e.message}`);
+  }
+}
+
+function showModal(status) {
+  const modal = document.getElementById('extract-modal');
+  modal.style.display = 'flex';
+  document.getElementById('extract-status').textContent = status;
+  document.getElementById('extract-items').innerHTML = '';
+}
+
+function showExtractedItems(items) {
+  document.getElementById('extract-status').textContent = `Found ${items.length} value${items.length>1?'s':''}. Review and save:`;
+  document.getElementById('extract-items').innerHTML = items.map((item,i) => {
+    const cfg = TYPES[item.type];
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="ext-${i}" checked style="width:16px;height:16px;flex-shrink:0">
+      <div class="history-tag ${cfg?.cls||''}" style="flex-shrink:0">${cfg?.label||item.type}</div>
+      <input type="number" value="${item.value}" id="ext-val-${i}" style="width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+      <span style="font-size:11px;color:var(--ink3)">${cfg?.unit||''}</span>
+      <input type="date" value="${item.date||today()}" id="ext-date-${i}" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+    </div>`;
+  }).join('');
+}
+
+function saveExtracted() {
+  const entries = getData();
+  let count = 0;
+  extractedData.forEach((item, i) => {
+    if (!document.getElementById('ext-'+i)?.checked) return;
+    const val = parseFloat(document.getElementById('ext-val-'+i)?.value);
+    const date = document.getElementById('ext-date-'+i)?.value;
+    if (!val || !date) return;
+    entries.push({ id: Date.now()+i, date, type: item.type, value: val, note:'Extracted from document', created: new Date().toISOString() });
+    count++;
+  });
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData(entries);
+  closeModal();
+  showToast(`${count} value${count>1?'s':''} saved ✓`);
+  updateChart();
+  updateSummaryChips();
+}
+
+function closeModal() {
+  document.getElementById('extract-modal').style.display = 'none';
+  extractedData = [];
+}
+
+function toBase64(file) {
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+// ── Init ──
+(async () => {
+  // Set default dates
+  document.getElementById('drug-date').value = today();
+  document.getElementById('lab-date').value  = today();
+  document.getElementById('ivig-date').value = today();
+
+  // Skip pull if preloaded by lts_care
+  if (!new URLSearchParams(location.search).get('preloaded')) {
+    const remote = await syncLoadClinical('immuno_tracker');
+    if (remote && Array.isArray(remote) && remote.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+    }
+  }
+
+  updateChart();
+  updateSummaryChips();
+})();
+</script>
+</body>
+</html>

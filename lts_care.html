@@ -561,6 +561,8 @@ const MODULES = [
     getSummary(){ try{ const conv=JSON.parse(localStorage.getItem('clinical_conversation_v1')||'[]'); const files=JSON.parse(localStorage.getItem('clinical_files_v1')||'[]'); if(!conv.length) return{val:null,sub:'Labs · Medications · Trends',since:null}; const lastMsg=conv[conv.length-1]; const lastDate=lastMsg?.timestamp?lastMsg.timestamp.split('T')[0]:null; const lastReply=conv.filter(m=>m.role==='assistant').pop(); const hasFlags=lastReply&&(lastReply.displayText||'').match(/\bHIGH\b|\bLOW\b/); return{val:files.length||conv.filter(m=>m.role==='assistant').length||null,unit:files.length?' docs analyzed':' responses',sub:hasFlags?'⚠️ Flags in last analysis':'Labs · Medications · Trends',since:lastDate?daysSince(lastDate):null,alert:hasFlags?'warn':null}; }catch(e){return{val:null,sub:'Labs · Medications · Trends',since:null};} } },
   { id:'meds',     name:'Medications',        icon:'💊', file:'medications.html',               group:'medlabs',
     getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('clinical_meds_v1')||'[]'); const active=meds.filter(m=>m.active); if(!active.length) return{val:null,sub:'Current medication list',since:null}; const lastUpdated=meds.reduce((a,m)=>m.updated>a?m.updated:a,''); return{val:active.length,unit:' active',sub:active.slice(0,2).map(m=>m.name+(m.dose?' '+m.dose:'')).join(', ')+(active.length>2?'…':''),since:lastUpdated?daysSince(lastUpdated.split('T')[0]):null}; }catch(e){return{val:null,sub:'Current medication list',since:null};} } },
+  { id:'immuno_tracker', name:'Immunosuppression Tracker', icon:'🧪', file:'immuno_tracker.html', group:'medlabs',
+    getSummary(){ try{ const d=JSON.parse(localStorage.getItem('immuno_tracker_v1')||'[]'); if(!d.length) return{val:null,sub:'Drug doses · Trough · Immune labs',since:null}; const last=d[d.length-1]; const tac=d.filter(e=>e.type==='tac').pop(); const trough=d.filter(e=>e.type==='trough').pop(); return{val:tac?tac.value:null,unit:tac?' mg Tac':'',sub:trough?`Trough ${trough.value} ng/mL`:'Drug doses · Trough · Immune labs',since:daysSince(last.date)}; }catch(e){return{val:null,sub:'Drug doses · Trough · Immune labs',since:null};} } },
 ];
 
 
@@ -1011,7 +1013,11 @@ async function openModule(id) {
           const { data: f } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','files').single();
           if (f?.data) localStorage.setItem('clinical_files_v1', JSON.stringify(f.data));
         },
-        health:   async () => {
+        immuno_tracker: async () => {
+          const { data } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','immuno_tracker').single();
+          if (data?.data) localStorage.setItem('immuno_tracker_v1', JSON.stringify(data.data));
+        },
+        health: async () => {
           if (!sessionStorage.getItem('chi_settings_pulled')) {
             const { data } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','health_index_settings').single();
             if (data?.data) {
