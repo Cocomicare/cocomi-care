@@ -412,6 +412,8 @@ header {
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════
@@ -959,6 +961,7 @@ function saveWeights() {
   });
   if (total !== 100) { showToast('Weights must total exactly 100%', ''); return; }
   localStorage.setItem(WEIGHTS_KEY, JSON.stringify(w));
+  syncSettings();
   showToast('Weights saved ✓', 'success');
   computeScore();
 }
@@ -979,6 +982,7 @@ function saveThresholds() {
     amber:  parseInt(document.getElementById('th-amber').value)  || 85
   };
   localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(t));
+  syncSettings();
   showToast('Thresholds saved ✓', 'success');
   computeScore();
 }
@@ -1016,6 +1020,7 @@ function saveWindows() {
     w[p.key] = isNaN(v) || v < 1 ? p.maxAgeDays : v;
   });
   localStorage.setItem(WINDOWS_KEY, JSON.stringify(w));
+  syncSettings();
   showToast('Measurement windows saved ✓', 'success');
   computeScore();
 }
@@ -1062,9 +1067,37 @@ function formatDateShort(d) { const [y,m,day]=d.split('-'); return `${m}/${day}`
 function showToast(msg,type='') { const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); setTimeout(()=>el.className='toast',2800); }
 
 // ══════════════════════════════════════════════════
+//  SYNC SETTINGS TO/FROM SUPABASE
+// ══════════════════════════════════════════════════
+async function syncSettings() {
+  try {
+    const settings = {
+      weights:    JSON.parse(localStorage.getItem(WEIGHTS_KEY)    || '{}'),
+      thresholds: JSON.parse(localStorage.getItem(THRESHOLDS_KEY) || '{}'),
+      windows:    JSON.parse(localStorage.getItem(WINDOWS_KEY)    || '{}'),
+    };
+    await syncSaveClinical('health_index_settings', settings);
+    syncShowStatus('synced');
+  } catch(e) { syncShowStatus('error'); }
+}
+
+// ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
 computeScore();
+
+// Pull settings from Supabase on load
+(async () => {
+  try {
+    const remote = await syncLoadClinical('health_index_settings');
+    if (remote && typeof remote === 'object') {
+      if (remote.weights)    localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remote.weights));
+      if (remote.thresholds) localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remote.thresholds));
+      if (remote.windows)    localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remote.windows));
+      computeScore(); // recompute with synced settings
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>

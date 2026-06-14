@@ -947,6 +947,20 @@ async function runSyncDebug() {
       el.textContent += `✅ vitals_${v} pushed (${recs.length})\n`; pushed++;
     }
 
+    // Push health index settings
+    const chiSettings = {
+      weights:    JSON.parse(localStorage.getItem('chi_weights_v1')    || '{}'),
+      thresholds: JSON.parse(localStorage.getItem('chi_thresholds_v1') || '{}'),
+      windows:    JSON.parse(localStorage.getItem('chi_windows_v1')    || '{}'),
+    };
+    if (Object.keys(chiSettings.weights).length || Object.keys(chiSettings.windows).length) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'health_index_settings', data:chiSettings, updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ health index settings pushed\n`; pushed++; }
+    }
+
     el.textContent += pushed > 0 ? `\n✅ Push complete — ${pushed} datasets uploaded\n` : `\n⚠️ Nothing to push (localStorage empty)\n`;
     el.textContent += 'Now open this page on device 2 and tap Force Sync to pull.';
   } catch(e) {
@@ -979,6 +993,14 @@ function showDashboard() {
       for (const [type, key] of Object.entries(typeMap)) {
         const { data } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', type).single();
         if (data?.data) localStorage.setItem(key, JSON.stringify(data.data));
+      }
+
+      // Pull health index settings (weights, windows, thresholds)
+      const { data: hiSettings } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_settings').single();
+      if (hiSettings?.data) {
+        if (hiSettings.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(hiSettings.data.weights));
+        if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
+        if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
       }
 
       // Pull health records
