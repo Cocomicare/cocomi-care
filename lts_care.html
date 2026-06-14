@@ -877,24 +877,48 @@ function setGreeting() {
 }
 
 function renderDashboard() {
-  // Health Index banner
+  // Health Index banner — check nonnegotiables first
   try {
-    const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
     const scoreEl = document.getElementById('health-banner-score');
     const titleEl = document.getElementById('health-banner-title');
     const subEl   = document.getElementById('health-banner-sub');
     const banner  = document.getElementById('health-banner');
-    if (hist.length) {
-      const l = hist[hist.length-1]; const s = l.score;
-      scoreEl.textContent = s;
-      scoreEl.className = 'health-banner-score' + (s<50?' danger':s<70?' warn':'');
-      titleEl.textContent = s>=85?'All parameters near baseline':s>=70?'Minor deviation detected':s>=50?'Notable deviation — watch closely':'Significant deviation';
-      subEl.textContent = `Last updated ${daysSince(l.date)===0?'today':daysSince(l.date)+' days ago'} · Tap to view breakdown`;
-      banner.className = 'health-banner' + (s<50?' alert-danger':s<70?' alert-warn':'');
+
+    // Check nonnegotiables
+    const NONNEGOTIABLES = [
+      { key:'symptom_checkins_v1', name:'Symptom Check-in', days:2,
+        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
+      { key:'vss_spo2_v1', name:'SpO₂', days:2,
+        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
+      { key:'peak_flow_sessions_v1', name:'Peak Flow', days:2,
+        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date||recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
+      { key:'vss_hr_v1', name:'Heart Rate', days:2,
+        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
+    ];
+
+    const missing = NONNEGOTIABLES.filter(n => {
+      try { return !n.hasRecent(JSON.parse(localStorage.getItem(n.key)||'[]')); } catch(e) { return true; }
+    });
+
+    if (missing.length > 0) {
+      scoreEl.textContent = '?'; scoreEl.className = 'health-banner-score none';
+      titleEl.textContent = 'Insufficient data — score unavailable';
+      subEl.textContent = 'Missing: ' + missing.map(m=>m.name).join(', ');
+      banner.className = 'health-banner';
     } else {
-      scoreEl.textContent = '—'; scoreEl.className = 'health-banner-score none';
-      titleEl.textContent = 'No data yet — log readings to calculate';
-      subEl.textContent = '8 weighted parameters · Tap to open';
+      const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
+      if (hist.length) {
+        const l = hist[hist.length-1]; const s = l.score;
+        scoreEl.textContent = s;
+        scoreEl.className = 'health-banner-score' + (s<50?' danger':s<70?' warn':'');
+        titleEl.textContent = s>=85?'All parameters near baseline':s>=70?'Minor deviation detected':s>=50?'Notable deviation — watch closely':'Significant deviation';
+        subEl.textContent = `Last updated ${daysSince(l.date)===0?'today':daysSince(l.date)+' days ago'} · Tap to view breakdown`;
+        banner.className = 'health-banner' + (s<50?' alert-danger':s<70?' alert-warn':'');
+      } else {
+        scoreEl.textContent = '—'; scoreEl.className = 'health-banner-score none';
+        titleEl.textContent = 'No data yet — log readings to calculate';
+        subEl.textContent = '8 weighted parameters · Tap to open';
+      }
     }
   } catch(e) {}
 
