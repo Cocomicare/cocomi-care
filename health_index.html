@@ -313,6 +313,10 @@ header {
     </div>
 
     <div class="breakdown-panel" id="breakdown-panel">
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:0 4px;margin-bottom:4px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em">
+        <span style="width:32px;text-align:right">Score</span>
+        <span style="width:28px;text-align:right">Wt</span>
+      </div>
       <div id="breakdown-rows"></div>
       <div style="display:flex;justify-content:space-between;padding-top:10px;font-size:11px;color:var(--ink3)">
         <span>★ = highest impact on score</span>
@@ -526,8 +530,7 @@ const PARAMS = [
     weight:     7,
     maxAgeDays: 2,
     storageKey: 'vss_hr_v1',
-    direction:  'target_range',
-    targetLow:  60, targetHigh: 100,
+    direction:  'stable',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
       return rollingBaseline(recs, r=>r.val, getBaselineDays());
@@ -541,8 +544,7 @@ const PARAMS = [
     weight:     6,
     maxAgeDays: 7,
     storageKey: 'vss_bp_v1',
-    direction:  'target_range',
-    targetLow:  90, targetHigh: 130,
+    direction:  'stable',
     getLatest(recs) { return recs.length ? recs[recs.length-1].sys : null; },
     getBaseline(recs) {
       return rollingBaseline(recs, r=>r.sys, getBaselineDays());
@@ -556,10 +558,9 @@ const PARAMS = [
     weight:     13,
     maxAgeDays: 3,
     storageKey: 'vss_temp_v1',
-    direction:  'lower_better',
-    normalTarget: 98.6,
+    direction:  'stable',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
-    getBaseline(recs) { return 98.6; }
+    getBaseline(recs) { return rollingBaseline(recs, r=>r.val, getBaselineDays()); }
   },
   {
     key:        'wt',
@@ -591,14 +592,16 @@ function getBaselineDays() {
 }
 
 // Rolling baseline: average of readings within the last N days
-// Falls back to all readings if fewer than 3 in window
+// Falls back to ALL readings if fewer than 3 in window — never blocks scoring
 function rollingBaseline(recs, valFn, days) {
+  if (!recs.length) return null;
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
   const cutoffStr = cutoff.toISOString().slice(0,10);
   const windowRecs = recs.filter(r => (r.date||'') >= cutoffStr);
-  const useRecs = windowRecs.length >= 3 ? windowRecs : recs;
-  const vals = useRecs.map(valFn).filter(v => v != null);
+  // Use window if it has data, otherwise fall back to all records
+  const useRecs = windowRecs.length > 0 ? windowRecs : recs;
+  const vals = useRecs.map(valFn).filter(v => v != null && !isNaN(v));
   return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
 }
 
@@ -653,73 +656,50 @@ const CLINICAL_REFS = {
 function computeParamScore(param, latest, baseline, recCount) {
   if (latest === null || latest === undefined) return null;
 
+  // SpO₂ — only param with absolute clinical thresholds
+  // (94% is dangerous regardless of personal baseline)
+  if (param.key === 'spo2') {
+    if (latest >= 98) return 100;
+    if (latest >= 97) return 85;
+    if (latest >= 96) return 65;
+    if (latest >= 94) return 40;
+    if (latest >= 91) return 20;
+    return Math.max(0, (latest - 80) * 2);
+  }
+
+  // All other params: score purely against personal baseline
+  // If no baseline yet, use the latest reading as the baseline (first reading = 100)
+  const base = (baseline != null && baseline !== 0) ? baseline : latest;
+  if (base === 0) return 75;
+
   if (param.direction === 'higher_better') {
-
-    // SpO₂: fine-grained absolute clinical scale
-    if (param.key === 'spo2') {
-      if (latest >= 98) return 100;           // 98-100: green
-      if (latest >= 97) return 85;            // 97-97.9: amber/watch
-      if (latest >= 96) return 65;            // 96-96.9: orange/alert
-      if (latest >= 94) return 40;            // 94-95.9: red/significant
-      if (latest >= 91) return 20;            // 91-93.9: critical
-      return Math.max(0, (latest - 80) * 2); // below 91: severe
-    }
-
-    // Symptom check-in: wellnessScore/10 (0-10 scale)
-    if (param.key === 'symptoms') {
-      const score = latest * 10; // back to 0-100
-      if (score >= 95) return 100;
-      if (score >= 90) return 85;
-      if (score >= 85) return 65;
-      if (score >= 70) return 40;
-      return Math.max(0, Math.round(score * 0.5));
-    }
-
-    // Peak flow & spirometer: personal baseline comparison
-    // Need ≥3 readings for meaningful baseline
-    if (!baseline || baseline === 0 || recCount < 3) return 75;
-    const ratio = latest / baseline;
-    if (ratio >= 0.98) return 100;          // within 2%: green
-    if (ratio >= 0.95) return 85;           // 2-5% below: amber/watch
-    if (ratio >= 0.90) return 65;           // 5-10% below: orange/alert
-    if (ratio >= 0.85) return 40;           // 10-15% below: red
-    return Math.max(0, Math.round(ratio * 50)); // >15% below: critical
+    // FEV1, PEF, Spirometer, Symptoms — higher is better
+    const ratio = latest / base;
+    if (ratio >= 0.98) return 100;        // within 2%: normal
+    if (ratio >= 0.95) return 85;         // 2-5% below: watch
+    if (ratio >= 0.90) return 65;         // 5-10% below: alert
+    if (ratio >= 0.85) return 40;         // 10-15% below: significant
+    return Math.max(0, Math.round(ratio * 47)); // >15%: critical
   }
 
   if (param.direction === 'lower_better') {
-    // Temperature: tighter thresholds
-    const deviation = Math.abs(latest - 98.6);
-    if (deviation <= 0.4) return 100;   // 98.2-99.0: normal
-    if (deviation <= 0.9) return 85;    // 97.7-99.5: watch
-    if (deviation <= 1.4) return 65;    // 97.2-100.0: alert
-    if (deviation <= 2.0) return 40;    // 96.6-100.6: significant
-    return Math.max(0, 20 - (deviation-2)*15);
+    // Temperature — lower deviation from personal baseline is better
+    const pctDev = Math.abs((latest - base) / base) * 100;
+    if (pctDev <= 0.5) return 100;
+    if (pctDev <= 1.0) return 85;
+    if (pctDev <= 1.5) return 65;
+    if (pctDev <= 2.5) return 40;
+    return Math.max(0, 20 - pctDev * 4);
   }
 
-  if (param.direction === 'target_range') {
-    const lo = param.targetLow, hi = param.targetHigh;
-    if (latest >= lo && latest <= hi) return 100;
-    const overHigh = latest > hi ? latest - hi : 0;
-    const underLow = latest < lo ? lo - latest : 0;
-    const deviation = Math.max(overHigh, underLow);
-    const range = hi - lo;
-    const pctDev = deviation / range;
-    // Tighter: 5% dev = amber, 10% = orange, 20% = red
-    if (pctDev <= 0.05) return 85;
-    if (pctDev <= 0.10) return 65;
-    if (pctDev <= 0.20) return 40;
-    return Math.max(0, 20 - pctDev*20);
-  }
-
-  if (param.direction === 'stable') {
-    // Weight: tighter — 2% change = watch, 5% = alert
-    if (!baseline || baseline === 0 || recCount < 3) return 75;
-    const pctChange = Math.abs((latest - baseline) / baseline) * 100;
-    if (pctChange <= 1)  return 100;
-    if (pctChange <= 3)  return 85;
-    if (pctChange <= 5)  return 65;
-    if (pctChange <= 8)  return 40;
-    return Math.max(0, 20 - (pctChange-8)*3);
+  if (param.direction === 'target_range' || param.direction === 'stable') {
+    // Heart Rate, Blood Pressure, Weight — deviation from personal baseline
+    const pctDev = Math.abs((latest - base) / base) * 100;
+    if (pctDev <= 2)  return 100;         // within 2%: normal
+    if (pctDev <= 5)  return 85;          // 2-5%: watch
+    if (pctDev <= 10) return 65;          // 5-10%: alert
+    if (pctDev <= 15) return 40;          // 10-15%: significant
+    return Math.max(0, 20 - (pctDev-15)); // >15%: critical
   }
 
   return 75;
@@ -901,9 +881,10 @@ function renderDial(score, breakdown, staleCount, missingCount, missingRequired)
     const barWidth = score !== null ? score : 0;
     const isTopImpact = i === 0 && score !== null && score < 90;
     const sinceText = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo !== null ? `${daysAgo}d ago` : '—';
-    const baselineText = baseline !== null ? `Baseline: ${typeof baseline === 'number' ? baseline.toFixed(1) : baseline} ${param.unit}` : 'No baseline yet';
+    const baselineText = baseline !== null ? `Baseline: ${typeof baseline === 'number' ? baseline.toFixed(1) : baseline} ${param.unit}` : 'Building baseline…';
     const latestText = latest !== null ? `Latest: ${typeof latest === 'number' ? latest.toFixed(1) : latest} ${param.unit}` : 'Not logged';
     const windowText = freshness === 'missing' ? `window: ${param.maxAgeDays}d` : '';
+    const scoreDisplay = score !== null ? score : '—';
 
     return `
     <div class="param-row" style="${freshness === 'missing' ? 'opacity:0.45' : ''}">
@@ -917,7 +898,7 @@ function renderDial(score, breakdown, staleCount, missingCount, missingRequired)
           </div>
         </div>
       </div>
-      <div class="param-score" style="color:${barColor}">${score !== null ? score : '—'}</div>
+      <div class="param-score" style="color:${barColor}">${scoreDisplay}</div>
       <div class="param-weight">${w}%</div>
       ${freshness === 'missing' ? `<span class="param-missing">Excluded · ${windowText}</span>` : ''}
     </div>`;
