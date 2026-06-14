@@ -641,6 +641,9 @@ function computeParamScore(param, latest, baseline) {
   return 75;
 }
 
+// Parameters that MUST have fresh data for a valid score
+const NONNEGOTIABLES = ['symptoms', 'spo2', 'peakflow', 'hr'];
+
 function computeScore() {
   const weights = getWeights();
   const windows = getWindows();
@@ -652,6 +655,7 @@ function computeScore() {
   let missingCount = 0;
   let staleCount   = 0;
   const breakdown  = [];
+  const missingRequired = [];
 
   PARAMS.forEach(param => {
     const w = weights[param.key] || 0;
@@ -666,7 +670,6 @@ function computeScore() {
     const latestDate = latestRec ? new Date(latestRec.date) : null;
     if (latestDate) latestDate.setHours(0,0,0,0);
 
-    // Use this param's specific max age window (from settings or default)
     const maxAge   = windows[param.key] || param.maxAgeDays || 7;
     const cutoff   = new Date(today); cutoff.setDate(today.getDate() - maxAge);
     const daysAgo  = latestDate ? Math.floor((today - latestDate) / 86400000) : null;
@@ -674,12 +677,13 @@ function computeScore() {
     let freshness = 'ok';
     if (!latestDate || latest === null || latest === undefined) {
       freshness = 'missing'; missingCount++;
+      if (NONNEGOTIABLES.includes(param.key)) missingRequired.push(param.name);
     } else if (latestDate < cutoff) {
       freshness = 'missing'; missingCount++;
+      if (NONNEGOTIABLES.includes(param.key)) missingRequired.push(param.name + ' (expired)');
     }
 
     if (freshness === 'missing') {
-      // Excluded from score — weight redistributed below
       breakdown.push({ param, score: null, latest, baseline, w, freshness, daysAgo });
       return;
     }
@@ -690,14 +694,17 @@ function computeScore() {
     breakdown.push({ param, score, latest, baseline, w, freshness, daysAgo });
   });
 
-  // Proportional redistribution: score = weightedSum / totalWeight
-  // If totalWeight < 100, missing params are simply ignored — score still out of 100
+  // If any nonnegotiable is missing/expired — show insufficient data, no score
+  if (missingRequired.length > 0) {
+    renderDial(null, breakdown, staleCount, missingCount, missingRequired);
+    return; // Don't save to history
+  }
+
   let finalScore = totalWeight > 0
     ? Math.round(weightedSum / totalWeight)
     : null;
   if (finalScore !== null) finalScore = Math.max(0, Math.min(100, finalScore));
 
-  // Sort breakdown: active params first by impact, then missing ones
   breakdown.sort((a, b) => {
     if (a.score !== null && b.score === null) return -1;
     if (a.score === null && b.score !== null) return 1;
@@ -706,14 +713,14 @@ function computeScore() {
     return impB - impA;
   });
 
-  renderDial(finalScore, breakdown, staleCount, missingCount);
+  renderDial(finalScore, breakdown, staleCount, missingCount, []);
   saveScoreToHistory(finalScore);
 }
 
 // ══════════════════════════════════════════════════
 //  DIAL RENDER
 // ══════════════════════════════════════════════════
-function renderDial(score, breakdown, staleCount, missingCount) {
+function renderDial(score, breakdown, staleCount, missingCount, missingRequired) {
   const thresholds = getThresholds();
 
   // ── Draw arcs ──
@@ -756,6 +763,11 @@ function renderDial(score, breakdown, staleCount, missingCount) {
   if (score !== null) {
     scoreEl.textContent = score;
     scoreEl.style.color = getZoneColor(score, thresholds);
+    scoreEl.style.fontSize = '';
+  } else if (missingRequired && missingRequired.length > 0) {
+    scoreEl.textContent = '?';
+    scoreEl.style.color = 'var(--ink3)';
+    scoreEl.style.fontSize = '48px';
   } else {
     scoreEl.textContent = '—';
     scoreEl.style.color = 'var(--ink3)';
@@ -763,7 +775,10 @@ function renderDial(score, breakdown, staleCount, missingCount) {
 
   // ── Status badge ──
   const statusEl = document.getElementById('dial-status');
-  if (score === null) {
+  if (missingRequired && missingRequired.length > 0) {
+    statusEl.textContent = '⚠️ Insufficient data — score unavailable';
+    statusEl.className = 'dial-status status-amber';
+  } else if (score === null) {
     statusEl.textContent = 'No data yet — log readings to generate score';
     statusEl.className = 'dial-status status-amber';
   } else if (score >= thresholds.amber) {
@@ -784,7 +799,9 @@ function renderDial(score, breakdown, staleCount, missingCount) {
   const freshEl = document.getElementById('dial-freshness');
   const activeParams = breakdown.filter(b=>b.score!==null).length;
   const totalParams  = breakdown.length;
-  if (missingCount > 0) {
+  if (missingRequired && missingRequired.length > 0) {
+    freshEl.innerHTML = `<strong style="color:var(--warn)">Required readings missing or expired:</strong><br>${missingRequired.join(' · ')}`;
+  } else if (missingCount > 0) {
     freshEl.innerHTML = `Score based on ${activeParams} of ${totalParams} parameters · ${missingCount} excluded (outside measurement window)`;
   } else {
     freshEl.innerHTML = 'All parameters have recent readings ✓';
