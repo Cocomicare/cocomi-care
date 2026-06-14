@@ -372,17 +372,17 @@ header {
       <div class="threshold-row">
         <div class="threshold-group">
           <div class="threshold-label" style="color:var(--zone-red)">🔴 Critical</div>
-          <input type="number" class="threshold-input" id="th-red" value="50" min="0" max="100" style="border-color:#FAEAEA">
+          <input type="number" class="threshold-input" id="th-red" value="85" min="0" max="100" style="border-color:#FAEAEA">
           <div style="font-size:10px;color:var(--ink3)">below this</div>
         </div>
         <div class="threshold-group">
           <div class="threshold-label" style="color:var(--zone-orange)">🟠 Concern</div>
-          <input type="number" class="threshold-input" id="th-orange" value="70" min="0" max="100" style="border-color:#FDF0E8">
+          <input type="number" class="threshold-input" id="th-orange" value="90" min="0" max="100" style="border-color:#FDF0E8">
           <div style="font-size:10px;color:var(--ink3)">below this</div>
         </div>
         <div class="threshold-group">
           <div class="threshold-label" style="color:var(--zone-amber)">🟡 Watch</div>
-          <input type="number" class="threshold-input" id="th-amber" value="85" min="0" max="100" style="border-color:#FEF9E7">
+          <input type="number" class="threshold-input" id="th-amber" value="95" min="0" max="100" style="border-color:#FEF9E7">
           <div style="font-size:10px;color:var(--ink3)">below this</div>
         </div>
         <div class="threshold-group">
@@ -578,8 +578,8 @@ function getWeights() {
 
 function getThresholds() {
   try {
-    return { ...{ red: 50, orange: 70, amber: 85 }, ...JSON.parse(localStorage.getItem(THRESHOLDS_KEY)||'{}') };
-  } catch(e) { return { red: 50, orange: 70, amber: 85 }; }
+    return { ...{ red: 85, orange: 90, amber: 95 }, ...JSON.parse(localStorage.getItem(THRESHOLDS_KEY)||'{}') };
+  } catch(e) { return { red: 85, orange: 90, amber: 95 }; }
 }
 
 function getHistory() {
@@ -606,45 +606,46 @@ function computeParamScore(param, latest, baseline, recCount) {
   if (latest === null || latest === undefined) return null;
 
   if (param.direction === 'higher_better') {
-    const ref = CLINICAL_REFS[param.key];
 
-    // SpO₂: use absolute clinical scale always
+    // SpO₂: fine-grained absolute clinical scale
     if (param.key === 'spo2') {
-      if (latest >= 95) return 100;
-      if (latest >= 93) return 85;
-      if (latest >= 91) return 60;
-      if (latest >= 88) return 35;
-      return Math.max(0, Math.round((latest - 80) * 5));
+      if (latest >= 98) return 100;           // 98-100: green
+      if (latest >= 97) return 85;            // 97-97.9: amber/watch
+      if (latest >= 96) return 65;            // 96-96.9: orange/alert
+      if (latest >= 94) return 40;            // 94-95.9: red/significant
+      if (latest >= 91) return 20;            // 91-93.9: critical
+      return Math.max(0, (latest - 80) * 2); // below 91: severe
     }
 
-    // Symptom check-in: latest is wellnessScore/10 (0-10 scale)
+    // Symptom check-in: wellnessScore/10 (0-10 scale)
     if (param.key === 'symptoms') {
-      // Scale 0-10 → 0-100
-      const score = latest * 10;
-      if (score >= 85) return 100;
-      if (score >= 70) return Math.round(85 + (score-70)/15*15);
-      if (score >= 50) return Math.round(60 + (score-50)/20*25);
-      if (score >= 30) return Math.round(30 + (score-30)/20*30);
-      return Math.max(0, Math.round(score * 1.5));
+      const score = latest * 10; // back to 0-100
+      if (score >= 95) return 100;
+      if (score >= 90) return 85;
+      if (score >= 85) return 65;
+      if (score >= 70) return 40;
+      return Math.max(0, Math.round(score * 0.5));
     }
 
-    // For peak flow and spirometer: need ≥3 readings for meaningful baseline
-    if (!baseline || baseline === 0 || recCount < 3) return 75; // neutral until baseline established
+    // Peak flow & spirometer: personal baseline comparison
+    // Need ≥3 readings for meaningful baseline
+    if (!baseline || baseline === 0 || recCount < 3) return 75;
     const ratio = latest / baseline;
-    if (ratio >= 1.0)  return 100;
-    if (ratio >= 0.95) return Math.round(100 - (1-ratio)*200);
-    if (ratio >= 0.85) return Math.round(90  - (0.95-ratio)*300);
-    if (ratio >= 0.70) return Math.round(50  - (0.85-ratio)*267);
-    return Math.max(0, Math.round((ratio/0.70)*20));
+    if (ratio >= 0.98) return 100;          // within 2%: green
+    if (ratio >= 0.95) return 85;           // 2-5% below: amber/watch
+    if (ratio >= 0.90) return 65;           // 5-10% below: orange/alert
+    if (ratio >= 0.85) return 40;           // 10-15% below: red
+    return Math.max(0, Math.round(ratio * 50)); // >15% below: critical
   }
 
   if (param.direction === 'lower_better') {
+    // Temperature: tighter thresholds
     const deviation = Math.abs(latest - 98.6);
-    if (deviation <= 0.5) return 100;
-    if (deviation <= 1.0) return 85;
-    if (deviation <= 1.5) return 65;
-    if (deviation <= 2.0) return 40;
-    return Math.max(0, 20 - (deviation-2)*20);
+    if (deviation <= 0.4) return 100;   // 98.2-99.0: normal
+    if (deviation <= 0.9) return 85;    // 97.7-99.5: watch
+    if (deviation <= 1.4) return 65;    // 97.2-100.0: alert
+    if (deviation <= 2.0) return 40;    // 96.6-100.6: significant
+    return Math.max(0, 20 - (deviation-2)*15);
   }
 
   if (param.direction === 'target_range') {
@@ -655,20 +656,22 @@ function computeParamScore(param, latest, baseline, recCount) {
     const deviation = Math.max(overHigh, underLow);
     const range = hi - lo;
     const pctDev = deviation / range;
-    if (pctDev <= 0.1)  return 85;
-    if (pctDev <= 0.25) return 65;
-    if (pctDev <= 0.5)  return 40;
+    // Tighter: 5% dev = amber, 10% = orange, 20% = red
+    if (pctDev <= 0.05) return 85;
+    if (pctDev <= 0.10) return 65;
+    if (pctDev <= 0.20) return 40;
     return Math.max(0, 20 - pctDev*20);
   }
 
   if (param.direction === 'stable') {
+    // Weight: tighter — 2% change = watch, 5% = alert
     if (!baseline || baseline === 0 || recCount < 3) return 75;
     const pctChange = Math.abs((latest - baseline) / baseline) * 100;
-    if (pctChange <= 2)  return 100;
-    if (pctChange <= 5)  return 85;
-    if (pctChange <= 8)  return 65;
-    if (pctChange <= 12) return 40;
-    return Math.max(0, 20 - (pctChange-12)*2);
+    if (pctChange <= 1)  return 100;
+    if (pctChange <= 3)  return 85;
+    if (pctChange <= 5)  return 65;
+    if (pctChange <= 8)  return 40;
+    return Math.max(0, 20 - (pctChange-8)*3);
   }
 
   return 75;
@@ -818,10 +821,10 @@ function renderDial(score, breakdown, staleCount, missingCount, missingRequired)
     statusEl.textContent = '✓ All parameters near baseline';
     statusEl.className = 'dial-status status-green';
   } else if (score >= thresholds.orange) {
-    statusEl.textContent = '👀 Minor deviation — watch closely';
+    statusEl.textContent = '👀 Watch closely — mild deviation';
     statusEl.className = 'dial-status status-amber';
   } else if (score >= thresholds.red) {
-    statusEl.textContent = '⚠️ Notable deviation — consider contacting team';
+    statusEl.textContent = '⚠️ Notable deviation — review parameters';
     statusEl.className = 'dial-status status-orange';
   } else {
     statusEl.textContent = '🚨 Significant deviation — contact transplant team';

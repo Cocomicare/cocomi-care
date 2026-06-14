@@ -917,10 +917,10 @@ function renderDashboard() {
       if (hist.length) {
         const l = hist[hist.length-1]; const s = l.score;
         scoreEl.textContent = s;
-        scoreEl.className = 'health-banner-score' + (s<50?' danger':s<70?' warn':'');
-        titleEl.textContent = s>=85?'All parameters near baseline':s>=70?'Minor deviation detected':s>=50?'Notable deviation — watch closely':'Significant deviation';
+        scoreEl.className = 'health-banner-score' + (s<85?' danger':s<90?' warn':'');
+        titleEl.textContent = s>=95?'All parameters near baseline':s>=90?'Watch closely — mild deviation':s>=85?'Notable deviation — review parameters':'Significant deviation — contact team';
         subEl.textContent = `Last updated ${daysSince(l.date)===0?'today':daysSince(l.date)+' days ago'} · Tap to view breakdown`;
-        banner.className = 'health-banner' + (s<50?' alert-danger':s<70?' alert-warn':'');
+        banner.className = 'health-banner' + (s<85?' alert-danger':s<90?' alert-warn':'');
       } else {
         scoreEl.textContent = '—'; scoreEl.className = 'health-banner-score none';
         titleEl.textContent = 'No data yet — log readings to calculate';
