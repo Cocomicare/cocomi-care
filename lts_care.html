@@ -886,25 +886,31 @@ function renderDashboard() {
 
     // Check nonnegotiables
     const NONNEGOTIABLES = [
-      { key:'symptom_checkins_v1', name:'Symptom Check-in', days:2,
-        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
-      { key:'vss_spo2_v1', name:'SpO₂', days:2,
-        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
-      { key:'peak_flow_sessions_v1', name:'Peak Flow', days:2,
-        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date||recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
-      { key:'vss_hr_v1', name:'Heart Rate', days:2,
-        hasRecent(recs) { if(!recs.length) return false; const d=new Date(recs[recs.length-1].date); return (new Date()-d)/86400000 <= 2; } },
+      { key:'symptom_checkins_v1', name:'Symptom Check-in', days:2 },
+      { key:'vss_spo2_v1',         name:'SpO₂',            days:2 },
+      { key:'peak_flow_sessions_v1',name:'Peak Flow',       days:2 },
+      { key:'vss_hr_v1',           name:'Heart Rate',       days:2 },
     ];
 
+    const today = new Date(); today.setHours(0,0,0,0);
     const missing = NONNEGOTIABLES.filter(n => {
-      try { return !n.hasRecent(JSON.parse(localStorage.getItem(n.key)||'[]')); } catch(e) { return true; }
+      try {
+        const recs = JSON.parse(localStorage.getItem(n.key)||'[]');
+        if (!recs.length) return true;
+        const last = recs[recs.length-1];
+        const lastDate = new Date(last.date||last.recorded_at||'');
+        if (isNaN(lastDate)) return true;
+        lastDate.setHours(0,0,0,0);
+        const daysAgo = Math.floor((today - lastDate) / 86400000);
+        return daysAgo > n.days;
+      } catch(e) { return true; }
     });
 
     if (missing.length > 0) {
       scoreEl.textContent = '?'; scoreEl.className = 'health-banner-score none';
       titleEl.textContent = 'Insufficient data — score unavailable';
-      subEl.textContent = 'Missing: ' + missing.map(m=>m.name).join(', ');
-      banner.className = 'health-banner';
+      subEl.textContent = 'Missing: ' + missing.map(m=>m.name).join(', ') + ' · Tap to view';
+      banner.className = 'health-banner alert-warn';
     } else {
       const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
       if (hist.length) {
