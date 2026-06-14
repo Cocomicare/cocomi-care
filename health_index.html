@@ -548,6 +548,9 @@ function getWindows() {
 
 function getWeights() {
   try {
+    const saved = JSON.parse(localStorage.getItem(WEIGHTS_KEY)||'{}');
+    const w = {};
+    PARAMS.forEach(p => w[p.key] = saved[p.key] ?? p.weight);
     return w;
   } catch(e) {
     const w = {}; PARAMS.forEach(p => w[p.key] = p.weight); return w;
@@ -1076,37 +1079,50 @@ async function syncSettings() {
       thresholds: JSON.parse(localStorage.getItem(THRESHOLDS_KEY) || '{}'),
       windows:    JSON.parse(localStorage.getItem(WINDOWS_KEY)    || '{}'),
     };
-    await syncSaveClinical('health_index_settings', settings);
-    syncShowStatus('synced');
+    // Only sync if we have real data
+    if (Object.keys(settings.weights).length > 0) {
+      await syncSaveClinical('health_index_settings', settings);
+      syncShowStatus('synced');
+    }
   } catch(e) { syncShowStatus('error'); }
 }
 
 // ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
-computeScore();
-
-// Pull settings and history from Supabase on load
+// Pull settings from Supabase FIRST, then render
 (async () => {
   try {
     const [remoteSettings, remoteHistory] = await Promise.all([
       syncLoadClinical('health_index_settings'),
       syncLoadClinical('health_index_history')
     ]);
+
     if (remoteSettings && typeof remoteSettings === 'object') {
-      if (remoteSettings.weights)    localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
-      if (remoteSettings.thresholds) localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
-      if (remoteSettings.windows)    localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
+      // Only overwrite local if remote has more complete data
+      const remoteWeights = remoteSettings.weights;
+      const localWeights  = JSON.parse(localStorage.getItem(WEIGHTS_KEY) || '{}');
+      // Use remote only if it has data and local doesn't, OR remote was saved more recently
+      if (remoteWeights && Object.keys(remoteWeights).length >= Object.keys(localWeights).length) {
+        localStorage.setItem(WEIGHTS_KEY, JSON.stringify(remoteWeights));
+      }
+      if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0) {
+        localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+      }
+      if (remoteSettings.windows && Object.keys(remoteSettings.windows).length > 0) {
+        localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
+      }
     }
+
     if (remoteHistory && Array.isArray(remoteHistory) && remoteHistory.length) {
-      // Merge remote history with local — keep all unique dates, prefer remote on conflict
       const local = getHistory();
       const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
       const sorted = Object.values(merged).sort((a,b)=>a.date.localeCompare(b.date)).slice(-90);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(sorted));
     }
-    computeScore();
   } catch(e) {}
+
+  computeScore();
 })();
 </script>
 </body>
