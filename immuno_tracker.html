@@ -135,6 +135,7 @@
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('upload-input').click()">📎 Upload</button>
+    <button class="btn btn-ghost btn-sm" onclick="pasteFromClipboard()">📋 Paste</button>
     <input type="file" id="upload-input" accept="image/*,.pdf" style="display:none" onchange="handleUpload(this)">
   </div>
 </div>
@@ -192,8 +193,9 @@
 <div class="tab-panel" id="panel-log">
 
   <div class="upload-bar">
-    <span class="upload-bar-text">📎 Upload a lab report or medication document to auto-extract values</span>
+    <span class="upload-bar-text">📎 Upload or 📋 paste a lab report or medication document to auto-extract values</span>
     <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="document.getElementById('upload-input').click()">Upload</button>
+    <button class="btn btn-sm" style="background:var(--purple);color:#fff" onclick="pasteFromClipboard()">Paste</button>
   </div>
 
   <div class="entry-card">
@@ -680,7 +682,7 @@ function deleteEntry(id) {
 let extractedData = [];
 
 async function handleUpload(input) {
-  const file = input.files?.[0]; if (!file) return; input.value='';
+  const file = input.files?.[0]; if (!file) return; if (input.value !== undefined) input.value = '';
   showModal('Analyzing document with AI…');
   try {
     const b64 = await toBase64(file);
@@ -775,6 +777,43 @@ function closeModal() {
 
 function toBase64(file) {
   return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+// ── Clipboard paste ──
+async function pasteFromClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imageType = item.types.find(t => t.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        const file = new File([blob], 'clipboard.png', { type: imageType });
+        await processFile(file);
+        return;
+      }
+    }
+    showToast('No image on clipboard — copy a screenshot first', 'error');
+  } catch(e) {
+    showToast('Paste failed — try the 📎 Upload button', 'error');
+  }
+}
+
+// Global Ctrl+V / Cmd+V anywhere on page
+document.addEventListener('paste', async (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      if (blob) { await processFile(blob); return; }
+    }
+  }
+});
+
+async function processFile(file) {
+  const fakeInput = { files: [file], value: '' };
+  await handleUpload(fakeInput);
 }
 
 // ── Init ──
