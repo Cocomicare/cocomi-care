@@ -400,15 +400,12 @@ header {
   </div>
 
   <div class="settings-card">
-    <div class="settings-title">Data Freshness Rules</div>
-    <div class="settings-sub">How old can a reading be before it's considered stale and flagged in the score?</div>
-    <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
-      <input type="number" id="freshness-days" value="7" min="1" max="30"
-        style="width:70px;text-align:center;font-family:'DM Mono',monospace;font-size:18px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);-moz-appearance:textfield">
-      <span style="font-size:14px;color:var(--ink2)">days — readings older than this are flagged as stale</span>
-    </div>
-    <div style="display:flex;justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-primary btn-sm" onclick="saveFreshness()">Save</button>
+    <div class="settings-title">Measurement Windows</div>
+    <div class="settings-sub">How many days can pass before a parameter is excluded from the score. If a reading is older than this, its weight is redistributed to the other active parameters.</div>
+    <div id="window-rows" style="margin-top:12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-ghost btn-sm" onclick="resetWindows()">Reset to defaults</button>
+      <button class="btn btn-primary" onclick="saveWindows()">Save Windows</button>
     </div>
   </div>
 </div>
@@ -427,8 +424,9 @@ const PARAMS = [
     icon:       '🩸',
     unit:       '%',
     weight:     22,
+    maxAgeDays: 2,
     storageKey: 'vss_spo2_v1',
-    direction:  'higher_better', // higher = better
+    direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
       const vals = recs.map(r=>r.val).filter(v=>v!=null);
@@ -441,6 +439,7 @@ const PARAMS = [
     icon:       '📊',
     unit:       '',
     weight:     18,
+    maxAgeDays: 2,
     storageKey: 'peak_flow_sessions_v1',
     direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].avg : null; },
@@ -455,6 +454,7 @@ const PARAMS = [
     icon:       '🌬️',
     unit:       'mL',
     weight:     18,
+    maxAgeDays: 2,
     storageKey: 'spiro_records_v1',
     direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
@@ -469,11 +469,12 @@ const PARAMS = [
     icon:       '🌡️',
     unit:       '°F',
     weight:     13,
+    maxAgeDays: 3,
     storageKey: 'vss_temp_v1',
-    direction:  'lower_better', // closer to normal = better
+    direction:  'lower_better',
     normalTarget: 98.6,
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
-    getBaseline(recs) { return 98.6; } // always use clinical normal for temp
+    getBaseline(recs) { return 98.6; }
   },
   {
     key:        'hr',
@@ -481,6 +482,7 @@ const PARAMS = [
     icon:       '❤️',
     unit:       'bpm',
     weight:     7,
+    maxAgeDays: 2,
     storageKey: 'vss_hr_v1',
     direction:  'target_range',
     targetLow:  60, targetHigh: 100,
@@ -496,9 +498,10 @@ const PARAMS = [
     icon:       '💜',
     unit:       'mmHg',
     weight:     6,
+    maxAgeDays: 7,
     storageKey: 'vss_bp_v1',
     direction:  'target_range',
-    targetLow:  90, targetHigh: 130, // systolic
+    targetLow:  90, targetHigh: 130,
     getLatest(recs) { return recs.length ? recs[recs.length-1].sys : null; },
     getBaseline(recs) {
       const vals = recs.map(r=>r.sys).filter(v=>v!=null);
@@ -511,8 +514,9 @@ const PARAMS = [
     icon:       '🟠',
     unit:       'lbs',
     weight:     6,
+    maxAgeDays: 14,
     storageKey: 'vss_wt_v1',
-    direction:  'stable', // deviation from personal baseline
+    direction:  'stable',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
       const vals = recs.map(r=>r.val).filter(v=>v!=null);
@@ -527,9 +531,18 @@ const PARAMS = [
 const WEIGHTS_KEY    = 'chi_weights_v1';
 const THRESHOLDS_KEY = 'chi_thresholds_v1';
 const HISTORY_KEY    = 'chi_history_v1';
-const FRESHNESS_KEY  = 'chi_freshness_v1';
+const WINDOWS_KEY    = 'chi_windows_v1';
 
-function getWeights() {
+function getWindows() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WINDOWS_KEY)||'{}');
+    const w = {};
+    PARAMS.forEach(p => w[p.key] = saved[p.key] ?? p.maxAgeDays);
+    return w;
+  } catch(e) {
+    const w = {}; PARAMS.forEach(p => w[p.key] = p.maxAgeDays); return w;
+  }
+}
   try {
     const saved = JSON.parse(localStorage.getItem(WEIGHTS_KEY)||'{}');
     const w = {};
@@ -610,17 +623,15 @@ function computeParamScore(param, latest, baseline) {
 }
 
 function computeScore() {
-  const weights     = getWeights();
-  const freshDays   = getFreshnessDays();
-  const cutoff      = new Date();
-  cutoff.setDate(cutoff.getDate() - freshDays);
-  const staleCutoff = new Date();
-  staleCutoff.setDate(staleCutoff.getDate() - freshDays * 2);
+  const weights = getWeights();
+  const windows = getWindows();
+  const today   = new Date();
+  today.setHours(0,0,0,0);
 
   let weightedSum  = 0;
   let totalWeight  = 0;
-  let staleCount   = 0;
   let missingCount = 0;
+  let staleCount   = 0;
   const breakdown  = [];
 
   PARAMS.forEach(param => {
@@ -630,39 +641,49 @@ function computeScore() {
     let recs = [];
     try { recs = JSON.parse(localStorage.getItem(param.storageKey)||'[]'); } catch(e) {}
 
-    const latest = param.getLatest(recs);
-    const baseline = param.getBaseline(recs);
-    const latestDate = recs.length ? new Date(recs[recs.length-1].date) : null;
+    const latest     = param.getLatest(recs);
+    const baseline   = param.getBaseline(recs);
+    const latestRec  = recs.length ? recs[recs.length-1] : null;
+    const latestDate = latestRec ? new Date(latestRec.date) : null;
+    if (latestDate) latestDate.setHours(0,0,0,0);
+
+    // Use this param's specific max age window (from settings or default)
+    const maxAge   = windows[param.key] || param.maxAgeDays || 7;
+    const cutoff   = new Date(today); cutoff.setDate(today.getDate() - maxAge);
+    const daysAgo  = latestDate ? Math.floor((today - latestDate) / 86400000) : null;
 
     let freshness = 'ok';
-    if (!latestDate || latest === null) { freshness = 'missing'; missingCount++; }
-    else if (latestDate < staleCutoff)  { freshness = 'missing'; missingCount++; }
-    else if (latestDate < cutoff)       { freshness = 'stale';   staleCount++; }
+    if (!latestDate || latest === null || latest === undefined) {
+      freshness = 'missing'; missingCount++;
+    } else if (latestDate < cutoff) {
+      freshness = 'missing'; missingCount++;
+    }
 
     if (freshness === 'missing') {
-      breakdown.push({ param, score: null, latest, baseline, w, freshness, daysAgo: null });
+      // Excluded from score — weight redistributed below
+      breakdown.push({ param, score: null, latest, baseline, w, freshness, daysAgo });
       return;
     }
 
     const score = computeParamScore(param, latest, baseline);
-    const daysAgo = latestDate ? Math.floor((new Date() - latestDate) / 86400000) : null;
-
-    weightedSum += score * (w / 100);
     totalWeight += w;
+    weightedSum += score * w;
     breakdown.push({ param, score, latest, baseline, w, freshness, daysAgo });
   });
 
-  // Adjust for missing parameters — penalize slightly
-  const missingPenalty = missingCount * 3;
+  // Proportional redistribution: score = weightedSum / totalWeight
+  // If totalWeight < 100, missing params are simply ignored — score still out of 100
   let finalScore = totalWeight > 0
-    ? Math.round((weightedSum / (totalWeight / 100)) - missingPenalty)
+    ? Math.round(weightedSum / totalWeight)
     : null;
   if (finalScore !== null) finalScore = Math.max(0, Math.min(100, finalScore));
 
-  // Sort breakdown by impact (score deviation from 100, weighted)
+  // Sort breakdown: active params first by impact, then missing ones
   breakdown.sort((a, b) => {
-    const impA = a.score !== null ? (100 - a.score) * a.w : -1;
-    const impB = b.score !== null ? (100 - b.score) * b.w : -1;
+    if (a.score !== null && b.score === null) return -1;
+    if (a.score === null && b.score !== null) return 1;
+    const impA = a.score !== null ? (100 - a.score) * a.w : 0;
+    const impB = b.score !== null ? (100 - b.score) * b.w : 0;
     return impB - impA;
   });
 
@@ -742,27 +763,30 @@ function renderDial(score, breakdown, staleCount, missingCount) {
 
   // ── Freshness notice ──
   const freshEl = document.getElementById('dial-freshness');
-  const notices = [];
-  if (staleCount > 0)   notices.push(`<span class="stale-warn">${staleCount} reading${staleCount>1?'s':''} overdue for update</span>`);
-  if (missingCount > 0) notices.push(`${missingCount} parameter${missingCount>1?'s':''} not yet logged`);
-  freshEl.innerHTML = notices.length ? notices.join(' · ') : 'All parameters have recent readings';
+  const activeParams = breakdown.filter(b=>b.score!==null).length;
+  const totalParams  = breakdown.length;
+  if (missingCount > 0) {
+    freshEl.innerHTML = `Score based on ${activeParams} of ${totalParams} parameters · ${missingCount} excluded (outside measurement window)`;
+  } else {
+    freshEl.innerHTML = 'All parameters have recent readings ✓';
+  }
 
   // ── Breakdown rows ──
   const rowsEl = document.getElementById('breakdown-rows');
   const weights = getWeights();
-  const totalActiveWeight = PARAMS.filter(p=>weights[p.key]>0).reduce((a,p)=>a+weights[p.key],0);
 
   rowsEl.innerHTML = breakdown.map((b, i) => {
     const { param, score, latest, baseline, w, freshness, daysAgo } = b;
     const barColor = score !== null ? getZoneColor(score, thresholds) : 'var(--ink3)';
     const barWidth = score !== null ? score : 0;
     const isTopImpact = i === 0 && score !== null && score < 90;
-    const sinceText = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo ? `${daysAgo}d ago` : '—';
+    const sinceText = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : daysAgo !== null ? `${daysAgo}d ago` : '—';
     const baselineText = baseline !== null ? `Baseline: ${typeof baseline === 'number' ? baseline.toFixed(1) : baseline} ${param.unit}` : 'No baseline yet';
     const latestText = latest !== null ? `Latest: ${typeof latest === 'number' ? latest.toFixed(1) : latest} ${param.unit}` : 'Not logged';
+    const windowText = freshness === 'missing' ? `window: ${param.maxAgeDays}d` : '';
 
     return `
-    <div class="param-row">
+    <div class="param-row" style="${freshness === 'missing' ? 'opacity:0.45' : ''}">
       <div class="param-icon">${param.icon}</div>
       <div class="param-info">
         <div class="param-name">${param.name} ${isTopImpact ? '<span style="color:var(--warn);font-size:11px">★ highest impact</span>' : ''}</div>
@@ -775,13 +799,12 @@ function renderDial(score, breakdown, staleCount, missingCount) {
       </div>
       <div class="param-score" style="color:${barColor}">${score !== null ? score : '—'}</div>
       <div class="param-weight">${w}%</div>
-      ${freshness === 'stale'   ? '<span class="param-stale">Stale</span>'   : ''}
-      ${freshness === 'missing' ? '<span class="param-missing">No data</span>' : ''}
+      ${freshness === 'missing' ? `<span class="param-missing">Excluded · ${windowText}</span>` : ''}
     </div>`;
   }).join('');
 
   const activePct = Math.round(breakdown.filter(b=>b.score!==null).reduce((a,b)=>a+b.w,0));
-  document.getElementById('score-basis').textContent = `Score based on ${activePct}% of total weight`;
+  document.getElementById('score-basis').textContent = `Score based on ${activePct}% of total weight · remaining ${100-activePct}% redistributed`;
 }
 
 function getZoneColor(score, thresholds) {
@@ -972,9 +995,45 @@ function resetThresholds() {
   showToast('Reset to defaults');
 }
 
-function saveFreshness() {
-  const v = parseInt(document.getElementById('freshness-days').value) || 7;
-  localStorage.setItem(FRESHNESS_KEY, String(v));
+function buildWindowRows() {
+  const windows = getWindows();
+  const el = document.getElementById('window-rows');
+  if (!el) return;
+  el.innerHTML = PARAMS.map(p => `
+    <div class="weight-row">
+      <div class="weight-icon">${p.icon}</div>
+      <div style="flex:1">
+        <div class="weight-name">${p.name}</div>
+        <div style="font-size:11px;color:var(--ink3)">${getParamDescription(p.key)}</div>
+      </div>
+      <input type="number" class="weight-input" id="win-${p.key}"
+        value="${windows[p.key]}" min="1" max="90"
+        style="width:52px">
+      <div class="weight-pct" style="width:30px;font-size:12px">days</div>
+    </div>
+  `).join('');
+}
+
+function saveWindows() {
+  const w = {};
+  PARAMS.forEach(p => {
+    const v = parseInt(document.getElementById('win-'+p.key)?.value||p.maxAgeDays);
+    w[p.key] = isNaN(v) || v < 1 ? p.maxAgeDays : v;
+  });
+  localStorage.setItem(WINDOWS_KEY, JSON.stringify(w));
+  showToast('Measurement windows saved ✓', 'success');
+  computeScore();
+}
+
+function resetWindows() {
+  PARAMS.forEach(p => {
+    const el = document.getElementById('win-'+p.key);
+    if (el) el.value = p.maxAgeDays;
+  });
+  localStorage.removeItem(WINDOWS_KEY);
+  showToast('Reset to defaults');
+  computeScore();
+}
   showToast('Freshness rule saved ✓', 'success');
   computeScore();
 }
@@ -1000,7 +1059,7 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if (name === 'trend')    renderTrend();
-  if (name === 'settings') buildWeightRows();
+  if (name === 'settings') { buildWeightRows(); buildWindowRows(); }
 }
 
 // ══════════════════════════════════════════════════
