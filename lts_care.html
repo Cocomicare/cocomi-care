@@ -173,6 +173,7 @@ body {
 .tile.health::before  { background: #2D9E6B; }
 .tile.clinical::before{ background: #0E7490; }
 .tile.meds::before    { background: #6B4FA8; }
+.tile.immuno_tracker::before { background: #2D9E6B; }
 .tile-icon { font-size: 22px; margin-bottom: 8px; display: block; }
 .tile-name { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
 .tile-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1; margin-bottom: 3px; }
@@ -185,7 +186,6 @@ body {
 .tile.alert-danger { border-color: #f0c0c0; background: var(--danger-bg); }
 .tile.alert-warn { border-color: #f0d0b0; background: var(--warn-bg); }
 .tile-since.overdue { color: var(--warn); font-weight: 500; }
-
 .global-alert { margin: 0 0 14px; display: none; background: var(--danger-bg); border: 1px solid #f0c0c0; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: var(--danger); font-weight: 500; }
 .global-alert.show { display: block; }
 .dash-footer { text-align: center; padding: 0 20px 40px; font-size: 11px; color: var(--ink3); line-height: 1.6; }
@@ -440,7 +440,6 @@ body {
     </div>
 
     <div class="dash-body">
-      <div class="global-alert" id="global-alert"></div>
 
       <!-- Immunosuppression Banner -->
       <div class="immuno-banner" onclick="openModule('immuno')">
@@ -561,7 +560,7 @@ const MODULES = [
     getSummary(){ try{ const conv=JSON.parse(localStorage.getItem('clinical_conversation_v1')||'[]'); const files=JSON.parse(localStorage.getItem('clinical_files_v1')||'[]'); if(!conv.length) return{val:null,sub:'Labs · Medications · Trends',since:null}; const lastMsg=conv[conv.length-1]; const lastDate=lastMsg?.timestamp?lastMsg.timestamp.split('T')[0]:null; const lastReply=conv.filter(m=>m.role==='assistant').pop(); const hasFlags=lastReply&&(lastReply.displayText||'').match(/\bHIGH\b|\bLOW\b/); return{val:files.length||conv.filter(m=>m.role==='assistant').length||null,unit:files.length?' docs analyzed':' responses',sub:hasFlags?'⚠️ Flags in last analysis':'Labs · Medications · Trends',since:lastDate?daysSince(lastDate):null,alert:hasFlags?'warn':null}; }catch(e){return{val:null,sub:'Labs · Medications · Trends',since:null};} } },
   { id:'meds',     name:'Medications',        icon:'💊', file:'medications.html',               group:'medlabs',
     getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('clinical_meds_v1')||'[]'); const active=meds.filter(m=>m.active); if(!active.length) return{val:null,sub:'Current medication list',since:null}; const lastUpdated=meds.reduce((a,m)=>m.updated>a?m.updated:a,''); return{val:active.length,unit:' active',sub:active.slice(0,2).map(m=>m.name+(m.dose?' '+m.dose:'')).join(', ')+(active.length>2?'…':''),since:lastUpdated?daysSince(lastUpdated.split('T')[0]):null}; }catch(e){return{val:null,sub:'Current medication list',since:null};} } },
-  { id:'immuno_tracker', name:'Immunosuppression Tracker', icon:'🧪', file:'immuno_tracker.html', group:'medlabs',
+  { id:'immuno_tracker', name:'Immunosuppression Tracker', icon:'🧪', file:'immuno_tracker.html', group:'medlabs', tileColor:'#2D9E6B',
     getSummary(){ try{ const d=JSON.parse(localStorage.getItem('immuno_tracker_v1')||'[]'); if(!d.length) return{val:null,sub:'Drug doses · Trough · Immune labs',since:null}; const last=d[d.length-1]; const tac=d.filter(e=>e.type==='tac').pop(); const trough=d.filter(e=>e.type==='trough').pop(); return{val:tac?tac.value:null,unit:tac?' mg Tac':'',sub:trough?`Trough ${trough.value} ng/mL`:'Drug doses · Trough · Immune labs',since:daysSince(last.date)}; }catch(e){return{val:null,sub:'Drug doses · Trough · Immune labs',since:null};} } },
 ];
 
@@ -939,14 +938,11 @@ function renderDashboard() {
     const days = s.since;
     const overdue = mod.cadence && days !== null && days >= mod.cadence;
     const sinceStr = days === null ? 'Never logged' : days === 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
-    const alertCls = s.alert === 'danger' ? 'alert-danger' : s.alert === 'warn' ? 'alert-warn' : '';
-    if (s.alert === 'danger') alerts.push(`${mod.icon} ${mod.name}: ${s.sub}`);
     const valHtml = s.val !== null
       ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>`
       : `<div class="tile-empty">No data yet</div>`;
     groups[mod.group].push(`
-      <div class="tile ${mod.id} ${alertCls}" onclick="openModule('${mod.id}')">
-        <div class="tile-alert-dot"></div>
+      <div class="tile ${mod.id}" onclick="openModule('${mod.id}')">
         <span class="tile-icon">${mod.icon}</span>
         <div class="tile-name">${mod.name}</div>
         ${valHtml}
@@ -958,9 +954,6 @@ function renderDashboard() {
   document.getElementById('tiles-measurements').innerHTML = groups.measurements.join('');
   document.getElementById('tiles-medlabs').innerHTML      = groups.medlabs.join('');
 
-  const alertEl = document.getElementById('global-alert');
-  if (alerts.length) { alertEl.innerHTML = `⚠️ <strong>Alerts requiring attention:</strong><br>${alerts.join('<br>')}`; alertEl.classList.add('show'); }
-  else alertEl.classList.remove('show');
 
   document.getElementById('last-updated').textContent = 'Refreshed ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 }
