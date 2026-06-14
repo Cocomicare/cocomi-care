@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -346,7 +347,8 @@ function getData() {
 }
 function saveData(entries) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  syncSaveClinical('immuno_tracker', entries).catch(()=>{});
+  // Send to parent lts_care which has a guaranteed Supabase session
+  window.parent.postMessage({ type: 'SYNC_SAVE_CLINICAL', dataType: 'immuno_tracker', data: entries }, '*');
 }
 
 // ── Tab switching ──
@@ -519,9 +521,9 @@ function updateChart() {
       scales: {
         x: {
           type: 'time',
-          time: { unit: 'month', tooltipFormat: 'MMM d, yyyy', displayFormats: { month: 'MMM yy' } },
+          time: { unit: 'month', tooltipFormat: 'MMM d, yyyy', displayFormats: { day:'MMM d', month: 'MMM yy', year:'yyyy' } },
           grid: { color: '#E8EAF0' },
-          ticks: { color: '#9396A8', font: { size: 11 } },
+          ticks: { color: '#9396A8', font: { size: 11 }, maxTicksLimit: 8 },
         },
         yLeft: {
           type: 'linear',
@@ -773,6 +775,9 @@ function toBase64(file) {
 
   updateChart();
   updateSummaryChips();
+
+  // Re-render after short delay in case Chart.js adapter needs time to load
+  setTimeout(() => { updateChart(); updateSummaryChips(); }, 500);
 })();
 </script>
 </body>
