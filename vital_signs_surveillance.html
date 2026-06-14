@@ -1247,18 +1247,20 @@ function initVitalDateTime(vital) {
 VITALS.forEach(v => initVitalDateTime(v));
 loadSettings();
 (async()=>{
-  // Pull alert threshold settings from Supabase
-  const remoteSettings = await syncLoadClinical('vitals_settings');
-  if(remoteSettings && typeof remoteSettings === 'object') {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(remoteSettings));
-  }
-  // Pull vitals records
-  const vitals=['spo2','hr','bp','wt','temp'];
-  for(const v of vitals){
-    const rows = await syncLoadHealthRecords('vitals_'+v);
-    if(rows&&rows.length){
-      const remote = rows.map(r=>r.data);
-      localStorage.setItem(SK(v), JSON.stringify(remote));
+  const preloaded = new URLSearchParams(location.search).get('preloaded');
+  if (!preloaded) {
+    // Only pull from Supabase if lts_care hasn't already preloaded fresh data
+    const remoteSettings = await syncLoadClinical('vitals_settings');
+    if(remoteSettings && typeof remoteSettings === 'object') {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(remoteSettings));
+    }
+    const vitals=['spo2','hr','bp','wt','temp'];
+    for(const v of vitals){
+      const rows = await syncLoadHealthRecords('vitals_'+v);
+      if(rows&&rows.length){
+        const remote = rows.map(r=>r.data);
+        localStorage.setItem(SK(v), JSON.stringify(remote));
+      }
     }
   }
   loadSettings();

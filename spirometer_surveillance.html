@@ -839,16 +839,16 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 //  INIT
 // ══════════════════════════════════════════════════
 (async()=>{
-  // Pull settings from Supabase
-  const remoteSettings = await syncLoadClinical('spiro_settings');
-  if(remoteSettings && typeof remoteSettings === 'object') {
-    localStorage.setItem(SET_KEY, JSON.stringify(remoteSettings));
-  }
-  // Pull records from Supabase
-  const rows = await syncLoadHealthRecords('spirometer');
-  if(rows&&rows.length){
-    const remote = rows.map(r=>r.data);
-    localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  if (!new URLSearchParams(location.search).get('preloaded')) {
+    const remoteSettings = await syncLoadClinical('spiro_settings');
+    if(remoteSettings && typeof remoteSettings === 'object') {
+      localStorage.setItem(SET_KEY, JSON.stringify(remoteSettings));
+    }
+    const rows = await syncLoadHealthRecords('spirometer');
+    if(rows&&rows.length){
+      const remote = rows.map(r=>r.data);
+      localStorage.setItem(REC_KEY, JSON.stringify(remote));
+    }
   }
   clearLog();
   loadSettings();

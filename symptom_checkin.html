@@ -672,12 +672,14 @@ function showToast(msg, type='') {
 
 // Pull from Supabase after init
 (async()=>{
-  const rows = await syncLoadHealthRecords('symptoms');
-  if(rows&&rows.length){
-    const remote = rows.map(r=>r.data);
-    localStorage.setItem(REC_KEY, JSON.stringify(remote));
-    updateNudge(); updateBaselineNotice(); updateWellnessPreview();
-    renderHistory(); renderTrends();
+  if (!new URLSearchParams(location.search).get('preloaded')) {
+    const rows = await syncLoadHealthRecords('symptoms');
+    if(rows&&rows.length){
+      const remote = rows.map(r=>r.data);
+      localStorage.setItem(REC_KEY, JSON.stringify(remote));
+      updateNudge(); updateBaselineNotice(); updateWellnessPreview();
+      renderHistory(); renderTrends();
+    }
   }
 })();
 </script>

@@ -913,12 +913,14 @@ initDateTime();
 //  INIT — pull data from Supabase on load
 // ══════════════════════════════════════════════════
 (async()=>{
-  const rows = await syncLoadHealthRecords('peak_flow');
-  if(rows&&rows.length){
-    const remote = rows.map(r=>r.data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
-    renderHistory();
-    renderTrends();
+  if (!new URLSearchParams(location.search).get('preloaded')) {
+    const rows = await syncLoadHealthRecords('peak_flow');
+    if(rows&&rows.length){
+      const remote = rows.map(r=>r.data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+      renderHistory();
+      renderTrends();
+    }
   }
 })();
 </body>

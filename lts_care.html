@@ -999,7 +999,7 @@ async function openModule(id) {
     if (bar) { bar.textContent='⚠ Could not reach server: ' + e.message; setTimeout(()=>bar.style.display='none', 3000); }
   }
 
-  document.getElementById('module-iframe').src = mod.file + '?v=' + Date.now();
+  document.getElementById('module-iframe').src = mod.file + '?v=' + Date.now() + '&preloaded=1';
 }
 
 function goHome() {
