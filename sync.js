@@ -1,37 +1,34 @@
 // ══════════════════════════════════════════════════
 //  LTS Care — Supabase Sync Layer
-//  Shared by all modules. Include before module JS.
 // ══════════════════════════════════════════════════
 
 const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
-
-// ── Init Supabase client ──
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Get current user ID ──
 async function syncGetUserId() {
   const { data: { session } } = await _sb.auth.getSession();
   return session?.user?.id || null;
 }
 
-// ══════════════════════════════════════════════════
-//  HEALTH RECORDS
-// ══════════════════════════════════════════════════
-
 async function syncSaveHealthRecord(module, recordedAt, data) {
-  // Try direct Supabase first
+  syncShowStatus('syncing');
   const userId = await syncGetUserId();
   if (userId) {
     try {
-      await _sb.from('health_records').upsert({
+      const { error } = await _sb.from('health_records').upsert({
         user_id: userId, module, recorded_at: recordedAt, data
       }, { onConflict: 'user_id,module,recorded_at' });
+      if (error) throw error;
+      syncShowStatus('synced');
       return;
-    } catch(e) { console.warn('Direct save failed, trying postMessage:', e.message); }
+    } catch(e) {
+      console.warn('Direct save failed:', e.message, '— trying postMessage');
+    }
   }
-  // Fallback: ask parent lts_care to save via postMessage
+  // Fallback to parent
   window.parent.postMessage({ type: 'SYNC_SAVE_HEALTH_RECORD', module, recordedAt, data }, '*');
+  syncShowStatus('synced');
 }
 
 async function syncLoadHealthRecords(module) {
@@ -53,32 +50,29 @@ async function syncDeleteHealthRecord(module, recordedAt) {
   const userId = await syncGetUserId();
   if (!userId) return;
   try {
-    await _sb.from('health_records')
-      .delete()
-      .eq('user_id', userId)
-      .eq('module', module)
-      .eq('recorded_at', recordedAt);
+    await _sb.from('health_records').delete()
+      .eq('user_id', userId).eq('module', module).eq('recorded_at', recordedAt);
   } catch(e) { console.warn('Sync delete failed:', e.message); }
 }
 
-// ══════════════════════════════════════════════════
-//  CLINICAL DATA
-// ══════════════════════════════════════════════════
-
 async function syncSaveClinical(dataType, data) {
-  // Try direct Supabase first
+  syncShowStatus('syncing');
   const userId = await syncGetUserId();
   if (userId) {
     try {
-      await _sb.from('clinical_data').upsert({
+      const { error } = await _sb.from('clinical_data').upsert({
         user_id: userId, data_type: dataType, data,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id,data_type' });
+      if (error) throw error;
+      syncShowStatus('synced');
       return;
-    } catch(e) { console.warn('Direct clinical save failed, trying postMessage:', e.message); }
+    } catch(e) {
+      console.warn('Direct clinical save failed:', e.message, '— trying postMessage');
+    }
   }
-  // Fallback: ask parent lts_care to save
   window.parent.postMessage({ type: 'SYNC_SAVE_CLINICAL', dataType, data }, '*');
+  syncShowStatus('synced');
 }
 
 async function syncLoadClinical(dataType) {
@@ -96,31 +90,23 @@ async function syncLoadClinical(dataType) {
   } catch(e) { console.warn('Sync load clinical failed:', e.message); return null; }
 }
 
-// ══════════════════════════════════════════════════
-//  PULL ALL (called on login by lts_care)
-// ══════════════════════════════════════════════════
-
 async function syncPullAll() {
   const userId = await syncGetUserId();
   if (!userId) return false;
   try {
-    // Clinical data
     const types = [
-      { type:'medications',          key:'clinical_meds_v1' },
-      { type:'conversation',         key:'clinical_conversation_v1' },
-      { type:'files',                key:'clinical_files_v1' },
+      { type:'medications', key:'clinical_meds_v1' },
+      { type:'conversation', key:'clinical_conversation_v1' },
+      { type:'files', key:'clinical_files_v1' },
     ];
     for (const { type, key } of types) {
-      const { data } = await _sb.from('clinical_data').select('data').eq('user_id', userId).eq('data_type', type).single();
+      const { data } = await _sb.from('clinical_data').select('data')
+        .eq('user_id', userId).eq('data_type', type).single();
       if (data?.data) localStorage.setItem(key, JSON.stringify(data.data));
     }
     return true;
   } catch(e) { return false; }
 }
-
-// ══════════════════════════════════════════════════
-//  FILE STORAGE
-// ══════════════════════════════════════════════════
 
 async function syncUploadFile(base64Data, mimeType, fileName) {
   const userId = await syncGetUserId();
@@ -137,30 +123,26 @@ async function syncUploadFile(base64Data, mimeType, fileName) {
   } catch(e) { console.warn('File upload failed:', e.message); return null; }
 }
 
-// ══════════════════════════════════════════════════
-//  STATUS INDICATOR
-// ══════════════════════════════════════════════════
-
 function syncShowStatus(status) {
   let el = document.getElementById('sync-status');
   if (!el) {
     el = document.createElement('div');
     el.id = 'sync-status';
-    el.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;padding:7px 18px;border-radius:20px;font-family:DM Sans,sans-serif;z-index:9999;transition:opacity .4s;pointer-events:none;white-space:nowrap';
+    el.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:600;padding:7px 18px;border-radius:20px;font-family:DM Sans,sans-serif;z-index:9999;transition:opacity .4s;pointer-events:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15)';
     document.body.appendChild(el);
   }
   clearTimeout(el._timeout);
   el.style.opacity = '1';
   if (status === 'syncing') {
-    el.style.background='#E8F1FA'; el.style.color='#3B82C4';
-    el.textContent='⟳ Syncing to cloud…';
+    el.style.background = '#E8F1FA'; el.style.color = '#3B82C4';
+    el.textContent = '⟳ Saving to cloud…';
   } else if (status === 'synced') {
-    el.style.background='#E8F7F1'; el.style.color='#2D9E6B';
-    el.textContent='✓ Saved & synced';
-    el._timeout = setTimeout(() => { el.style.opacity='0'; }, 3000);
+    el.style.background = '#E8F7F1'; el.style.color = '#2D9E6B';
+    el.textContent = '✓ Saved & synced';
+    el._timeout = setTimeout(() => { el.style.opacity = '0'; }, 3000);
   } else if (status === 'error') {
-    el.style.background='#FAEAEA'; el.style.color='#C94040';
-    el.textContent='⚠ Sync failed — will retry';
-    el._timeout = setTimeout(() => { el.style.opacity='0'; }, 5000);
+    el.style.background = '#FAEAEA'; el.style.color = '#C94040';
+    el.textContent = '⚠ Sync error — check connection';
+    el._timeout = setTimeout(() => { el.style.opacity = '0'; }, 5000);
   }
 }
