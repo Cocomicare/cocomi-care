@@ -590,13 +590,47 @@ function getHistory() {
 // ══════════════════════════════════════════════════
 //  SCORE COMPUTATION
 // ══════════════════════════════════════════════════
-function computeParamScore(param, latest, baseline) {
+// Clinical reference ranges for absolute scoring (used when < 3 readings for baseline)
+const CLINICAL_REFS = {
+  spo2:     { direction:'higher_better', min:88, good:95 },  // SpO₂ %
+  peakflow: { direction:'higher_better', min:0,  good:null }, // no universal ref — use relative
+  spiro:    { direction:'higher_better', min:0,  good:null }, // no universal ref — use relative
+  symptoms: { direction:'higher_better', min:0,  good:7 },   // wellness score (0-10 scale after /10)
+  hr:       { direction:'target_range',  lo:60,  hi:100 },
+  bp:       { direction:'target_range',  lo:90,  hi:130 },
+  temp:     { direction:'lower_better',  normal:98.6 },
+  wt:       { direction:'stable' },
+};
+
+function computeParamScore(param, latest, baseline, recCount) {
   if (latest === null || latest === undefined) return null;
 
   if (param.direction === 'higher_better') {
-    if (!baseline || baseline === 0) return 75; // no history — neutral
+    const ref = CLINICAL_REFS[param.key];
+
+    // SpO₂: use absolute clinical scale always
+    if (param.key === 'spo2') {
+      if (latest >= 95) return 100;
+      if (latest >= 93) return 85;
+      if (latest >= 91) return 60;
+      if (latest >= 88) return 35;
+      return Math.max(0, Math.round((latest - 80) * 5));
+    }
+
+    // Symptom check-in: latest is wellnessScore/10 (0-10 scale)
+    if (param.key === 'symptoms') {
+      // Scale 0-10 → 0-100
+      const score = latest * 10;
+      if (score >= 85) return 100;
+      if (score >= 70) return Math.round(85 + (score-70)/15*15);
+      if (score >= 50) return Math.round(60 + (score-50)/20*25);
+      if (score >= 30) return Math.round(30 + (score-30)/20*30);
+      return Math.max(0, Math.round(score * 1.5));
+    }
+
+    // For peak flow and spirometer: need ≥3 readings for meaningful baseline
+    if (!baseline || baseline === 0 || recCount < 3) return 75; // neutral until baseline established
     const ratio = latest / baseline;
-    // 100% of baseline = 100 score, 80% = 60 score, 60% = 0
     if (ratio >= 1.0)  return 100;
     if (ratio >= 0.95) return Math.round(100 - (1-ratio)*200);
     if (ratio >= 0.85) return Math.round(90  - (0.95-ratio)*300);
@@ -605,7 +639,6 @@ function computeParamScore(param, latest, baseline) {
   }
 
   if (param.direction === 'lower_better') {
-    // Temperature: deviation from 98.6
     const deviation = Math.abs(latest - 98.6);
     if (deviation <= 0.5) return 100;
     if (deviation <= 1.0) return 85;
@@ -629,7 +662,7 @@ function computeParamScore(param, latest, baseline) {
   }
 
   if (param.direction === 'stable') {
-    if (!baseline || baseline === 0) return 75;
+    if (!baseline || baseline === 0 || recCount < 3) return 75;
     const pctChange = Math.abs((latest - baseline) / baseline) * 100;
     if (pctChange <= 2)  return 100;
     if (pctChange <= 5)  return 85;
@@ -688,7 +721,7 @@ function computeScore() {
       return;
     }
 
-    const score = computeParamScore(param, latest, baseline);
+    const score = computeParamScore(param, latest, baseline, recs.length);
     totalWeight += w;
     weightedSum += score * w;
     breakdown.push({ param, score, latest, baseline, w, freshness, daysAgo });
