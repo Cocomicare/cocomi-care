@@ -1101,49 +1101,17 @@ async function syncSettings() {
       savedAt:    new Date().toISOString(),
     };
     if (Object.keys(settings.weights).length > 0) {
-      const result = await syncSaveClinical('health_index_settings', settings);
-      showToast('Settings synced to Supabase ✓', 'success');
-      console.log('Synced weights:', JSON.stringify(settings.weights));
+      // Tell parent lts_care.html to save to Supabase (iframe can't reach it directly)
+      window.parent.postMessage({ type: 'SAVE_HEALTH_INDEX_SETTINGS', settings }, '*');
+      showToast('Settings saved ✓', 'success');
     }
-  } catch(e) { showToast('Sync failed: ' + e.message, ''); console.error(e); }
+  } catch(e) { showToast('Save failed: ' + e.message, ''); }
 }
 
 // ══════════════════════════════════════════════════
-//  INIT
+//  INIT — localStorage already populated by lts_care.html on login
 // ══════════════════════════════════════════════════
-// Pull settings from Supabase FIRST, then render
-(async () => {
-  try {
-    const [remoteSettings, remoteHistory] = await Promise.all([
-      syncLoadClinical('health_index_settings'),
-      syncLoadClinical('health_index_history')
-    ]);
-
-    if (remoteSettings && typeof remoteSettings === 'object' && remoteSettings.weights && Object.keys(remoteSettings.weights).length > 0) {
-      // Remote always wins — it's the source of truth
-      localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
-      localStorage.setItem('chi_settings_saved_at', remoteSettings.savedAt || '');
-      if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
-        localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
-      if (remoteSettings.windows && Object.keys(remoteSettings.windows).length > 0)
-        localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
-    }
-
-    if (remoteHistory && Array.isArray(remoteHistory) && remoteHistory.length) {
-      const local = getHistory();
-      const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
-      const sorted = Object.values(merged).sort((a,b)=>a.date.localeCompare(b.date)).slice(-90);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(sorted));
-    }
-  } catch(e) {}
-
-  computeScore();
-  // If settings tab is open, rebuild rows with synced values
-  if (document.getElementById('tab-settings')?.classList.contains('active')) {
-    buildWeightRows();
-    buildWindowRows();
-  }
-})();
+computeScore();
 
 // Refresh button — re-pull from Supabase then recompute
 async function refreshScore() {

@@ -753,6 +753,25 @@ async function handleSignOut() {
 //  DASHBOARD
 // ══════════════════════════════════════════════════
 
+// Listen for settings save requests from module iframes
+window.addEventListener('message', async (e) => {
+  if (e.data?.type === 'SAVE_HEALTH_INDEX_SETTINGS') {
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+      await sb.from('clinical_data').upsert(
+        { user_id: session.user.id, data_type: 'health_index_settings', data: e.data.settings, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,data_type' }
+      );
+      // Also update localStorage so other modules see it immediately
+      if (e.data.settings.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(e.data.settings.weights));
+      if (e.data.settings.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(e.data.settings.thresholds));
+      if (e.data.settings.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(e.data.settings.windows));
+      if (e.data.settings.savedAt)    localStorage.setItem('chi_settings_saved_at', e.data.settings.savedAt);
+    } catch(err) { console.error('Failed to save health index settings:', err); }
+  }
+});
+
 function showDashboard() {
   showScreen('screen-dashboard');
   if (currentUser && !localStorage.getItem('lts_display_name')) {
@@ -786,6 +805,7 @@ function showDashboard() {
         if (hiSettings.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(hiSettings.data.weights));
         if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
         if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
+        if (hiSettings.data.savedAt)    localStorage.setItem('chi_settings_saved_at', hiSettings.data.savedAt);
       }
 
       // Pull health index history
