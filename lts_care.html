@@ -490,6 +490,7 @@ body {
     <button class="back-btn" onclick="goHome()">← Home</button>
     <div class="module-bar-title" id="module-bar-title"></div>
   </div>
+  <div id="module-sync-bar" style="display:none;background:#E8F1FA;color:#3B82C4;font-size:12px;font-weight:500;padding:6px 16px;align-items:center;gap:8px;flex-shrink:0"></div>
   <iframe class="module-iframe" id="module-iframe" src="about:blank"></iframe>
 </div>
 
@@ -932,6 +933,8 @@ async function openModule(id) {
   document.getElementById('module-bar-title').textContent = mod.name;
 
   // Pull fresh data from Supabase before loading the module
+  const bar = document.getElementById('module-sync-bar');
+  if (bar) { bar.style.display='flex'; bar.textContent='⟳ Loading latest data…'; }
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
@@ -987,8 +990,14 @@ async function openModule(id) {
       };
 
       if (pulls[id]) await pulls[id]();
+      if (bar) { bar.textContent='✓ Data refreshed'; setTimeout(()=>bar.style.display='none', 1500); }
+    } else {
+      if (bar) { bar.textContent='⚠ Not signed in'; setTimeout(()=>bar.style.display='none', 2000); }
     }
-  } catch(e) { console.warn('Pre-load pull failed:', e.message); }
+  } catch(e) {
+    console.warn('Pre-load pull failed:', e.message);
+    if (bar) { bar.textContent='⚠ Could not reach server: ' + e.message; setTimeout(()=>bar.style.display='none', 3000); }
+  }
 
   document.getElementById('module-iframe').src = mod.file + '?v=' + Date.now();
 }
