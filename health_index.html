@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -543,10 +543,9 @@ function getWindows() {
     const w = {}; PARAMS.forEach(p => w[p.key] = p.maxAgeDays); return w;
   }
 }
+
+function getWeights() {
   try {
-    const saved = JSON.parse(localStorage.getItem(WEIGHTS_KEY)||'{}');
-    const w = {};
-    PARAMS.forEach(p => w[p.key] = saved[p.key] ?? p.weight);
     return w;
   } catch(e) {
     const w = {}; PARAMS.forEach(p => w[p.key] = p.weight); return w;
@@ -562,10 +561,6 @@ function getThresholds() {
 function getHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }
   catch(e) { return []; }
-}
-
-function getFreshnessDays() {
-  return parseInt(localStorage.getItem(FRESHNESS_KEY)||'7');
 }
 
 // ══════════════════════════════════════════════════
@@ -1032,9 +1027,6 @@ function resetWindows() {
   });
   localStorage.removeItem(WINDOWS_KEY);
   showToast('Reset to defaults');
-  computeScore();
-}
-  showToast('Freshness rule saved ✓', 'success');
   computeScore();
 }
 
