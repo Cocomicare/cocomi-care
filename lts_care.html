@@ -961,6 +961,36 @@ async function runSyncDebug() {
       if (!error) { el.textContent += `✅ health index settings pushed\n`; pushed++; }
     }
 
+    // Push spirometer settings
+    const spiroSet = localStorage.getItem('spiro_settings_v1');
+    if (spiroSet) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'spiro_settings', data:JSON.parse(spiroSet), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ spiro settings pushed\n`; pushed++; }
+    }
+
+    // Push vitals settings
+    const vitalsSet = localStorage.getItem('vss_settings_v1');
+    if (vitalsSet) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'vitals_settings', data:JSON.parse(vitalsSet), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ vitals settings pushed\n`; pushed++; }
+    }
+
+    // Push health index history
+    const chiHistory = localStorage.getItem('chi_history_v1');
+    if (chiHistory) {
+      const { error } = await sb.from('clinical_data').upsert(
+        { user_id:uid, data_type:'health_index_history', data:JSON.parse(chiHistory), updated_at:new Date().toISOString() },
+        { onConflict:'user_id,data_type' }
+      );
+      if (!error) { el.textContent += `✅ health index history pushed\n`; pushed++; }
+    }
+
     el.textContent += pushed > 0 ? `\n✅ Push complete — ${pushed} datasets uploaded\n` : `\n⚠️ Nothing to push (localStorage empty)\n`;
     el.textContent += 'Now open this page on device 2 and tap Force Sync to pull.';
   } catch(e) {
@@ -1002,6 +1032,18 @@ function showDashboard() {
         if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
         if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
       }
+
+      // Pull health index history
+      const { data: hiHistory } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_history').single();
+      if (hiHistory?.data) localStorage.setItem('chi_history_v1', JSON.stringify(hiHistory.data));
+
+      // Pull spirometer settings
+      const { data: spiroSet } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'spiro_settings').single();
+      if (spiroSet?.data) localStorage.setItem('spiro_settings_v1', JSON.stringify(spiroSet.data));
+
+      // Pull vitals settings
+      const { data: vitalsSet } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'vitals_settings').single();
+      if (vitalsSet?.data) localStorage.setItem('vss_settings_v1', JSON.stringify(vitalsSet.data));
 
       // Pull health records
       const modMap = {

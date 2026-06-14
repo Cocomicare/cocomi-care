@@ -723,6 +723,7 @@ function saveSettings() {
     cadWt:   document.getElementById('cad-wt').value
   };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  syncSaveClinical('vitals_settings', s).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
   showToast('Settings saved ✓', 'success');
   showPage('dashboard');
 }
@@ -1246,6 +1247,12 @@ function initVitalDateTime(vital) {
 VITALS.forEach(v => initVitalDateTime(v));
 loadSettings();
 (async()=>{
+  // Pull alert threshold settings from Supabase
+  const remoteSettings = await syncLoadClinical('vitals_settings');
+  if(remoteSettings && typeof remoteSettings === 'object') {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(remoteSettings));
+  }
+  // Pull vitals records
   const vitals=['spo2','hr','bp','wt','temp'];
   for(const v of vitals){
     const rows = await syncLoadHealthRecords('vitals_'+v);
@@ -1254,6 +1261,7 @@ loadSettings();
       localStorage.setItem(SK(v), JSON.stringify(remote));
     }
   }
+  loadSettings();
   renderDashboard();
 })();
 

@@ -818,14 +818,14 @@ function saveScoreToHistory(score) {
   if (score === null) return;
   const hist = getHistory();
   const today = toDateStr(new Date());
-  // Update or add today's score
   const idx = hist.findIndex(h => h.date === today);
   if (idx >= 0) hist[idx].score = score;
   else hist.push({ date: today, score });
-  // Keep last 90 days
   hist.sort((a,b) => a.date.localeCompare(b.date));
   const trimmed = hist.slice(-90);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+  // Sync history to Supabase
+  syncSaveClinical('health_index_history', trimmed).catch(()=>{});
 }
 
 let trendChart = null;
@@ -1086,16 +1086,26 @@ async function syncSettings() {
 // ══════════════════════════════════════════════════
 computeScore();
 
-// Pull settings from Supabase on load
+// Pull settings and history from Supabase on load
 (async () => {
   try {
-    const remote = await syncLoadClinical('health_index_settings');
-    if (remote && typeof remote === 'object') {
-      if (remote.weights)    localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remote.weights));
-      if (remote.thresholds) localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remote.thresholds));
-      if (remote.windows)    localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remote.windows));
-      computeScore(); // recompute with synced settings
+    const [remoteSettings, remoteHistory] = await Promise.all([
+      syncLoadClinical('health_index_settings'),
+      syncLoadClinical('health_index_history')
+    ]);
+    if (remoteSettings && typeof remoteSettings === 'object') {
+      if (remoteSettings.weights)    localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
+      if (remoteSettings.thresholds) localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+      if (remoteSettings.windows)    localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
     }
+    if (remoteHistory && Array.isArray(remoteHistory) && remoteHistory.length) {
+      // Merge remote history with local — keep all unique dates, prefer remote on conflict
+      const local = getHistory();
+      const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
+      const sorted = Object.values(merged).sort((a,b)=>a.date.localeCompare(b.date)).slice(-90);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(sorted));
+    }
+    computeScore();
   } catch(e) {}
 })();
 </script>

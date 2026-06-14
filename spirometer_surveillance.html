@@ -434,6 +434,7 @@ function saveSettings() {
     cadence:  parseInt(document.getElementById('set-cadence').value) || 1
   };
   localStorage.setItem(SET_KEY, JSON.stringify(s));
+  syncSaveClinical('spiro_settings', s).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
   showToast('Settings saved ✓', 'success');
   showTab('log');
 }
@@ -838,6 +839,12 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 //  INIT
 // ══════════════════════════════════════════════════
 (async()=>{
+  // Pull settings from Supabase
+  const remoteSettings = await syncLoadClinical('spiro_settings');
+  if(remoteSettings && typeof remoteSettings === 'object') {
+    localStorage.setItem(SET_KEY, JSON.stringify(remoteSettings));
+  }
+  // Pull records from Supabase
   const rows = await syncLoadHealthRecords('spirometer');
   if(rows&&rows.length){
     const remote = rows.map(r=>r.data);
