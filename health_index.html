@@ -983,6 +983,7 @@ function saveWeights() {
   });
   if (total !== 100) { showToast('Weights must total exactly 100%', ''); return; }
   localStorage.setItem(WEIGHTS_KEY, JSON.stringify(w));
+  localStorage.setItem('chi_settings_saved_at', new Date().toISOString());
   syncSettings();
   showToast('Weights saved ✓', 'success');
   computeScore();
@@ -1097,8 +1098,8 @@ async function syncSettings() {
       weights:    JSON.parse(localStorage.getItem(WEIGHTS_KEY)    || '{}'),
       thresholds: JSON.parse(localStorage.getItem(THRESHOLDS_KEY) || '{}'),
       windows:    JSON.parse(localStorage.getItem(WINDOWS_KEY)    || '{}'),
+      savedAt:    new Date().toISOString(),
     };
-    // Only sync if we have real data
     if (Object.keys(settings.weights).length > 0) {
       await syncSaveClinical('health_index_settings', settings);
       syncShowStatus('synced');
@@ -1118,18 +1119,18 @@ async function syncSettings() {
     ]);
 
     if (remoteSettings && typeof remoteSettings === 'object') {
-      // Only overwrite local if remote has more complete data
-      const remoteWeights = remoteSettings.weights;
-      const localWeights  = JSON.parse(localStorage.getItem(WEIGHTS_KEY) || '{}');
-      // Use remote only if it has data and local doesn't, OR remote was saved more recently
-      if (remoteWeights && Object.keys(remoteWeights).length >= Object.keys(localWeights).length) {
-        localStorage.setItem(WEIGHTS_KEY, JSON.stringify(remoteWeights));
-      }
-      if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0) {
-        localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
-      }
-      if (remoteSettings.windows && Object.keys(remoteSettings.windows).length > 0) {
-        localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
+      const localSavedAt  = localStorage.getItem('chi_settings_saved_at') || '';
+      const remoteSavedAt = remoteSettings.savedAt || '';
+      // Remote wins if it was saved more recently, OR if local has no timestamp
+      if (remoteSavedAt > localSavedAt || !localSavedAt) {
+        if (remoteSettings.weights    && Object.keys(remoteSettings.weights).length > 0)
+          localStorage.setItem(WEIGHTS_KEY,    JSON.stringify(remoteSettings.weights));
+        if (remoteSettings.thresholds && Object.keys(remoteSettings.thresholds).length > 0)
+          localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
+        if (remoteSettings.windows    && Object.keys(remoteSettings.windows).length > 0)
+          localStorage.setItem(WINDOWS_KEY,    JSON.stringify(remoteSettings.windows));
+        if (remoteSavedAt)
+          localStorage.setItem('chi_settings_saved_at', remoteSavedAt);
       }
     }
 
