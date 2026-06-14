@@ -421,6 +421,25 @@ header {
 // ══════════════════════════════════════════════════
 const PARAMS = [
   {
+    key:        'symptoms',
+    name:       'Symptom Check-in',
+    icon:       '🧠',
+    unit:       '',
+    weight:     10,
+    maxAgeDays: 2,
+    storageKey: 'symptom_checkins_v1',
+    direction:  'higher_better',
+    getLatest(recs) {
+      if (!recs.length) return null;
+      const l = recs[recs.length-1];
+      return l.wellnessScore != null ? l.wellnessScore / 10 : null;
+    },
+    getBaseline(recs) {
+      const vals = recs.map(r=>r.wellnessScore).filter(v=>v!=null);
+      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) / 10 : null;
+    }
+  },
+  {
     key:        'spo2',
     name:       'SpO₂',
     icon:       '🩸',
@@ -466,19 +485,6 @@ const PARAMS = [
     }
   },
   {
-    key:        'temp',
-    name:       'Temperature',
-    icon:       '🌡️',
-    unit:       '°F',
-    weight:     13,
-    maxAgeDays: 3,
-    storageKey: 'vss_temp_v1',
-    direction:  'lower_better',
-    normalTarget: 98.6,
-    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
-    getBaseline(recs) { return 98.6; }
-  },
-  {
     key:        'hr',
     name:       'Heart Rate',
     icon:       '❤️',
@@ -511,6 +517,19 @@ const PARAMS = [
     }
   },
   {
+    key:        'temp',
+    name:       'Temperature',
+    icon:       '🌡️',
+    unit:       '°F',
+    weight:     13,
+    maxAgeDays: 3,
+    storageKey: 'vss_temp_v1',
+    direction:  'lower_better',
+    normalTarget: 98.6,
+    getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
+    getBaseline(recs) { return 98.6; }
+  },
+  {
     key:        'wt',
     name:       'Weight',
     icon:       '🟠',
@@ -523,26 +542,6 @@ const PARAMS = [
     getBaseline(recs) {
       const vals = recs.map(r=>r.val).filter(v=>v!=null);
       return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    }
-  },
-  {
-    key:        'symptoms',
-    name:       'Symptom Check-in',
-    icon:       '🧠',
-    unit:       '',
-    weight:     10,
-    maxAgeDays: 2,
-    storageKey: 'symptom_checkins_v1',
-    direction:  'higher_better',
-    getLatest(recs) {
-      if (!recs.length) return null;
-      const l = recs[recs.length-1];
-      // wellnessScore is 0-100, normalize to 0-10 scale for consistency
-      return l.wellnessScore != null ? l.wellnessScore / 10 : null;
-    },
-    getBaseline(recs) {
-      const vals = recs.map(r=>r.wellnessScore).filter(v=>v!=null);
-      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) / 10 : null;
     }
   }
 ];
