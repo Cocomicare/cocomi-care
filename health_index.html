@@ -400,6 +400,21 @@ header {
   </div>
 
   <div class="settings-card">
+    <div class="settings-title">Baseline Window</div>
+    <div class="settings-sub">How many days of readings to average for your personal baseline. Shorter = adapts faster to recent changes. Longer = more stable reference.</div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:12px">
+      <input type="number" id="baseline-days" min="7" max="90" step="7"
+        style="width:70px;text-align:center;font-family:'DM Mono',monospace;font-size:18px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink)">
+      <span style="font-size:13px;color:var(--ink2)">days — rolling average of recent readings</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('baseline-days').value=14">14d default</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('baseline-days').value=30">30d</button>
+      <button class="btn btn-primary btn-sm" onclick="saveBaselineDays()" style="margin-left:auto">Save</button>
+    </div>
+  </div>
+
+  <div class="settings-card">
     <div class="settings-title">Measurement Windows</div>
     <div class="settings-sub">How many days can pass before a parameter is excluded from the score. If a reading is older than this, its weight is redistributed to the other active parameters.</div>
     <div id="window-rows" style="margin-top:12px"></div>
@@ -435,8 +450,9 @@ const PARAMS = [
       return l.wellnessScore != null ? l.wellnessScore / 10 : null;
     },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.wellnessScore).filter(v=>v!=null);
-      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) / 10 : null;
+      const days = getBaselineDays();
+      const base = rollingBaseline(recs, r=>r.wellnessScore, days);
+      return base != null ? base / 10 : null;
     }
   },
   {
@@ -465,8 +481,7 @@ const PARAMS = [
     direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].avg : null; },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.avg).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      return rollingBaseline(recs, r=>r.avg, getBaselineDays());
     }
   },
   {
@@ -480,8 +495,7 @@ const PARAMS = [
     direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.val).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      return rollingBaseline(recs, r=>r.val, getBaselineDays());
     }
   },
   {
@@ -496,8 +510,7 @@ const PARAMS = [
     targetLow:  60, targetHigh: 100,
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.val).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      return rollingBaseline(recs, r=>r.val, getBaselineDays());
     }
   },
   {
@@ -512,8 +525,7 @@ const PARAMS = [
     targetLow:  90, targetHigh: 130,
     getLatest(recs) { return recs.length ? recs[recs.length-1].sys : null; },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.sys).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      return rollingBaseline(recs, r=>r.sys, getBaselineDays());
     }
   },
   {
@@ -540,8 +552,7 @@ const PARAMS = [
     direction:  'stable',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
     getBaseline(recs) {
-      const vals = recs.map(r=>r.val).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      return rollingBaseline(recs, r=>r.val, getBaselineDays());
     }
   }
 ];
@@ -553,6 +564,23 @@ const WEIGHTS_KEY    = 'chi_weights_v1';
 const THRESHOLDS_KEY = 'chi_thresholds_v1';
 const HISTORY_KEY    = 'chi_history_v1';
 const WINDOWS_KEY    = 'chi_windows_v1';
+const BASELINE_KEY   = 'chi_baseline_days_v1';
+
+function getBaselineDays() {
+  return parseInt(localStorage.getItem(BASELINE_KEY)||'14');
+}
+
+// Rolling baseline: average of readings within the last N days
+// Falls back to all readings if fewer than 3 in window
+function rollingBaseline(recs, valFn, days) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const windowRecs = recs.filter(r => (r.date||'') >= cutoffStr);
+  const useRecs = windowRecs.length >= 3 ? windowRecs : recs;
+  const vals = useRecs.map(valFn).filter(v => v != null);
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
 
 function getWindows() {
   try {
@@ -876,7 +904,7 @@ function renderDial(score, breakdown, staleCount, missingCount, missingRequired)
   }).join('');
 
   const activePct = Math.round(breakdown.filter(b=>b.score!==null).reduce((a,b)=>a+b.w,0));
-  document.getElementById('score-basis').textContent = `Score based on ${activePct}% of total weight · remaining ${100-activePct}% redistributed`;
+  document.getElementById('score-basis').textContent = `Score based on ${activePct}% of total weight · remaining ${100-activePct}% redistributed · ${getBaselineDays()}-day baseline window`;
 }
 
 function getZoneColor(score, thresholds) {
@@ -1070,6 +1098,15 @@ function resetThresholds() {
   showToast('Reset to defaults');
 }
 
+function saveBaselineDays() {
+  const v = parseInt(document.getElementById('baseline-days').value) || 14;
+  const days = Math.max(7, Math.min(90, v));
+  localStorage.setItem(BASELINE_KEY, String(days));
+  syncSettings();
+  showToast(`Baseline window set to ${days} days ✓`, 'success');
+  computeScore();
+}
+
 function buildWindowRows() {
   const windows = getWindows();
   const el = document.getElementById('window-rows');
@@ -1132,7 +1169,12 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if (name === 'trend')    renderTrend();
-  if (name === 'settings') { buildWeightRows(); buildWindowRows(); }
+  if (name === 'settings') {
+    buildWeightRows();
+    buildWindowRows();
+    const bdEl = document.getElementById('baseline-days');
+    if (bdEl) bdEl.value = getBaselineDays();
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -1148,10 +1190,11 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 async function syncSettings() {
   try {
     const settings = {
-      weights:    JSON.parse(localStorage.getItem(WEIGHTS_KEY)    || '{}'),
-      thresholds: JSON.parse(localStorage.getItem(THRESHOLDS_KEY) || '{}'),
-      windows:    JSON.parse(localStorage.getItem(WINDOWS_KEY)    || '{}'),
-      savedAt:    new Date().toISOString(),
+      weights:      JSON.parse(localStorage.getItem(WEIGHTS_KEY)    || '{}'),
+      thresholds:   JSON.parse(localStorage.getItem(THRESHOLDS_KEY) || '{}'),
+      windows:      JSON.parse(localStorage.getItem(WINDOWS_KEY)    || '{}'),
+      baselineDays: getBaselineDays(),
+      savedAt:      new Date().toISOString(),
     };
     if (Object.keys(settings.weights).length > 0) {
       // Tell parent lts_care.html to save to Supabase (iframe can't reach it directly)
@@ -1182,6 +1225,8 @@ async function refreshScore() {
         localStorage.setItem(THRESHOLDS_KEY, JSON.stringify(remoteSettings.thresholds));
       if (remoteSettings?.windows && Object.keys(remoteSettings.windows).length > 0)
         localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
+      if (remoteSettings?.baselineDays)
+        localStorage.setItem(BASELINE_KEY, String(remoteSettings.baselineDays));
       showToast('Pulled weights: ' + JSON.stringify(remoteSettings.weights), '');
     } else {
       showToast('No weights in Supabase!', '');
