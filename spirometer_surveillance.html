@@ -604,7 +604,13 @@ function confirmDelete(id) {
   card.appendChild(bar);
 }
 function deleteRecord(id) {
-  saveRecords(getRecords().filter(r => r.id !== id));
+  const recs = getRecords();
+  const rec = recs.find(r=>r.id===id);
+  if (rec) {
+    const ts = rec.date ? rec.date + 'T00:00:00Z' : null;
+    if (ts) syncDeleteHealthRecord('spirometer', ts);
+  }
+  saveRecords(recs.filter(r => r.id !== id));
   renderHistory(); renderTrends(); updateLastLogged();
   showToast('Reading deleted');
 }

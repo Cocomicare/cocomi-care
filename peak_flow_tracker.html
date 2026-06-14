@@ -604,7 +604,14 @@ function confirmDelete(id) {
 }
 
 function deleteSession(id) {
-  saveSessions(getSessions().filter(s => s.id !== id));
+  const sessions = getSessions();
+  const session = sessions.find(s=>s.id===id);
+  if (session) {
+    const timeStr = (session.time||'00:00').slice(0,5);
+    const ts = session.date ? session.date + 'T' + timeStr + ':00Z' : null;
+    if (ts) syncDeleteHealthRecord('peak_flow', ts);
+  }
+  saveSessions(sessions.filter(s => s.id !== id));
   renderHistory();
   showToast('Reading deleted');
 }

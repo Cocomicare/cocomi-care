@@ -911,7 +911,15 @@ function confirmDeleteVital(vital, id) {
 }
 
 function deleteVital(vital, id) {
-  saveRecords(vital, getRecords(vital).filter(r => r.id !== id));
+  const recs = getRecords(vital);
+  const rec = recs.find(r => r.id === id);
+  // Delete from Supabase
+  if (rec) {
+    const timeStr = (rec.time || '00:00').slice(0, 5);
+    const ts = rec.date ? rec.date + 'T' + timeStr + ':00Z' : null;
+    if (ts) syncDeleteHealthRecord('vitals_' + vital, ts);
+  }
+  saveRecords(vital, recs.filter(r => r.id !== id));
   renderVitalHistory(vital);
   renderVitalTrends(vital);
   updateLastLogged(vital);

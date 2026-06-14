@@ -47,12 +47,22 @@ async function syncLoadHealthRecords(module) {
 }
 
 async function syncDeleteHealthRecord(module, recordedAt) {
+  syncShowStatus('syncing');
   const userId = await syncGetUserId();
-  if (!userId) return;
-  try {
-    await _sb.from('health_records').delete()
-      .eq('user_id', userId).eq('module', module).eq('recorded_at', recordedAt);
-  } catch(e) { console.warn('Sync delete failed:', e.message); }
+  if (userId) {
+    try {
+      const { error } = await _sb.from('health_records').delete()
+        .eq('user_id', userId).eq('module', module).eq('recorded_at', recordedAt);
+      if (error) throw error;
+      syncShowStatus('synced');
+      return;
+    } catch(e) {
+      console.warn('Direct delete failed:', e.message, '— trying postMessage');
+    }
+  }
+  // Fallback to parent
+  window.parent.postMessage({ type: 'SYNC_DELETE_HEALTH_RECORD', module, recordedAt }, '*');
+  syncShowStatus('synced');
 }
 
 async function syncSaveClinical(dataType, data) {

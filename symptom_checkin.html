@@ -598,7 +598,13 @@ function renderHistory() {
 
 function deleteRec(id) {
   if (!confirm('Delete this check-in?')) return;
-  saveRecords(getRecords().filter(r=>r.id!==id));
+  const recs = getRecords();
+  const rec = recs.find(r=>r.id===id);
+  if (rec) {
+    const ts = rec.date ? rec.date + 'T00:00:00Z' : null;
+    if (ts) syncDeleteHealthRecord('symptoms', ts);
+  }
+  saveRecords(recs.filter(r=>r.id!==id));
   renderHistory();
   showToast('Deleted');
 }

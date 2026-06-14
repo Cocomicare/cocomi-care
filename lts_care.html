@@ -776,6 +776,13 @@ window.addEventListener('message', async (e) => {
       sessionStorage.setItem('chi_settings_pulled', '1');
     }
 
+    if (type === 'SYNC_DELETE_HEALTH_RECORD') {
+      await sb.from('health_records').delete()
+        .eq('user_id', uid)
+        .eq('module', e.data.module)
+        .eq('recorded_at', e.data.recordedAt);
+    }
+
     if (type === 'SYNC_SAVE_HEALTH_RECORD') {
       await sb.from('health_records').upsert(
         { user_id:uid, module:e.data.module, recorded_at:e.data.recordedAt, data:e.data.data },
