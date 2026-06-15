@@ -384,16 +384,26 @@
 
   <div class="card">
     <div class="card-title">Session Reading</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3)">Max Value — Best Effort</div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <input type="number" class="blow-input" id="blow1" min="0" max="10000" step="1"
-          placeholder="—" oninput="onBlowInput()"
-          style="width:190px;font-size:52px;text-align:center">
-        <span style="font-family:'DM Mono',monospace;font-size:22px;color:var(--ink3)">mL</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3)">PEF</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" class="blow-input" id="inputPef" min="0" max="900" step="1"
+            placeholder="—" oninput="onBlowInput()"
+            style="width:110px;font-size:40px;text-align:center">
+          <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ink3);line-height:1.2">L/<br>min</span>
+        </div>
+        <div style="font-size:11px;color:var(--ink3);text-align:center">Peak Expiratory Flow</div>
       </div>
-      <div style="font-size:12px;color:var(--ink3);text-align:center;line-height:1.5">
-        Enter the highest value shown on your FEV1 device for this session
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3)">FEV1</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" class="blow-input" id="inputFev1" min="0" max="10" step="0.01"
+            placeholder="—" oninput="onBlowInput()"
+            style="width:110px;font-size:40px;text-align:center">
+          <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--ink3)">L</span>
+        </div>
+        <div style="font-size:11px;color:var(--ink3);text-align:center">Forced Exp. Volume</div>
       </div>
     </div>
   </div>
@@ -468,10 +478,15 @@
       </div>
     </div>
     <div style="margin-bottom:14px">
-      <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:500;color:var(--ink2);letter-spacing:0.3px;text-transform:uppercase">Blow Readings</label>
-      <div style="margin-bottom:14px">
-        <label style="display:block;text-transform:uppercase;font-size:10px;letter-spacing:0.4px;color:var(--ink3);margin-bottom:6px">Max Value (mL)</label>
-        <input type="number" class="edit-blow-input" id="editBlow1" min="0" max="10000" style="font-size:22px;text-align:center;width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);font-family:'DM Mono',monospace;-moz-appearance:textfield">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px">
+        <div>
+          <label style="display:block;text-transform:uppercase;font-size:10px;letter-spacing:0.4px;color:var(--ink3);margin-bottom:6px">PEF (L/min)</label>
+          <input type="number" class="edit-blow-input" id="editPef" min="0" max="900" step="1" placeholder="—" style="font-size:22px;text-align:center;width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);font-family:'DM Mono',monospace;-moz-appearance:textfield">
+        </div>
+        <div>
+          <label style="display:block;text-transform:uppercase;font-size:10px;letter-spacing:0.4px;color:var(--ink3);margin-bottom:6px">FEV1 (L)</label>
+          <input type="number" class="edit-blow-input" id="editFev1" min="0" max="10" step="0.01" placeholder="—" style="font-size:22px;text-align:center;width:100%;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);font-family:'DM Mono',monospace;-moz-appearance:textfield">
+        </div>
       </div>
     </div>
     <div class="form-group" style="margin-bottom:18px">
@@ -504,17 +519,20 @@ function saveSessions(s) {
 // ══════════════════════════════════════════════════
 //  BLOW INPUT LOGIC
 // ══════════════════════════════════════════════════
-function getBlows() {
-  const v = parseFloat(document.getElementById('blow1').value);
-  return [isNaN(v) ? null : v, null, null];
+function getInputValues() {
+  const pef  = parseFloat(document.getElementById('inputPef').value);
+  const fev1 = parseFloat(document.getElementById('inputFev1').value);
+  return { pef: isNaN(pef) ? null : pef, fev1: isNaN(fev1) ? null : fev1 };
 }
 
 function onBlowInput() {
-  const inp = document.getElementById('blow1');
-  const val = parseFloat(inp.value);
-  const hasVal = inp.value !== '' && !isNaN(val);
-  inp.classList.toggle('filled', hasVal);
-  document.getElementById('saveBtn').disabled = !hasVal;
+  const { pef, fev1 } = getInputValues();
+  const pefInp  = document.getElementById('inputPef');
+  const fev1Inp = document.getElementById('inputFev1');
+  pefInp.classList.toggle('filled', pef !== null);
+  fev1Inp.classList.toggle('filled', fev1 !== null);
+  // Enable save if at least one value entered
+  document.getElementById('saveBtn').disabled = (pef === null && fev1 === null);
 }
 
 // ══════════════════════════════════════════════════
@@ -524,16 +542,18 @@ function saveSession() {
   const date  = document.getElementById('sessionDate').value;
   const time  = document.getElementById('sessionTime').value;
   const notes = document.getElementById('sessionNotes').value.trim();
-  const val   = parseFloat(document.getElementById('blow1').value);
+  const { pef, fev1 } = getInputValues();
 
   if (!date) { showToast('Please set a date', 'error'); return; }
-  if (isNaN(val)) { showToast('Enter a reading', 'error'); return; }
+  if (pef === null && fev1 === null) { showToast('Enter at least one reading', 'error'); return; }
 
   const session = {
     id: Date.now(),
     date, time: time || null, notes,
-    blows: [val, null, null],
-    best: val, avg: val
+    pef, fev1,
+    // keep legacy fields for backward compat
+    best: fev1 ?? pef,
+    avg:  fev1 ?? pef
   };
 
   const sessions = getSessions();
@@ -550,8 +570,10 @@ function clearForm() {
   document.getElementById('sessionTime').value = '';
   document.getElementById('timeDisplayText').textContent = 'Tap to set time';
   document.getElementById('sessionNotes').value = '';
-  const inp = document.getElementById('blow1');
-  if (inp) { inp.value = ''; inp.classList.remove('filled','best'); }
+  const pefInp  = document.getElementById('inputPef');
+  const fev1Inp = document.getElementById('inputFev1');
+  if (pefInp)  { pefInp.value  = ''; pefInp.classList.remove('filled','best'); }
+  if (fev1Inp) { fev1Inp.value = ''; fev1Inp.classList.remove('filled','best'); }
   document.getElementById('saveBtn').disabled = true;
   initDateTime();
 }
@@ -569,10 +591,8 @@ function renderHistory() {
   }
 
   el.innerHTML = [...sessions].reverse().map(s => {
-    // Support both old format (pef/fev1) and new format (best/avg/blows)
-    const displayVal = s.best ?? s.fev1 ?? s.pef ?? '—';
-    const displayUnit = s.best != null ? 'mL — Max Value' : s.fev1 != null ? 'L — FEV1' : 'L/min — PEF';
-    const displayAvg  = s.avg ?? s.best ?? s.fev1 ?? '';
+    const pef  = s.pef  ?? null;
+    const fev1 = s.fev1 ?? null;
     return `
     <div class="hist-card" id="hcard-${s.id}">
       <div class="hist-top">
@@ -580,15 +600,26 @@ function renderHistory() {
           <div class="hist-date">${formatDate(s.date)}</div>
           <div class="hist-time-text">${s.time ? formatTime(s.time) : 'No time set'}</div>
         </div>
-        ${displayAvg ? `<div class="hist-best">${displayAvg}<span class="hist-best-label">Best</span></div>` : ''}
         <div class="hist-actions">
           <button class="icon-btn btn-edit" onclick="openEditModal(${s.id})" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5E72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="icon-btn btn-delete" onclick="confirmDelete(${s.id})" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5E72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
-      <div style="padding:10px 16px 14px;text-align:center">
-        <div style="font-family:'DM Mono',monospace;font-size:32px;font-weight:500;color:var(--good)">${displayVal}</div>
-        <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.4px;margin-top:3px">${displayUnit}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;padding:12px 16px 16px;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3)">PEF</div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${pef !== null ? 'var(--accent)' : 'var(--ink3)'}">${pef !== null ? pef : '—'}</span>
+            ${pef !== null ? '<span style="font-size:12px;color:var(--ink3)">L/min</span>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink3)">FEV1</div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${fev1 !== null ? 'var(--accent)' : 'var(--ink3)'}">${fev1 !== null ? fev1 : '—'}</span>
+            ${fev1 !== null ? '<span style="font-size:12px;color:var(--ink3)">L</span>' : ''}
+          </div>
+        </div>
       </div>
       ${s.notes ? `<div class="hist-notes">${s.notes}</div>` : ''}
     </div>`;
@@ -620,9 +651,10 @@ function openEditModal(id) {
   const s = getSessions().find(x => x.id === id);
   if (!s) return;
   editingId = id;
-  document.getElementById('editDate').value = s.date;
-  document.getElementById('editTime').value = s.time || '';
-  document.getElementById('editBlow1').value = s.best ?? s.fev1 ?? s.pef ?? '';
+  document.getElementById('editDate').value  = s.date;
+  document.getElementById('editTime').value  = s.time || '';
+  document.getElementById('editPef').value   = s.pef  ?? s.best ?? '';
+  document.getElementById('editFev1').value  = s.fev1 ?? '';
   document.getElementById('editNotes').value = s.notes || '';
   if (s.time) {
     const [hh,mm] = s.time.split(':');
@@ -639,14 +671,21 @@ function saveEdit() {
   const date  = document.getElementById('editDate').value;
   const time  = document.getElementById('editTime').value;
   const notes = document.getElementById('editNotes').value.trim();
-  const editVal = parseFloat(document.getElementById('editBlow1').value);
+  const pef   = parseFloat(document.getElementById('editPef').value);
+  const fev1  = parseFloat(document.getElementById('editFev1').value);
   if (!date) { showToast('Date is required', 'error'); return; }
-  if (isNaN(editVal)) { showToast('Reading is required', 'error'); return; }
+  if (isNaN(pef) && isNaN(fev1)) { showToast('Enter at least one reading', 'error'); return; }
 
   const sessions = getSessions();
   const idx = sessions.findIndex(s => s.id === editingId);
   if (idx === -1) return;
-  sessions[idx] = { ...sessions[idx], date, time: time||null, notes, blows: [editVal, null, null], best: editVal, avg: editVal };
+  sessions[idx] = {
+    ...sessions[idx], date, time: time||null, notes,
+    pef:  isNaN(pef)  ? null : pef,
+    fev1: isNaN(fev1) ? null : fev1,
+    best: isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
+    avg:  isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
+  };
   sessions.sort((a,b) => a.date.localeCompare(b.date));
   saveSessions(sessions);
   document.getElementById('editModal').style.display = 'none';
@@ -673,9 +712,12 @@ function renderTrends() {
 
   const sorted = [...sessions].sort((a,b) => a.date.localeCompare(b.date));
   const labels = sorted.map(s => formatDateShort(s.date));
-  // Support old (pef/fev1) and new (best/avg) formats
-  const bests  = sorted.map(s => s.best ?? s.fev1 ?? s.pef ?? 0);
-  const avgs   = sorted.map(s => s.avg  ?? s.best ?? s.fev1 ?? s.pef ?? 0);
+  // Support both old and new formats
+  const pefs  = sorted.map(s => s.pef  ?? null);
+  const fev1s = sorted.map(s => s.fev1 ?? null);
+  // For stats, use fev1 if available, else pef
+  const avgs  = sorted.map(s => s.fev1 ?? s.pef ?? s.avg ?? s.best ?? 0);
+  const bests = avgs;
 
   const allBest = Math.max(...avgs);
   const allAvg  = (avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(1);
@@ -732,7 +774,7 @@ function renderTrends() {
     </div>
 
     <div class="chart-card">
-      <div class="chart-title">FEV1 Max Value per Session (mL)</div>
+      <div class="chart-title">PEF &amp; FEV1 per Session</div>
       <div class="chart-wrap"><canvas id="chartBest"></canvas></div>
     </div>
 
@@ -740,62 +782,40 @@ function renderTrends() {
 
   const chartDefaults = {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+    plugins: { legend: { display: true }, tooltip: { mode: 'index', intersect: false } },
     scales: {
       x: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } },
-      y: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' }, min: 0, max: 100 }
+      yPEF:  { type: 'linear', position: 'left',  grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#3B82C4' }, title: { display: true, text: 'PEF (L/min)', color: '#3B82C4', font: { size: 10 } } },
+      yFEV1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#2D9E6B' }, title: { display: true, text: 'FEV1 (L)', color: '#2D9E6B', font: { size: 10 } } },
     }
   };
 
-  // Accumulated running average up to each session
-  const runningAvg = avgs.map((_, i) => {
-    const slice = avgs.slice(0, i + 1);
-    return parseFloat((slice.reduce((a,b) => a+b, 0) / slice.length).toFixed(1));
+  const hasPef  = pefs.some(v => v !== null);
+  const hasFev1 = fev1s.some(v => v !== null);
+
+  const datasets = [];
+  if (hasPef) datasets.push({
+    label: 'PEF (L/min)', data: pefs,
+    borderColor: '#3B82C4', backgroundColor: 'rgba(59,130,196,0.08)',
+    borderWidth: 2.5, pointBackgroundColor: '#3B82C4', pointRadius: 5,
+    fill: true, tension: 0.3, yAxisID: 'yPEF', spanGaps: true
+  });
+  if (hasFev1) datasets.push({
+    label: 'FEV1 (L)', data: fev1s,
+    borderColor: '#2D9E6B', backgroundColor: 'rgba(45,158,107,0.08)',
+    borderWidth: 2.5, pointBackgroundColor: '#2D9E6B', pointRadius: 5,
+    fill: true, tension: 0.3, yAxisID: 'yFEV1', spanGaps: true
   });
 
   trendCharts.best = new Chart(document.getElementById('chartBest'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'FEV1 Max',
-          data: avgs,
-          borderColor: '#2D9E6B',
-          backgroundColor: 'rgba(45,158,107,0.08)',
-          borderWidth: 2.5,
-          pointBackgroundColor: '#2D9E6B',
-          pointRadius: 5,
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'Accumulated Avg',
-          data: runningAvg,
-          borderColor: '#3B82C4',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [6, 4],
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          fill: false,
-          tension: 0.3
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       ...chartDefaults,
       plugins: {
         legend: {
           display: true,
-          labels: {
-            font: { family: 'DM Sans', size: 11 },
-            color: '#4A5E72',
-            usePointStyle: true,
-            pointStyle: 'line',
-            boxWidth: 30,
-            padding: 14
-          }
+          labels: { font: { family: 'DM Sans', size: 11 }, color: '#4A5E72', usePointStyle: true, pointStyle: 'line', boxWidth: 30, padding: 14 }
         },
         tooltip: { mode: 'index', intersect: false }
       }
