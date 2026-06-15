@@ -508,18 +508,13 @@
 // ══════════════════════════════════════════════════
 const STORAGE_KEY = 'peak_flow_sessions_v1';
 function getSessions() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    // Handle both old plain array and new {records, savedAt} format
-    return Array.isArray(raw) ? raw : (raw.records || []);
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
 }
 function saveSessions(s) {
-  const now = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  localStorage.setItem(STORAGE_KEY + '_savedAt', now);
-  syncSaveClinical('peak_flow', { records: s, savedAt: now })
+  // Push to Supabase as plain array — best-effort, never blocks or overwrites local
+  syncSaveClinical('peak_flow', s)
     .then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
 }
 
@@ -943,31 +938,23 @@ function initDateTime() {
 initDateTime();
 
 // ══════════════════════════════════════════════════
-//  INIT — pull from Supabase (clinical_data) then render
+//  INIT
+//  localStorage is the single source of truth.
+//  Only pull from Supabase if this device has NO local data at all.
 // ══════════════════════════════════════════════════
 (async () => {
-  try {
-    syncShowStatus('syncing');
-    const remoteRaw = await syncLoadClinical('peak_flow');
-    if (remoteRaw) {
-      // Handle both old plain array and new {records, savedAt} format
-      const remoteRecords = Array.isArray(remoteRaw) ? remoteRaw : (remoteRaw.records || []);
-      const remoteSavedAt = Array.isArray(remoteRaw) ? null : (remoteRaw.savedAt || null);
-      const localSavedAt  = localStorage.getItem(STORAGE_KEY + '_savedAt') || null;
-
-      // Remote wins only if it's newer than local (or local has no timestamp)
-      const remoteIsNewer = !localSavedAt || (remoteSavedAt && remoteSavedAt > localSavedAt);
-
-      if (remoteIsNewer && remoteRecords.length) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteRecords));
-        if (remoteSavedAt) localStorage.setItem(STORAGE_KEY + '_savedAt', remoteSavedAt);
+  const local = getSessions();
+  if (!local.length) {
+    // First load on this device — pull from Supabase to seed
+    try {
+      const remote = await syncLoadClinical('peak_flow');
+      const records = Array.isArray(remote) ? remote : (remote?.records || []);
+      if (records.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
       }
-    }
-    syncShowStatus('synced');
-  } catch(e) {
-    console.warn('Peak flow sync pull failed:', e);
-    syncShowStatus('error');
+    } catch(e) { /* offline is fine */ }
   }
+  // Render whatever is in localStorage (seeded or pre-existing)
   const activeTab = document.querySelector('.tab.active');
   if (activeTab) {
     const name = activeTab.id.replace('tab-','');
