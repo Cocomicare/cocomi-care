@@ -171,8 +171,14 @@
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent2); }
   .btn-danger-soft { background: var(--danger-bg); color: var(--danger); border: 1px solid #f0c0c0; }
   .btn-sm { padding: 6px 12px; font-size: 12px; }
-  .btn-icon { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
-  .btn-icon:active { background: var(--surface2); }
+  .btn-icon { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; -webkit-tap-highlight-color: transparent; padding: 0; }
+  .btn-icon:hover { background: var(--surface2); border-color: var(--ink3); }
+  .btn-icon:active { background: var(--surface2); transform: scale(0.94); }
+  .btn-icon svg { display: block; }
+  .btn-icon.btn-edit:hover { background: var(--accent2); border-color: var(--accent); }
+  .btn-icon.btn-edit:hover svg { stroke: var(--accent); }
+  .btn-icon.btn-delete:hover { background: var(--danger-bg); border-color: var(--danger); }
+  .btn-icon.btn-delete:hover svg { stroke: var(--danger); }
 
   /* ── HISTORY CARDS ── */
   .hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
@@ -262,6 +268,7 @@
     <span class="logo-sub">Surveillance</span>
   </div>
   <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="showPage('settings')">⚙️ Settings</button>
     <button class="btn btn-ghost btn-sm" onclick="exportData()">↓ Export</button>
   </div>
 </header>
@@ -303,6 +310,10 @@
       <div class="big-input-group">
         <div class="big-input-label">SpO₂ %</div>
         <input type="number" class="big-input" id="spo2-val" min="70" max="100" placeholder="—" oninput="checkVital('spo2')">
+      </div>
+      <div class="big-input-group">
+        <div class="big-input-label">Pulse (opt)</div>
+        <input type="number" class="big-input" id="spo2-pulse" min="30" max="220" placeholder="—" oninput="checkVital('spo2')">
       </div>
     </div>
     <div class="alert-banner" id="spo2-alert"></div>
@@ -457,6 +468,130 @@
   <div id="temp-trends"></div>
 </div>
 
+<!-- ═══════════════════════════════════
+     SETTINGS
+═══════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">Alert Thresholds</div>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:16px">Set based on Cocomi's discharge targets from UF Health Shands. These calibrate all alerts and color indicators throughout the app.</p>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🩸 SpO₂ (%)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-spo2-low" min="70" max="99" placeholder="92">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-spo2" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="2">2-3x per week</option>
+            <option value="7">Weekly</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">❤️ Heart Rate (BPM)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-hr-low" min="20" max="80" placeholder="60">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ High Alert Above</div>
+          <input type="number" class="threshold-input" id="th-hr-high" min="60" max="220" placeholder="100">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-hr" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="3">Every 3 days</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">💜 Blood Pressure (mmHg)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Systolic Low</div>
+          <input type="number" class="threshold-input" id="th-bp-sys-low" min="50" max="120" placeholder="90">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Systolic High</div>
+          <input type="number" class="threshold-input" id="th-bp-sys-high" min="100" max="250" placeholder="130">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Diastolic Low</div>
+          <input type="number" class="threshold-input" id="th-bp-dia-low" min="30" max="80" placeholder="60">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Diastolic High</div>
+          <input type="number" class="threshold-input" id="th-bp-dia-high" min="60" max="150" placeholder="80">
+        </div>
+      </div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-bp" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="14">Bi-weekly</option>
+            <option value="0">When symptomatic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🟠 Weight (lbs)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ Flag gain of ≥</div>
+          <input type="number" class="threshold-input" id="th-wt-gain" min="1" max="20" step="0.5" placeholder="2">
+          <div class="cadence-note">lbs within 7 days</div>
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">Cadence</div>
+          <select id="cad-wt" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;color:var(--ink);width:100%">
+            <option value="7">Weekly</option>
+            <option value="3">Every 3 days</option>
+            <option value="14">Bi-weekly</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">🟢 Temperature (°F)</div>
+      <div class="threshold-row">
+        <div class="threshold-group">
+          <div class="threshold-label">⬆️ Fever Alert Above</div>
+          <input type="number" class="threshold-input" id="th-temp-high" min="97" max="105" step="0.1" placeholder="99.5">
+        </div>
+        <div class="threshold-group">
+          <div class="threshold-label">⬇️ Low Alert Below</div>
+          <input type="number" class="threshold-input" id="th-temp-low" min="90" max="98" step="0.1" placeholder="97.0">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-ghost" onclick="loadSettings()">Reset</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
 <!-- Time Picker -->
 <div class="tp-modal" id="tp-modal" onclick="if(event.target===this)closeTP()">
   <div class="tp-sheet">
@@ -534,14 +669,7 @@ function getRecords(vital) {
 }
 function saveRecords(vital, data) {
   localStorage.setItem(SK(vital), JSON.stringify(data));
-  const module = 'vitals_' + vital;
-  data.forEach(rec => {
-    // Normalize time to HH:MM only (strip seconds if present)
-    const timeStr = (rec.time || '00:00').slice(0, 5);
-    const ts = rec.date ? rec.date + 'T' + timeStr + ':00Z' : new Date().toISOString();
-    syncSaveHealthRecord(module, ts, rec).catch(()=>syncShowStatus('error'));
-  });
-  syncShowStatus('synced');
+  syncSaveClinical('vitals_' + vital, data).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
 }
 
 // ══════════════════════════════════════════════════
@@ -561,10 +689,42 @@ function getSettings() {
   catch(e) { return DEFAULT_SETTINGS; }
 }
 function loadSettings() {
-  // Settings UI removed — using hardcoded clinical defaults
+  const s = getSettings();
+  document.getElementById('th-spo2-low').value  = s.spo2.low;
+  document.getElementById('th-hr-low').value    = s.hr.low;
+  document.getElementById('th-hr-high').value   = s.hr.high;
+  document.getElementById('th-bp-sys-low').value  = s.bp.sysLow;
+  document.getElementById('th-bp-sys-high').value = s.bp.sysHigh;
+  document.getElementById('th-bp-dia-low').value  = s.bp.diaLow;
+  document.getElementById('th-bp-dia-high').value = s.bp.diaHigh;
+  document.getElementById('th-wt-gain').value   = s.wt.gainAlert;
+  document.getElementById('th-temp-high').value = s.temp.high;
+  document.getElementById('th-temp-low').value  = s.temp.low;
+  if (s.cadSpo2) document.getElementById('cad-spo2').value = s.cadSpo2;
+  if (s.cadHr)   document.getElementById('cad-hr').value   = s.cadHr;
+  if (s.cadBp)   document.getElementById('cad-bp').value   = s.cadBp;
+  if (s.cadWt)   document.getElementById('cad-wt').value   = s.cadWt;
 }
 function saveSettings() {
-  // Settings UI removed — using hardcoded clinical defaults
+  const s = {
+    spo2: { low:  parseFloat(document.getElementById('th-spo2-low').value)  || 92 },
+    hr:   { low:  parseFloat(document.getElementById('th-hr-low').value)    || 60,
+            high: parseFloat(document.getElementById('th-hr-high').value)   || 100 },
+    bp:   { sysLow:  parseFloat(document.getElementById('th-bp-sys-low').value)  || 90,
+            sysHigh: parseFloat(document.getElementById('th-bp-sys-high').value) || 130,
+            diaLow:  parseFloat(document.getElementById('th-bp-dia-low').value)  || 60,
+            diaHigh: parseFloat(document.getElementById('th-bp-dia-high').value) || 80 },
+    wt:   { gainAlert: parseFloat(document.getElementById('th-wt-gain').value) || 2 },
+    temp: { low:  parseFloat(document.getElementById('th-temp-low').value)  || 97.0,
+            high: parseFloat(document.getElementById('th-temp-high').value) || 99.5 },
+    cadSpo2: document.getElementById('cad-spo2').value,
+    cadHr:   document.getElementById('cad-hr').value,
+    cadBp:   document.getElementById('cad-bp').value,
+    cadWt:   document.getElementById('cad-wt').value
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  showToast('Settings saved ✓', 'success');
+  showPage('dashboard');
 }
 
 // ══════════════════════════════════════════════════
@@ -589,7 +749,12 @@ function checkVital(vital) {
   } else if (vital === 'hr') {
     saveBtn.disabled = inp.value === '';
     if (inp.value !== '') {
-      inp.classList.add('filled');
+      const isHigh = val > s.hr.high, isLow = val < s.hr.low;
+      inp.classList.toggle('alert-high', isHigh);
+      inp.classList.toggle('alert-low', isLow && !isHigh);
+      inp.classList.toggle('filled', !isHigh && !isLow);
+      if (isHigh) { alertMsg = `⚠️ Heart rate ${val} BPM is above threshold (${s.hr.high} BPM) — possible tachycardia.`; alertClass = 'high'; isAlert = true; }
+      else if (isLow) { alertMsg = `⚠️ Heart rate ${val} BPM is below threshold (${s.hr.low} BPM) — possible bradycardia.`; alertClass = 'low'; isAlert = true; }
     }
   } else if (vital === 'bp') {
     const sys = parseFloat(document.getElementById('bp-sys').value);
@@ -651,6 +816,7 @@ function saveVital(vital) {
 
   if (vital === 'spo2') {
     record.val   = parseFloat(document.getElementById('spo2-val').value);
+    record.pulse = document.getElementById('spo2-pulse').value ? parseFloat(document.getElementById('spo2-pulse').value) : null;
   } else if (vital === 'bp') {
     record.sys = parseFloat(document.getElementById('bp-sys').value);
     record.dia = parseFloat(document.getElementById('bp-dia').value);
@@ -683,7 +849,7 @@ function clearLog(vital) {
   } else {
     const inp = document.getElementById(vital + '-val');
     if (inp) { inp.value = ''; inp.className = 'big-input'; }
-    if (vital === 'spo2') { }
+    if (vital === 'spo2') { document.getElementById('spo2-pulse').value = ''; document.getElementById('spo2-pulse').className = 'big-input'; }
   }
   document.getElementById(vital + '-alert').className = 'alert-banner';
   document.getElementById(vital + '-save').disabled = true;
@@ -714,14 +880,15 @@ function renderVitalHistory(vital) {
           <div class="hist-date-block">
             <div class="hist-date">${formatDate(r.date)}</div>
             <div class="hist-time-text">${r.time ? formatTime(r.time) : 'No time set'}</div>
+            ${r.pulse ? `<div style="font-size:11px;color:var(--ink3);margin-top:2px">Pulse: ${r.pulse} bpm</div>` : ''}
           </div>
           <div class="hist-val" style="color:${statusColor(statusCls)}">
             ${valDisplay}<span class="hist-val-unit">${unitDisplay}</span>
             <span class="dash-tile-status ${statusCls}">${statusCls.replace('status-','').toUpperCase()}</span>
           </div>
           <div class="hist-actions">
-            <button class="btn-icon" onclick="openEditModal('${vital}',${r.id})">✏️</button>
-            <button class="btn-icon" onclick="confirmDeleteVital('${vital}',${r.id})">🗑️</button>
+            <button class="btn-icon btn-edit" onclick="openEditModal('${vital}',${r.id})" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5E72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="btn-icon btn-delete" onclick="confirmDeleteVital('${vital}',${r.id})" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5E72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
           </div>
         </div>
         ${r.notes ? `<div class="hist-notes">${r.notes}</div>` : ''}
@@ -742,15 +909,7 @@ function confirmDeleteVital(vital, id) {
 }
 
 function deleteVital(vital, id) {
-  const recs = getRecords(vital);
-  const rec = recs.find(r => r.id === id);
-  // Delete from Supabase
-  if (rec) {
-    const timeStr = (rec.time || '00:00').slice(0, 5);
-    const ts = rec.date ? rec.date + 'T' + timeStr + ':00Z' : null;
-    if (ts) syncDeleteHealthRecord('vitals_' + vital, ts);
-  }
-  saveRecords(vital, recs.filter(r => r.id !== id));
+  saveRecords(vital, getRecords(vital).filter(r => r.id !== id));
   renderVitalHistory(vital);
   renderVitalTrends(vital);
   updateLastLogged(vital);
@@ -829,18 +988,12 @@ function renderVitalTrends(vital) {
         { label: vitalName(vital), data: vals, borderColor: color, backgroundColor: color + '15', borderWidth: 2.5, pointBackgroundColor: color, pointRadius: 4, fill: true, tension: 0.3 },
         { label: 'Accumulated Avg', data: runAvg, borderColor: '#3B82C4', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 }
       ]},
-      options: chartOptions(true, vital)
+      options: chartOptions(true)
     });
   }, 50);
 }
 
-function chartOptions(showLegend, vital) {
-  const yOpts = { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } };
-  if (vital === 'spo2') {
-    yOpts.min = 88;
-    yOpts.max = 101;
-    yOpts.ticks = { ...yOpts.ticks, stepSize: 1, callback: v => v + '%' };
-  }
+function chartOptions(showLegend) {
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: {
@@ -849,7 +1002,7 @@ function chartOptions(showLegend, vital) {
     },
     scales: {
       x: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } },
-      y: yOpts
+      y: { grid: { color: '#E8EFF5' }, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8A9EAF' } }
     }
   };
 }
@@ -1026,7 +1179,7 @@ function updateLastLogged(vital) {
 // ══════════════════════════════════════════════════
 function getStatusClass(vital, r, s) {
   if (vital === 'spo2') return r.val < s.spo2.low ? 'status-low' : 'status-ok';
-  if (vital === 'hr')   return 'status-ok';
+  if (vital === 'hr')   return r.val > s.hr.high ? 'status-high' : r.val < s.hr.low ? 'status-low' : 'status-ok';
   if (vital === 'bp')   return (r.sys > s.bp.sysHigh || r.dia > s.bp.diaHigh) ? 'status-high' : (r.sys < s.bp.sysLow || r.dia < s.bp.diaLow) ? 'status-low' : 'status-ok';
   if (vital === 'wt')   return 'status-ok';
   if (vital === 'temp') return r.val >= s.temp.high ? 'status-high' : r.val < s.temp.low ? 'status-low' : 'status-ok';
@@ -1093,23 +1246,11 @@ function initVitalDateTime(vital) {
 VITALS.forEach(v => initVitalDateTime(v));
 loadSettings();
 (async()=>{
-  const preloaded = new URLSearchParams(location.search).get('preloaded');
-  if (!preloaded) {
-    // Only pull from Supabase if lts_care hasn't already preloaded fresh data
-    const remoteSettings = await syncLoadClinical('vitals_settings');
-    if(remoteSettings && typeof remoteSettings === 'object') {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(remoteSettings));
-    }
-    const vitals=['spo2','hr','bp','wt','temp'];
-    for(const v of vitals){
-      const rows = await syncLoadHealthRecords('vitals_'+v);
-      if(rows&&rows.length){
-        const remote = rows.map(r=>r.data);
-        localStorage.setItem(SK(v), JSON.stringify(remote));
-      }
-    }
+  const vitals=['spo2','hr','bp','wt','temp'];
+  for(const v of vitals){
+    const remote = await syncLoadClinical('vitals_'+v);
+    if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(SK(v), JSON.stringify(remote));
   }
-  loadSettings();
   renderDashboard();
 })();
 
