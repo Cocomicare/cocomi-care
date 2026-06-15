@@ -508,12 +508,19 @@
 // ══════════════════════════════════════════════════
 const STORAGE_KEY = 'peak_flow_sessions_v1';
 function getSessions() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    // Handle both old plain array and new {records, savedAt} format
+    return Array.isArray(raw) ? raw : (raw.records || []);
+  }
   catch(e) { return []; }
 }
 function saveSessions(s) {
+  const now = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  syncSaveClinical('peak_flow', s).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  localStorage.setItem(STORAGE_KEY + '_savedAt', now);
+  syncSaveClinical('peak_flow', { records: s, savedAt: now })
+    .then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
 }
 
 // ══════════════════════════════════════════════════
@@ -941,12 +948,19 @@ initDateTime();
 (async () => {
   try {
     syncShowStatus('syncing');
-    const remote = await syncLoadClinical('peak_flow');
-    if (remote && Array.isArray(remote) && remote.length) {
-      // Only overwrite if remote has more records — never lose a local edit
-      const local = getSessions();
-      if (remote.length >= local.length) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+    const remoteRaw = await syncLoadClinical('peak_flow');
+    if (remoteRaw) {
+      // Handle both old plain array and new {records, savedAt} format
+      const remoteRecords = Array.isArray(remoteRaw) ? remoteRaw : (remoteRaw.records || []);
+      const remoteSavedAt = Array.isArray(remoteRaw) ? null : (remoteRaw.savedAt || null);
+      const localSavedAt  = localStorage.getItem(STORAGE_KEY + '_savedAt') || null;
+
+      // Remote wins only if it's newer than local (or local has no timestamp)
+      const remoteIsNewer = !localSavedAt || (remoteSavedAt && remoteSavedAt > localSavedAt);
+
+      if (remoteIsNewer && remoteRecords.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteRecords));
+        if (remoteSavedAt) localStorage.setItem(STORAGE_KEY + '_savedAt', remoteSavedAt);
       }
     }
     syncShowStatus('synced');
