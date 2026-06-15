@@ -508,7 +508,54 @@ function dbg(msg) { const el=document.getElementById("debug-log"); if(el){const 
 //  STORAGE
 // ══════════════════════════════════════════════════
 const STORAGE_KEY    = 'peak_flow_sessions_v1';
-const STORAGE_TS_KEY = 'peak_flow_sessions_v1_ts'; // local write timestamp
+const STORAGE_TS_KEY = 'peak_flow_sessions_v1_ts';
+
+// ── INLINE SUPABASE CLIENT FOR PEAK FLOW ──
+// Bypasses sync.js entirely to avoid any interference
+const _PF_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+const _PF_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq'; // must match lts_care.html
+
+async function _pfGetUserId() {
+  try {
+    const sb = supabase.createClient(_PF_URL, _PF_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    return session?.user?.id || null;
+  } catch(e) { return null; }
+}
+
+async function _pfSave(records, updatedAt) {
+  const userId = await _pfGetUserId();
+  if (!userId) { dbg('_pfSave: no user session'); return false; }
+  try {
+    const res = await fetch(_PF_URL + '/rest/v1/clinical_data', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': _PF_KEY,
+        'Authorization': 'Bearer ' + _PF_KEY,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ user_id: userId, data_type: 'peak_flow', data: { records, updatedAt }, updated_at: updatedAt })
+    });
+    dbg('_pfSave: HTTP ' + res.status);
+    return res.ok || res.status === 201;
+  } catch(e) { dbg('_pfSave error: ' + e.message); return false; }
+}
+
+async function _pfLoad() {
+  const userId = await _pfGetUserId();
+  if (!userId) { dbg('_pfLoad: no user session'); return null; }
+  try {
+    const res = await fetch(_PF_URL + '/rest/v1/clinical_data?user_id=eq.' + userId + '&data_type=eq.peak_flow&select=data,updated_at', {
+      headers: { 'apikey': _PF_KEY, 'Authorization': 'Bearer ' + _PF_KEY }
+    });
+    const rows = await res.json();
+    dbg('_pfLoad: HTTP ' + res.status + ', rows=' + rows.length);
+    if (!rows.length) return null;
+    return rows[0].data; // { records: [...], updatedAt: '...' }
+  } catch(e) { dbg('_pfLoad error: ' + e.message); return null; }
+}
 
 function getSessions() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
@@ -519,15 +566,14 @@ async function saveSessions(s) {
   const now = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY,    JSON.stringify(s));
   localStorage.setItem(STORAGE_TS_KEY, now);
-  dbg('saveSessions: wrote ' + s.length + ' records, ts=' + now);
-  try {
-    syncShowStatus('syncing');
-    // Store the array AND the timestamp so we can compare on next load
-    await syncSaveClinical('peak_flow', { records: s, updatedAt: now });
+  dbg('saveSessions: wrote ' + s.length + ' records to localStorage, ts=' + now);
+  syncShowStatus('syncing');
+  const ok = await _pfSave(s, now);
+  if (ok) {
     dbg('saveSessions: Supabase write SUCCESS');
     syncShowStatus('synced');
-  } catch(e) {
-    dbg('saveSessions: Supabase FAILED: ' + e.message);
+  } else {
+    dbg('saveSessions: Supabase write FAILED');
     syncShowStatus('error');
     showToast('Saved locally — sync failed', '');
   }
@@ -601,27 +647,8 @@ window.addEventListener('pagehide', () => {
   if (!sessions.length) return;
   dbg('pagehide: pushing ' + sessions.length + ' records to Supabase');
   // Use fetch with keepalive so it survives page unload
-  syncGetUserId().then(userId => {
-    if (!userId) return;
-    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
-    fetch(SUPABASE_URL + '/rest/v1/clinical_data', {
-      method: 'POST',
-      keepalive: true,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        data_type: 'peak_flow',
-        data: sessions,
-        updated_at: new Date().toISOString()
-      })
-    }).catch(() => {});
-  });
+  const ts = localStorage.getItem(STORAGE_TS_KEY) || new Date().toISOString();
+  _pfSave(sessions, ts).catch(()=>{});
 });
 }
 
@@ -993,27 +1020,8 @@ window.addEventListener('pagehide', () => {
   if (!sessions.length) return;
   dbg('pagehide: pushing ' + sessions.length + ' records to Supabase');
   // Use fetch with keepalive so it survives page unload
-  syncGetUserId().then(userId => {
-    if (!userId) return;
-    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
-    fetch(SUPABASE_URL + '/rest/v1/clinical_data', {
-      method: 'POST',
-      keepalive: true,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        data_type: 'peak_flow',
-        data: sessions,
-        updated_at: new Date().toISOString()
-      })
-    }).catch(() => {});
-  });
+  const ts = localStorage.getItem(STORAGE_TS_KEY) || new Date().toISOString();
+  _pfSave(sessions, ts).catch(()=>{});
 });
 
 // ══════════════════════════════════════════════════
@@ -1042,7 +1050,7 @@ window.addEventListener('pagehide', () => {
 
   // Now check Supabase
   try {
-    const remote = await syncLoadClinical('peak_flow');
+    const remote = await _pfLoad(); // uses inline client, not sync.js
     if (remote) {
       // Handle both formats: plain array (old) or {records, updatedAt} (new)
       const remoteRecords = Array.isArray(remote) ? remote : (remote.records || []);
@@ -1078,7 +1086,7 @@ window.addEventListener('pagehide', () => {
         // If local is newer and remote is old format, push local up to Supabase
         if (localRecords.length && localTs && !remoteTs) {
           dbg('Pushing local to Supabase (upgrading remote to timestamped format)');
-          syncSaveClinical('peak_flow', { records: localRecords, updatedAt: localTs }).catch(()=>{});
+          _pfSave(localRecords, localTs).catch(()=>{});
         }
       }
     } else {

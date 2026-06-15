@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════
 
 const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq'; // must match lts_care.html
 
 // ── Init Supabase client ──
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

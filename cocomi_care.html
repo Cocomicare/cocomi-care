@@ -254,7 +254,7 @@ document.documentElement.style.visibility = 'hidden';
 (async function() {
   try {
     const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data: { session }, error } = await sb.auth.getSession();
     if (error || !session) {
@@ -295,17 +295,10 @@ const MODULES = [
     getSummary() {
       try {
         const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]');
-        if(!r.length) return{val:null,sub:'PEF · FEV1',since:null};
+        if(!r.length) return{val:null,sub:'FEV1 max value',since:null};
         const l=r[r.length-1];
-        const pef  = l.pef  ?? null;
-        const fev1 = l.fev1 ?? l.best ?? null;
-        const val  = fev1 ?? pef;
-        const unit = fev1 !== null ? ' L FEV1' : ' L/min PEF';
-        const sub  = (pef !== null && fev1 !== null)
-          ? 'PEF ' + pef + ' · FEV1 ' + fev1
-          : pef !== null ? pef + ' L/min PEF' : 'PEF · FEV1';
-        return{val, unit, sub, since:daysSince(l.date)};
-      } catch(e){return{val:null,sub:'PEF · FEV1',since:null};}
+        return{val:l.best,unit:'mL',sub:'FEV1 max value',since:daysSince(l.date)};
+      } catch(e){return{val:null,sub:'FEV1 max value',since:null};}
     }
   },
   {
