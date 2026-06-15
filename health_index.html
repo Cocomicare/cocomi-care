@@ -1209,15 +1209,56 @@ async function syncSettings() {
 }
 
 // ══════════════════════════════════════════════════
-//  INIT — localStorage already populated by lts_care.html on login
+//  DATA SYNC — pull all measurement data from Supabase
+//  peak_flow saves to clinical_data; vitals etc to clinical_data too
 // ══════════════════════════════════════════════════
-computeScore();
+const DATA_PULLS = [
+  { storageKey: 'peak_flow_sessions_v1',  clinicalType: 'peak_flow' },
+  { storageKey: 'spiro_records_v1',       clinicalType: 'spirometer' },
+  { storageKey: 'symptom_checkins_v1',    clinicalType: 'symptoms' },
+  { storageKey: 'vss_spo2_v1',           clinicalType: 'vitals_spo2' },
+  { storageKey: 'vss_hr_v1',             clinicalType: 'vitals_hr' },
+  { storageKey: 'vss_bp_v1',             clinicalType: 'vitals_bp' },
+  { storageKey: 'vss_temp_v1',           clinicalType: 'vitals_temp' },
+  { storageKey: 'vss_wt_v1',             clinicalType: 'vitals_wt' },
+];
 
-// Refresh button — re-pull from Supabase then recompute
+async function pullMeasurementData() {
+  for (const { storageKey, clinicalType } of DATA_PULLS) {
+    try {
+      const remote = await syncLoadClinical(clinicalType);
+      if (remote && Array.isArray(remote) && remote.length) {
+        const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        // Only overwrite if remote has more records (never lose local edits)
+        if (remote.length >= local.length) {
+          localStorage.setItem(storageKey, JSON.stringify(remote));
+        }
+      }
+    } catch(e) { /* offline — use localStorage */ }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  INIT — pull data then compute
+// ══════════════════════════════════════════════════
+computeScore(); // show immediately from localStorage while sync runs
+
+(async () => {
+  await pullMeasurementData();
+  computeScore(); // re-compute with fresh data
+})();
+
+// ══════════════════════════════════════════════════
+//  REFRESH BUTTON — re-pull everything then recompute
+// ══════════════════════════════════════════════════
 async function refreshScore() {
   const btn = document.querySelector('[onclick="refreshScore()"]');
   if (btn) btn.textContent = '⟳ Syncing…';
   try {
+    // Pull measurement data (peak flow, vitals, etc.)
+    await pullMeasurementData();
+
+    // Pull health index settings and history
     const [remoteSettings, remoteHistory] = await Promise.all([
       syncLoadClinical('health_index_settings'),
       syncLoadClinical('health_index_history')
@@ -1231,16 +1272,13 @@ async function refreshScore() {
         localStorage.setItem(WINDOWS_KEY, JSON.stringify(remoteSettings.windows));
       if (remoteSettings?.baselineDays)
         localStorage.setItem(BASELINE_KEY, String(remoteSettings.baselineDays));
-      showToast('Pulled weights: ' + JSON.stringify(remoteSettings.weights), '');
-    } else {
-      showToast('No weights in Supabase!', '');
     }
     if (remoteHistory?.length) {
       const local = getHistory();
       const merged = { ...Object.fromEntries(local.map(h=>[h.date,h])), ...Object.fromEntries(remoteHistory.map(h=>[h.date,h])) };
       localStorage.setItem(HISTORY_KEY, JSON.stringify(Object.values(merged).sort((a,b)=>a.date.localeCompare(b.date)).slice(-90)));
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Refresh failed:', e); }
   computeScore();
   buildWeightRows();
   buildWindowRows();
