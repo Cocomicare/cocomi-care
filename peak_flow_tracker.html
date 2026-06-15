@@ -510,64 +510,36 @@ function dbg(msg) { const el=document.getElementById("debug-log"); if(el){const 
 const STORAGE_KEY    = 'peak_flow_sessions_v1';
 const STORAGE_TS_KEY = 'peak_flow_sessions_v1_ts';
 
-// ── INLINE SUPABASE CLIENT FOR PEAK FLOW ──
-// Uses publishable key for auth session lookup (matches lts_care.html login)
-// Uses Supabase JS SDK for all DB operations (handles RLS/auth token correctly)
-const _PF_URL     = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-const _PF_PUB_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq'; // for auth session
-
-// Lazily create one client instance
-let _pfClient = null;
-function _getPfClient() {
-  if (!_pfClient) _pfClient = supabase.createClient(_PF_URL, _PF_PUB_KEY);
-  return _pfClient;
-}
-
-async function _pfGetSession() {
-  try {
-    const { data: { session } } = await _getPfClient().auth.getSession();
-    return session;
-  } catch(e) { return null; }
-}
-
+// ── PEAK FLOW SUPABASE HELPERS ──
+// Reuse _sb from sync.js (already has correct key + auth session)
 async function _pfSave(records, updatedAt) {
   try {
-    const session = await _pfGetSession();
-    if (!session) { dbg('_pfSave: no session'); return false; }
-    const userId = session.user.id;
-    const token  = session.access_token;
-    // Use fetch with the user's actual JWT token — this satisfies RLS
-    const res = await fetch(_PF_URL + '/rest/v1/clinical_data', {
-      method: 'POST',
-      keepalive: true,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': _PF_PUB_KEY,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({ user_id: userId, data_type: 'peak_flow', data: { records, updatedAt }, updated_at: updatedAt })
-    });
-    dbg('_pfSave: HTTP ' + res.status);
-    return res.ok || res.status === 201;
-  } catch(e) { dbg('_pfSave error: ' + e.message); return false; }
+    const userId = await syncGetUserId(); // from sync.js
+    if (!userId) { dbg('_pfSave: no userId'); return false; }
+    const { error } = await _sb.from('clinical_data').upsert(
+      { user_id: userId, data_type: 'peak_flow', data: { records, updatedAt }, updated_at: updatedAt },
+      { onConflict: 'user_id,data_type' }
+    );
+    if (error) { dbg('_pfSave error: ' + error.message); return false; }
+    dbg('_pfSave: SUCCESS');
+    return true;
+  } catch(e) { dbg('_pfSave exception: ' + e.message); return false; }
 }
 
 async function _pfLoad() {
   try {
-    const session = await _pfGetSession();
-    if (!session) { dbg('_pfLoad: no session'); return null; }
-    const userId = session.user.id;
-    const token  = session.access_token;
-    const res = await fetch(
-      _PF_URL + '/rest/v1/clinical_data?user_id=eq.' + userId + '&data_type=eq.peak_flow&select=data,updated_at',
-      { headers: { 'apikey': _PF_PUB_KEY, 'Authorization': 'Bearer ' + token } }
-    );
-    const rows = await res.json();
-    dbg('_pfLoad: HTTP ' + res.status + ', rows=' + (Array.isArray(rows) ? rows.length : 'err'));
-    if (!Array.isArray(rows) || !rows.length) return null;
-    return rows[0].data;
-  } catch(e) { dbg('_pfLoad error: ' + e.message); return null; }
+    const userId = await syncGetUserId(); // from sync.js
+    if (!userId) { dbg('_pfLoad: no userId'); return null; }
+    const { data, error } = await _sb
+      .from('clinical_data')
+      .select('data, updated_at')
+      .eq('user_id', userId)
+      .eq('data_type', 'peak_flow')
+      .single();
+    if (error && error.code !== 'PGRST116') { dbg('_pfLoad error: ' + error.message); return null; }
+    dbg('_pfLoad: SUCCESS, has data=' + !!data?.data);
+    return data?.data || null;
+  } catch(e) { dbg('_pfLoad exception: ' + e.message); return null; }
 }
 
 function getSessions() {
