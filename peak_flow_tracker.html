@@ -911,6 +911,24 @@ function initDateTime() {
 
 initDateTime();
 
+// ══════════════════════════════════════════════════
+//  INIT — pull from Supabase then render
+// ══════════════════════════════════════════════════
+(async () => {
+  try {
+    const remote = await syncLoadClinical('peak_flow');
+    if (remote && Array.isArray(remote) && remote.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+    }
+  } catch(e) { /* offline — use localStorage */ }
+  // Re-render whichever tab is currently active
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab) {
+    const name = activeTab.id.replace('tab-','');
+    if (name === 'history') renderHistory();
+    if (name === 'trends')  renderTrends();
+  }
+})();
 
 </script>
 </body>

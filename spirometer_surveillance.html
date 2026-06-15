@@ -841,11 +841,20 @@ function showToast(msg,type='') { const el=document.getElementById('toast'); el.
 //  INIT
 // ══════════════════════════════════════════════════
 (async()=>{
-  const remote = await syncLoadClinical('spirometer');
-  if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  try {
+    const remote = await syncLoadClinical('spirometer');
+    if(remote&&Array.isArray(remote)&&remote.length) localStorage.setItem(REC_KEY, JSON.stringify(remote));
+  } catch(e) { /* offline — use localStorage */ }
   clearLog();
   loadSettings();
   updateLastLogged();
+  // Re-render whichever tab is already active
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab) {
+    const name = activeTab.id.replace('tab-','');
+    if (name === 'history') renderHistory();
+    if (name === 'trends')  renderTrends();
+  }
 })();
 
 
