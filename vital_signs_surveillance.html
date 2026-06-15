@@ -589,12 +589,7 @@ function checkVital(vital) {
   } else if (vital === 'hr') {
     saveBtn.disabled = inp.value === '';
     if (inp.value !== '') {
-      const isHigh = val > s.hr.high, isLow = val < s.hr.low;
-      inp.classList.toggle('alert-high', isHigh);
-      inp.classList.toggle('alert-low', isLow && !isHigh);
-      inp.classList.toggle('filled', !isHigh && !isLow);
-      if (isHigh) { alertMsg = `⚠️ Heart rate ${val} BPM is above threshold (${s.hr.high} BPM) — possible tachycardia.`; alertClass = 'high'; isAlert = true; }
-      else if (isLow) { alertMsg = `⚠️ Heart rate ${val} BPM is below threshold (${s.hr.low} BPM) — possible bradycardia.`; alertClass = 'low'; isAlert = true; }
+      inp.classList.add('filled');
     }
   } else if (vital === 'bp') {
     const sys = parseFloat(document.getElementById('bp-sys').value);
@@ -1031,7 +1026,7 @@ function updateLastLogged(vital) {
 // ══════════════════════════════════════════════════
 function getStatusClass(vital, r, s) {
   if (vital === 'spo2') return r.val < s.spo2.low ? 'status-low' : 'status-ok';
-  if (vital === 'hr')   return r.val > s.hr.high ? 'status-high' : r.val < s.hr.low ? 'status-low' : 'status-ok';
+  if (vital === 'hr')   return 'status-ok';
   if (vital === 'bp')   return (r.sys > s.bp.sysHigh || r.dia > s.bp.diaHigh) ? 'status-high' : (r.sys < s.bp.sysLow || r.dia < s.bp.diaLow) ? 'status-low' : 'status-ok';
   if (vital === 'wt')   return 'status-ok';
   if (vital === 'temp') return r.val >= s.temp.high ? 'status-high' : r.val < s.temp.low ? 'status-low' : 'status-ok';
