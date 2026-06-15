@@ -503,6 +503,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
+function dbg(msg) { const el=document.getElementById("debug-log"); if(el){const d=document.createElement("div");d.textContent=new Date().toLocaleTimeString()+": "+msg;el.appendChild(d);el.scrollTop=el.scrollHeight;} console.log("[PF]",msg); }
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -513,11 +514,14 @@ function getSessions() {
 }
 async function saveSessions(s) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  dbg('saveSessions: wrote ' + s.length + ' records to localStorage');
   try {
     syncShowStatus('syncing');
     await syncSaveClinical('peak_flow', s);
+    dbg('saveSessions: Supabase write SUCCESS');
     syncShowStatus('synced');
   } catch(e) {
+    dbg('saveSessions: Supabase write FAILED: ' + e.message);
     console.error('Peak flow Supabase save failed:', e);
     syncShowStatus('error');
     showToast('Saved locally — sync failed, check connection', '');
@@ -695,7 +699,10 @@ async function saveEdit() {
     avg:  isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
   };
   sessions.sort((a,b) => (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  dbg('saveEdit: saving id=' + editingId + ' date=' + date);
   await saveSessions(sessions);
+  dbg('saveEdit: localStorage now has ' + getSessions().length + ' records');
+  dbg('saveEdit: entry[' + idx + '] date=' + sessions[idx].date);
   document.getElementById('editModal').style.display = 'none';
   renderHistory();
   showToast('Reading updated ✓', 'success');
@@ -950,15 +957,21 @@ initDateTime();
 // ══════════════════════════════════════════════════
 (async () => {
   const local = getSessions();
+  dbg('INIT: localStorage has ' + local.length + ' records');
   if (!local.length) {
     // First load on this device — pull from Supabase to seed
     try {
       const remote = await syncLoadClinical('peak_flow');
       const records = Array.isArray(remote) ? remote : (remote?.records || []);
+      dbg('INIT: localStorage empty, Supabase returned ' + records.length + ' records');
       if (records.length) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        dbg('INIT: seeded from Supabase');
       }
-    } catch(e) { /* offline is fine */ }
+    } catch(e) { dbg('INIT: Supabase seed failed: ' + e.message); }
+  } else {
+    dbg('INIT: using existing localStorage (not pulling)');
+    dbg('INIT: dates = ' + local.map(s=>s.date+'@'+(s.time||'?')).join(', '));
   }
   // Render whatever is in localStorage (seeded or pre-existing)
   const activeTab = document.querySelector('.tab.active');
@@ -970,5 +983,15 @@ initDateTime();
 })();
 
 </script>
+
+<!-- DEBUG PANEL — remove after fixing -->
+<div id="debug-panel" style="position:fixed;bottom:0;left:0;right:0;background:#1A2533;color:#a8dfc5;font-family:monospace;font-size:11px;padding:8px 12px;z-index:9999;max-height:140px;overflow-y:auto;display:none">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+    <strong style="color:#fff">Debug Log</strong>
+    <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#8A9EAF;cursor:pointer;font-size:14px">✕</button>
+  </div>
+  <div id="debug-log"></div>
+</div>
+<button onclick="document.getElementById('debug-panel').style.display='block'" style="position:fixed;bottom:40px;left:12px;z-index:9998;background:#1A2533;color:#a8dfc5;font-size:10px;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;opacity:0.7">🐛 debug</button>
 </body>
 </html>
