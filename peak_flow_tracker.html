@@ -507,24 +507,29 @@ function dbg(msg) { const el=document.getElementById("debug-log"); if(el){const 
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
-const STORAGE_KEY = 'peak_flow_sessions_v1';
+const STORAGE_KEY    = 'peak_flow_sessions_v1';
+const STORAGE_TS_KEY = 'peak_flow_sessions_v1_ts'; // local write timestamp
+
 function getSessions() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
 }
+
 async function saveSessions(s) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  dbg('saveSessions: wrote ' + s.length + ' records to localStorage');
+  const now = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY,    JSON.stringify(s));
+  localStorage.setItem(STORAGE_TS_KEY, now);
+  dbg('saveSessions: wrote ' + s.length + ' records, ts=' + now);
   try {
     syncShowStatus('syncing');
-    await syncSaveClinical('peak_flow', s);
+    // Store the array AND the timestamp so we can compare on next load
+    await syncSaveClinical('peak_flow', { records: s, updatedAt: now });
     dbg('saveSessions: Supabase write SUCCESS');
     syncShowStatus('synced');
   } catch(e) {
-    dbg('saveSessions: Supabase write FAILED: ' + e.message);
-    console.error('Peak flow Supabase save failed:', e);
+    dbg('saveSessions: Supabase FAILED: ' + e.message);
     syncShowStatus('error');
-    showToast('Saved locally — sync failed, check connection', '');
+    showToast('Saved locally — sync failed', '');
   }
 }
 
@@ -588,6 +593,36 @@ function clearForm() {
   if (fev1Inp) { fev1Inp.value = ''; fev1Inp.classList.remove('filled','best'); }
   document.getElementById('saveBtn').disabled = true;
   initDateTime();
+
+// Push to Supabase when iframe is about to unload (user taps Home)
+// Uses sendBeacon for reliability — fires even as page unloads
+window.addEventListener('pagehide', () => {
+  const sessions = getSessions();
+  if (!sessions.length) return;
+  dbg('pagehide: pushing ' + sessions.length + ' records to Supabase');
+  // Use fetch with keepalive so it survives page unload
+  syncGetUserId().then(userId => {
+    if (!userId) return;
+    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    fetch(SUPABASE_URL + '/rest/v1/clinical_data', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        data_type: 'peak_flow',
+        data: sessions,
+        updated_at: new Date().toISOString()
+      })
+    }).catch(() => {});
+  });
+});
 }
 
 // ══════════════════════════════════════════════════
@@ -699,10 +734,11 @@ async function saveEdit() {
     avg:  isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
   };
   sessions.sort((a,b) => (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
-  dbg('saveEdit: saving id=' + editingId + ' date=' + date);
+  const editedRecord = sessions.find(s => String(s.id) === String(editingId));
+  dbg('saveEdit: about to save — edited record date=' + (editedRecord?.date||'?') + ' pef=' + (editedRecord?.pef||'?'));
   await saveSessions(sessions);
-  dbg('saveEdit: localStorage now has ' + getSessions().length + ' records');
-  dbg('saveEdit: entry[' + idx + '] date=' + sessions[idx].date);
+  const verified = getSessions().find(s => String(s.id) === String(editingId));
+  dbg('saveEdit: verified in localStorage — date=' + (verified?.date||'?') + ' pef=' + (verified?.pef||'?'));
   document.getElementById('editModal').style.display = 'none';
   renderHistory();
   showToast('Reading updated ✓', 'success');
@@ -950,40 +986,108 @@ function initDateTime() {
 
 initDateTime();
 
+// Push to Supabase when iframe is about to unload (user taps Home)
+// Uses sendBeacon for reliability — fires even as page unloads
+window.addEventListener('pagehide', () => {
+  const sessions = getSessions();
+  if (!sessions.length) return;
+  dbg('pagehide: pushing ' + sessions.length + ' records to Supabase');
+  // Use fetch with keepalive so it survives page unload
+  syncGetUserId().then(userId => {
+    if (!userId) return;
+    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    fetch(SUPABASE_URL + '/rest/v1/clinical_data', {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        data_type: 'peak_flow',
+        data: sessions,
+        updated_at: new Date().toISOString()
+      })
+    }).catch(() => {});
+  });
+});
+
 // ══════════════════════════════════════════════════
 //  INIT
 //  localStorage is the single source of truth.
 //  Only pull from Supabase if this device has NO local data at all.
 // ══════════════════════════════════════════════════
 (async () => {
-  const local = getSessions();
-  dbg('INIT: localStorage has ' + local.length + ' records');
-  if (!local.length) {
-    // First load on this device — pull from Supabase to seed
-    try {
-      const remote = await syncLoadClinical('peak_flow');
-      const records = Array.isArray(remote) ? remote : (remote?.records || []);
-      dbg('INIT: localStorage empty, Supabase returned ' + records.length + ' records');
-      if (records.length) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-        dbg('INIT: seeded from Supabase');
-      }
-    } catch(e) { dbg('INIT: Supabase seed failed: ' + e.message); }
-  } else {
-    dbg('INIT: using existing localStorage (not pulling from Supabase)');
-    local.forEach((s,i) => dbg('INIT: ['+i+'] '+s.date+' '+(s.time||'?')+' pef='+s.pef+' fev1='+s.fev1));
-  }
-  // Render whatever is in localStorage (seeded or pre-existing)
-  const final = getSessions();
-  dbg('INIT complete: ' + final.length + ' records in localStorage');
+  // ── CROSS-DEVICE SYNC ──
+  // Compare Supabase updatedAt vs local timestamp — newest wins.
+  // This ensures edits made on any device always propagate correctly.
+
+  const localRecords = getSessions();
+  const localTs      = localStorage.getItem(STORAGE_TS_KEY) || null;
+  dbg('INIT: local has ' + localRecords.length + ' records, ts=' + (localTs||'none'));
+  localRecords.forEach((s,i) => dbg('  ['+i+'] '+s.date+' '+(s.time||'?')+' pef='+s.pef+' fev1='+s.fev1));
+
+  // Always render local data immediately so UI isn't blank
   const activeTab = document.querySelector('.tab.active');
-  if (activeTab) {
-    const name = activeTab.id.replace('tab-','');
+  function renderActive() {
+    const name = activeTab ? activeTab.id.replace('tab-','') : '';
     if (name === 'history') renderHistory();
     if (name === 'trends')  renderTrends();
   }
-})();
+  renderActive();
 
+  // Now check Supabase
+  try {
+    const remote = await syncLoadClinical('peak_flow');
+    if (remote) {
+      // Handle both formats: plain array (old) or {records, updatedAt} (new)
+      const remoteRecords = Array.isArray(remote) ? remote : (remote.records || []);
+      const remoteTs      = Array.isArray(remote) ? null   : (remote.updatedAt || null);
+      dbg('Supabase: ' + remoteRecords.length + ' records, ts=' + (remoteTs||'none'));
+
+      // Determine which version is newer
+      let useRemote = false;
+      if (!localRecords.length) {
+        useRemote = true; // nothing local — always use remote
+        dbg('Decision: use remote (local empty)');
+      } else if (!remoteTs && !localTs) {
+        useRemote = remoteRecords.length > localRecords.length;
+        dbg('Decision: ' + (useRemote?'remote':'local') + ' (count comparison, no timestamps)');
+      } else if (!localTs && remoteTs) {
+        useRemote = true; // remote has timestamp, local doesn't — remote was written by new code
+        dbg('Decision: use remote (has timestamp, local does not)');
+      } else if (localTs && remoteTs) {
+        useRemote = remoteTs > localTs; // strict timestamp comparison
+        dbg('Decision: ' + (useRemote?'remote':'local') + ' (timestamps: remote=' + remoteTs + ' local=' + localTs + ')');
+      } else {
+        useRemote = false; // local has timestamp, remote doesn't — local was written more recently
+        dbg('Decision: use local (has timestamp, remote does not)');
+      }
+
+      if (useRemote && remoteRecords.length) {
+        localStorage.setItem(STORAGE_KEY,    JSON.stringify(remoteRecords));
+        if (remoteTs) localStorage.setItem(STORAGE_TS_KEY, remoteTs);
+        dbg('Applied remote data, re-rendering');
+        renderActive();
+      } else {
+        dbg('Keeping local data');
+        // If local is newer and remote is old format, push local up to Supabase
+        if (localRecords.length && localTs && !remoteTs) {
+          dbg('Pushing local to Supabase (upgrading remote to timestamped format)');
+          syncSaveClinical('peak_flow', { records: localRecords, updatedAt: localTs }).catch(()=>{});
+        }
+      }
+    } else {
+      dbg('Supabase returned null — keeping local');
+    }
+  } catch(e) {
+    dbg('Supabase pull failed: ' + e.message + ' — using local');
+  }
+})();
 </script>
 
 <!-- DEBUG PANEL — remove after fixing -->

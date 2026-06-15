@@ -213,7 +213,6 @@ async function syncPushAll() {
       { key:'clinical_files_v1',        type:'files' },
       { key:'lab_conversation_v1',      type:'lab_conversation' },
       { key:'lab_summary_v1',           type:'lab_summary', isString:true },
-      { key:'peak_flow_sessions_v1',    type:'peak_flow' },
     ];
 
     for (const { key, type, isString } of clinicalKeys) {
@@ -262,7 +261,6 @@ async function syncPullAll() {
       { key:'clinical_files_v1',        type:'files' },
       { key:'lab_conversation_v1',      type:'lab_conversation' },
       { key:'lab_summary_v1',           type:'lab_summary', isString:true },
-      { key:'peak_flow_sessions_v1',    type:'peak_flow' },
     ];
 
     for (const { key, type, isString } of clinicalKeys) {
