@@ -970,10 +970,12 @@ initDateTime();
       }
     } catch(e) { dbg('INIT: Supabase seed failed: ' + e.message); }
   } else {
-    dbg('INIT: using existing localStorage (not pulling)');
-    dbg('INIT: dates = ' + local.map(s=>s.date+'@'+(s.time||'?')).join(', '));
+    dbg('INIT: using existing localStorage (not pulling from Supabase)');
+    local.forEach((s,i) => dbg('INIT: ['+i+'] '+s.date+' '+(s.time||'?')+' pef='+s.pef+' fev1='+s.fev1));
   }
   // Render whatever is in localStorage (seeded or pre-existing)
+  const final = getSessions();
+  dbg('INIT complete: ' + final.length + ' records in localStorage');
   const activeTab = document.querySelector('.tab.active');
   if (activeTab) {
     const name = activeTab.id.replace('tab-','');
