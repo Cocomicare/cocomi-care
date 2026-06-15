@@ -263,7 +263,46 @@ document.documentElement.style.visibility = 'hidden';
     }
     // Auth passed — show page and sync
     document.documentElement.style.visibility = 'visible';
-    await syncPullAll();
+    // Safe pull — explicitly excludes peak_flow_sessions_v1
+    // which is managed exclusively by peak_flow_tracker.html
+    try {
+      const _sbPull = supabase.createClient(
+        'https://nrurfusjkvuudfzgfsww.supabase.co',
+        'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq'
+      );
+      const { data: { session: _sess } } = await _sbPull.auth.getSession();
+      const _uid = _sess?.user?.id;
+      if (_uid) {
+        // Pull vitals from health_records (these are safe to overwrite)
+        const _vitals = [
+          { key:'vss_spo2_v1',         module:'vitals_spo2' },
+          { key:'vss_hr_v1',           module:'vitals_hr' },
+          { key:'vss_bp_v1',           module:'vitals_bp' },
+          { key:'vss_wt_v1',           module:'vitals_wt' },
+          { key:'vss_temp_v1',         module:'vitals_temp' },
+          { key:'spiro_records_v1',    module:'spirometer' },
+          { key:'symptom_checkins_v1', module:'symptoms' },
+        ];
+        for (const { key, module } of _vitals) {
+          try {
+            const r = await _sbPull.from('health_records').select('data').eq('user_id',_uid).eq('module',module).order('recorded_at',{ascending:true});
+            if (r.data?.length) localStorage.setItem(key, JSON.stringify(r.data.map(x=>x.data)));
+          } catch(e) {}
+        }
+        // Pull clinical data — but NEVER peak_flow (managed by peak_flow_tracker.html)
+        const _clinical = [
+          { key:'clinical_meds_v1',         type:'medications' },
+          { key:'clinical_conversation_v1', type:'conversation' },
+          { key:'clinical_files_v1',        type:'files' },
+        ];
+        for (const { key, type } of _clinical) {
+          try {
+            const r = await _sbPull.from('clinical_data').select('data').eq('user_id',_uid).eq('data_type',type).single();
+            if (r.data?.data) localStorage.setItem(key, JSON.stringify(r.data.data));
+          } catch(e) {}
+        }
+      }
+    } catch(e) { console.warn('Dashboard sync failed:', e); }
   } catch(e) {
     // If anything fails, redirect to login to be safe
     window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
