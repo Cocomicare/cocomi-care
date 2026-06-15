@@ -304,10 +304,6 @@
         <div class="big-input-label">SpO₂ %</div>
         <input type="number" class="big-input" id="spo2-val" min="70" max="100" placeholder="—" oninput="checkVital('spo2')">
       </div>
-      <div class="big-input-group">
-        <div class="big-input-label">Pulse (opt)</div>
-        <input type="number" class="big-input" id="spo2-pulse" min="30" max="220" placeholder="—" oninput="checkVital('spo2')">
-      </div>
     </div>
     <div class="alert-banner" id="spo2-alert"></div>
     <div class="form-group" style="margin-bottom:14px"><label>Notes</label><textarea id="spo2-notes" placeholder="e.g. after activity, at rest…"></textarea></div>
@@ -660,7 +656,6 @@ function saveVital(vital) {
 
   if (vital === 'spo2') {
     record.val   = parseFloat(document.getElementById('spo2-val').value);
-    record.pulse = document.getElementById('spo2-pulse').value ? parseFloat(document.getElementById('spo2-pulse').value) : null;
   } else if (vital === 'bp') {
     record.sys = parseFloat(document.getElementById('bp-sys').value);
     record.dia = parseFloat(document.getElementById('bp-dia').value);
@@ -693,7 +688,7 @@ function clearLog(vital) {
   } else {
     const inp = document.getElementById(vital + '-val');
     if (inp) { inp.value = ''; inp.className = 'big-input'; }
-    if (vital === 'spo2') { document.getElementById('spo2-pulse').value = ''; document.getElementById('spo2-pulse').className = 'big-input'; }
+    if (vital === 'spo2') { }
   }
   document.getElementById(vital + '-alert').className = 'alert-banner';
   document.getElementById(vital + '-save').disabled = true;
@@ -724,7 +719,6 @@ function renderVitalHistory(vital) {
           <div class="hist-date-block">
             <div class="hist-date">${formatDate(r.date)}</div>
             <div class="hist-time-text">${r.time ? formatTime(r.time) : 'No time set'}</div>
-            ${r.pulse ? `<div style="font-size:11px;color:var(--ink3);margin-top:2px">Pulse: ${r.pulse} bpm</div>` : ''}
           </div>
           <div class="hist-val" style="color:${statusColor(statusCls)}">
             ${valDisplay}<span class="hist-val-unit">${unitDisplay}</span>
