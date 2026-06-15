@@ -511,11 +511,17 @@ function getSessions() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
 }
-function saveSessions(s) {
+async function saveSessions(s) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  // Push to Supabase as plain array — best-effort, never blocks or overwrites local
-  syncSaveClinical('peak_flow', s)
-    .then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  try {
+    syncShowStatus('syncing');
+    await syncSaveClinical('peak_flow', s);
+    syncShowStatus('synced');
+  } catch(e) {
+    console.error('Peak flow Supabase save failed:', e);
+    syncShowStatus('error');
+    showToast('Saved locally — sync failed, check connection', '');
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -669,7 +675,7 @@ function openEditModal(id) {
   document.getElementById('editModal').style.display = 'flex';
 }
 
-function saveEdit() {
+async function saveEdit() {
   const date  = document.getElementById('editDate').value;
   const time  = document.getElementById('editTime').value;
   const notes = document.getElementById('editNotes').value.trim();
@@ -679,7 +685,7 @@ function saveEdit() {
   if (isNaN(pef) && isNaN(fev1)) { showToast('Enter at least one reading', 'error'); return; }
 
   const sessions = getSessions();
-  const idx = sessions.findIndex(s => s.id === editingId);
+  const idx = sessions.findIndex(s => String(s.id) === String(editingId));
   if (idx === -1) return;
   sessions[idx] = {
     ...sessions[idx], date, time: time||null, notes,
@@ -688,8 +694,8 @@ function saveEdit() {
     best: isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
     avg:  isNaN(fev1) ? (isNaN(pef) ? null : pef) : fev1,
   };
-  sessions.sort((a,b) => a.date.localeCompare(b.date));
-  saveSessions(sessions);
+  sessions.sort((a,b) => (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  await saveSessions(sessions);
   document.getElementById('editModal').style.display = 'none';
   renderHistory();
   showToast('Reading updated ✓', 'success');

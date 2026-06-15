@@ -269,12 +269,10 @@ async function syncPullAll() {
       const remote = await syncLoadClinical(type);
       if (!remote) continue;
       const data = isString ? remote.text : remote;
-      // Never overwrite local data with remote if local has more or equal records
-      // (local edits always win — remote only seeds empty localStorage)
-      const local = JSON.parse(localStorage.getItem(key) || (isString ? '""' : '[]'));
-      const localLen  = Array.isArray(local)  ? local.length  : 0;
-      const remoteLen = Array.isArray(data)   ? data.length   : 0;
-      if (localLen === 0 || remoteLen > localLen) {
+      // Only write to localStorage if it is completely empty — never overwrite local edits
+      const existing = localStorage.getItem(key);
+      const isEmpty = !existing || existing === '[]' || existing === '""' || existing === 'null';
+      if (isEmpty) {
         localStorage.setItem(key, isString ? data : JSON.stringify(data));
       }
     }
