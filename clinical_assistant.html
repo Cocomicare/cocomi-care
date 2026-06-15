@@ -119,9 +119,8 @@ input[type=file]{display:none;}
     </div>
     <div class="input-row">
       <button class="attach-btn" onclick="document.getElementById('fi').click()" title="Attach lab or medication document">📎</button>
-      <button class="attach-btn" onclick="pasteFromClipboard()" title="Paste screenshot from clipboard">📋</button>
       <input type="file" id="fi" accept="image/*,.pdf,application/pdf" onchange="handleFile(this)">
-      <textarea class="inp" id="inp" placeholder="Ask about labs or meds, upload a document, or paste a screenshot…" rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <textarea class="inp" id="inp" placeholder="Ask about labs or meds, upload a document, or describe what changed…" rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
       <button class="send-btn" id="sb" onclick="send()">↑</button>
     </div>
   </div>
@@ -205,11 +204,19 @@ function applyMedUpdate(updates) {
   const meds = load(MEDS_KEY);
   updates.forEach(u => {
     const i = meds.findIndex(m=>m.name.toLowerCase()===u.name.toLowerCase());
-    const entry = {id:i>=0?meds[i].id:Date.now().toString()+Math.random(), name:u.name, dose:u.dose||'', freq:u.freq||'', note:u.note||'', category:u.category||'Other', active:u.active!==false, updated:new Date().toISOString()};
+    const entry = {
+      id: i>=0 ? meds[i].id : Date.now().toString()+Math.random(),
+      name: u.name, dose: u.dose||'', freq: u.freq||'',
+      note: u.note||'', purpose: u.purpose||'', category: u.category||'Other',
+      active: u.active!==false, updated: new Date().toISOString()
+    };
     if(i>=0) meds[i]=entry; else meds.push(entry);
   });
   save(MEDS_KEY, meds);
+  // Sync to Supabase clinical_data table
   syncSaveClinical('medications', meds).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  // Dispatch storage event so Medications page iframe picks up the change immediately
+  window.dispatchEvent(new StorageEvent('storage', { key: MEDS_KEY, newValue: JSON.stringify(meds) }));
   showToast('Medication list updated ✓','success');
 }
 
@@ -246,18 +253,18 @@ async function send() {
     apiContent = [fb, {type:'text',text:prompt}];
     displayText = text || `📄 ${file.name}`;
     const files = load(FILES_KEY);
-    const fileEntry = {name:file.name, date:new Date().toLocaleDateString(), storagePath:null};
-    // Upload file to Supabase Storage
+    const fileEntry = {name:file.name, date:new Date().toLocaleDateString(), timestamp:new Date().toISOString()};
+    files.push(fileEntry);
+    save(FILES_KEY, files);
+    // Sync to Supabase via parent postMessage (guaranteed session)
+    window.parent.postMessage({ type:'SYNC_SAVE_CLINICAL', dataType:'files', data:files }, '*');
     syncUploadFile(file.b64, file.mime, file.name).then(path => {
       if (path) {
         fileEntry.storagePath = path;
-        files.push(fileEntry);
         save(FILES_KEY, files);
-        syncSaveClinical('files', files).catch(()=>{});
+        window.parent.postMessage({ type:'SYNC_SAVE_CLINICAL', dataType:'files', data:files }, '*');
       }
     });
-    files.push(fileEntry);
-    save(FILES_KEY, files);
   } else {
     apiContent = text;
   }
@@ -399,21 +406,8 @@ function showToast(msg,type='') { const e=document.getElementById('toast'); e.te
     syncLoadClinical('conversation'),
     syncLoadClinical('medications')
   ]);
-
-  // For conversation: keep whichever version has more messages
-  if (remoteConv && Array.isArray(remoteConv)) {
-    const localConv = load(CONV_KEY);
-    if (remoteConv.length > localConv.length) {
-      save(CONV_KEY, remoteConv);
-    } else if (localConv.length > remoteConv.length) {
-      // Local has more — push local up to Supabase
-      syncSaveClinical('conversation', localConv);
-    }
-  }
-
-  if (remoteMeds && Array.isArray(remoteMeds) && remoteMeds.length) {
-    save(MEDS_KEY, remoteMeds);
-  }
+  if (remoteConv) save(CONV_KEY, remoteConv);
+  if (remoteMeds) save(MEDS_KEY, remoteMeds);
 
   conv = load(CONV_KEY);
   if(!conv.length) {
@@ -424,51 +418,6 @@ function showToast(msg,type='') { const e=document.getElementById('toast'); e.te
     if(conv.length>=2) showSugs();
   }
 })();
-
-// ── CLIPBOARD PASTE ──
-async function pasteFromClipboard() {
-  try {
-    const items = await navigator.clipboard.read();
-    for (const item of items) {
-      const imageType = item.types.find(t => t.startsWith('image/'));
-      if (imageType) {
-        const blob = await item.getType(imageType);
-        const file = new File([blob], 'clipboard.png', { type: imageType });
-        // Reuse handleFile logic via a fake input
-        const b64 = await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-        pf = { name:'clipboard.png', b64, mime: imageType };
-        document.getElementById('ap').classList.add('show');
-        document.getElementById('ap-name').textContent = '📋 Pasted image';
-        document.getElementById('inp').focus();
-        showToast('Image pasted — add a note or just send ↑','success');
-        return;
-      }
-    }
-    showToast('No image on clipboard — copy a screenshot first','');
-  } catch(e) {
-    showToast('Paste failed — try the 📎 button instead','');
-  }
-}
-
-// Ctrl+V / Cmd+V anywhere on page
-document.addEventListener('paste', async (e) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      e.preventDefault();
-      const blob = item.getAsFile();
-      if (!blob) return;
-      const b64 = await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(blob);});
-      pf = { name:'clipboard.png', b64, mime: blob.type || 'image/png' };
-      document.getElementById('ap').classList.add('show');
-      document.getElementById('ap-name').textContent = '📋 Pasted image';
-      document.getElementById('inp').focus();
-      showToast('Image pasted — add a note or just send ↑','success');
-      return;
-    }
-  }
-});
 </script>
 </body>
 </html>
