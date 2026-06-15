@@ -149,17 +149,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 
 /* ── MODULE FRAME ── */
 #view-home   { display: block; }
-#view-module {
-  display: none;
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  flex-direction: column;
-  background: var(--bg);
-  z-index: 100;
-}
+#view-module { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
 #view-module.active { display: flex; }
 .module-bar {
   background: var(--surface); border-bottom: 1px solid var(--border);
@@ -258,20 +248,25 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
 // ══════════════════════════════════════════════════
 //  AUTH GATE — redirect to login if not authenticated
 // ══════════════════════════════════════════════════
+// Hide body until auth check completes to prevent flash
 document.documentElement.style.visibility = 'hidden';
 
 (async function() {
   try {
-    const { data: { session }, error } = await _sb.auth.getSession();
+    const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session }, error } = await sb.auth.getSession();
     if (error || !session) {
-      window.location.replace('lts_care.html');
+      window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
       return;
     }
+    // Auth passed — show page and sync
     document.documentElement.style.visibility = 'visible';
     await syncPullAll();
-    renderDashboard();
   } catch(e) {
-    window.location.replace('lts_care.html');
+    // If anything fails, redirect to login to be safe
+    window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
   }
 })();
 
@@ -300,10 +295,17 @@ const MODULES = [
     getSummary() {
       try {
         const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]');
-        if(!r.length) return{val:null,sub:'FEV1 max value',since:null};
+        if(!r.length) return{val:null,sub:'PEF · FEV1',since:null};
         const l=r[r.length-1];
-        return{val:l.best,unit:'mL',sub:'FEV1 max value',since:daysSince(l.date)};
-      } catch(e){return{val:null,sub:'FEV1 max value',since:null};}
+        const pef  = l.pef  ?? null;
+        const fev1 = l.fev1 ?? l.best ?? null;
+        const val  = fev1 ?? pef;
+        const unit = fev1 !== null ? ' L FEV1' : ' L/min PEF';
+        const sub  = (pef !== null && fev1 !== null)
+          ? 'PEF ' + pef + ' · FEV1 ' + fev1
+          : pef !== null ? pef + ' L/min PEF' : 'PEF · FEV1';
+        return{val, unit, sub, since:daysSince(l.date)};
+      } catch(e){return{val:null,sub:'PEF · FEV1',since:null};}
     }
   },
   {
