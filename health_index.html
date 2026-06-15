@@ -314,7 +314,7 @@ header {
 
     <div class="breakdown-panel" id="breakdown-panel">
       <div style="font-size:11px;color:var(--ink3);margin-bottom:10px;line-height:1.5;padding:8px 10px;background:var(--bg);border-radius:8px">
-        <strong style="color:var(--ink2)">Score</strong> = how close today's reading is to this parameter's personal baseline (0–100). 100 = at baseline. Below 95 = mild deviation. Below 85 = contact team.
+        <strong style="color:var(--ink2)">Score</strong> = how close today's reading is to this parameter's personal 14-day baseline (0–100). 100 = at baseline. Below 95 = mild deviation. Below 85 = contact team.
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;padding:0 4px;margin-bottom:4px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em">
         <span style="width:44px;text-align:right">Score</span>
@@ -472,10 +472,7 @@ const PARAMS = [
     storageKey: 'vss_spo2_v1',
     direction:  'higher_better',
     getLatest(recs) { return recs.length ? recs[recs.length-1].val : null; },
-    getBaseline(recs) {
-      const vals = recs.map(r=>r.val).filter(v=>v!=null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    }
+    getBaseline(recs) { return rollingBaseline(recs, r=>r.val, getBaselineDays()); }
   },
   {
     key:        'fev1',
@@ -659,15 +656,18 @@ const CLINICAL_REFS = {
 function computeParamScore(param, latest, baseline, recCount) {
   if (latest === null || latest === undefined) return null;
 
-  // SpO₂ — only param with absolute clinical thresholds
-  // (94% is dangerous regardless of personal baseline)
+  // SpO₂ — now uses personal baseline like all other params
+  // (14-day rolling average baseline, same deviation thresholds)
   if (param.key === 'spo2') {
-    if (latest >= 98) return 100;
-    if (latest >= 97) return 85;
-    if (latest >= 96) return 65;
-    if (latest >= 94) return 40;
-    if (latest >= 91) return 20;
-    return Math.max(0, (latest - 80) * 2);
+    const base = (baseline != null && baseline !== 0) ? baseline : latest;
+    if (base === 0) return 75;
+    const pctDev = ((base - latest) / base) * 100; // positive = dropped below baseline
+    if (pctDev <= 0)    return 100;  // at or above baseline
+    if (pctDev <= 0.5)  return 95;   // 0-0.5% below: still normal
+    if (pctDev <= 1.0)  return 85;   // 0.5-1% below: watch
+    if (pctDev <= 2.0)  return 65;   // 1-2% below: alert
+    if (pctDev <= 3.0)  return 40;   // 2-3% below: significant
+    return Math.max(0, 20 - (pctDev - 3) * 5); // >3% below: critical
   }
 
   // All other params: score purely against personal baseline
