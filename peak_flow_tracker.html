@@ -277,7 +277,9 @@ const KEY = 'peak_flow_sessions_v1';
 function getRecs(){ try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];} }
 function saveRecs(s){
   localStorage.setItem(KEY, JSON.stringify(s));
-  syncSaveClinical('peak_flow', s).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
+  syncSaveClinical('peak_flow', s)
+    .then(()=>{ syncShowStatus('synced'); })
+    .catch(()=>{ syncShowStatus('error'); toast('Sync failed — edit saved locally only','error'); });
 }
 
 // ── LOG ──
@@ -391,7 +393,11 @@ function saveEdit(){
   if(idx===-1){toast('Not found','error');return;}
   s[idx]={...s[idx],date,time,notes,pef:isNaN(pef)?null:pef,fev1:isNaN(fev1)?null:fev1};
   s.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
-  saveRecs(s); closeEdit(); renderHistory(); toast('Reading updated','success');
+  console.log('[PF] saveEdit: saving id='+_eid+' date='+date);
+  console.log('[PF] full array:', JSON.stringify(s.map(r=>({id:r.id,date:r.date}))));
+  saveRecs(s);
+  console.log('[PF] localStorage after save:', JSON.stringify(getRecs().map(r=>({id:r.id,date:r.date}))));
+  closeEdit(); renderHistory(); toast('Reading updated','success');
 }
 
 // ── TRENDS ──
@@ -489,17 +495,22 @@ function ft(t){const[h,m]=t.split(':'),hh=parseInt(h);return(hh%12||12)+':'+m+' 
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
 
 // ── INIT ──
-// Only seed from Supabase if localStorage is empty (new device).
-// saveSessions() always pushes to Supabase so it stays current.
 (async()=>{
   const local = getRecs();
   if(!local.length){
+    // localStorage empty — seed from Supabase
     try{
       const remote = await syncLoadClinical('peak_flow');
       if(remote && Array.isArray(remote) && remote.length){
         localStorage.setItem(KEY, JSON.stringify(remote));
+        toast('Loaded ' + remote.length + ' records from cloud');
+      } else {
+        toast('No cloud data found','error');
       }
-    }catch(e){}
+    }catch(e){ toast('Cloud load failed: ' + e.message,'error'); }
+  } else {
+    toast('Loaded ' + local.length + ' local records');
+    console.log('[PF] INIT from localStorage:', JSON.stringify(local.map(r=>({id:r.id,date:r.date}))));
   }
   clearLog();
   nudge();

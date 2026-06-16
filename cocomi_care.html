@@ -517,12 +517,19 @@ function openModule(id) {
   document.getElementById('view-home').style.display = 'none';
   document.getElementById('view-module').classList.add('active');
   document.getElementById('module-bar-title').textContent = mod.name;
-  document.getElementById('module-iframe').src = mod.file;
+  const iframe = document.getElementById('module-iframe');
+  // Only reload if switching to a different module
+  // Never set src to about:blank — iOS Safari clears localStorage on iframe unload
+  if (iframe.src !== location.origin + '/' + mod.file &&
+      iframe.src !== location.href.replace(/[^/]*$/, mod.file)) {
+    iframe.src = mod.file;
+  }
 }
 function goHome() {
   document.getElementById('view-module').classList.remove('active');
   document.getElementById('view-home').style.display = 'block';
-  document.getElementById('module-iframe').src = 'about:blank';
+  // Do NOT set src to about:blank — iOS Safari clears localStorage when iframe unloads
+  // Just hide the module view; iframe stays loaded preserving localStorage
   renderDashboard();
 }
 
