@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="supports-loading-mode" content="credentialed-prerender">
+<script type="speculationrules">
+{"prefetch": [], "prerender": []}
+</script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -498,7 +502,10 @@ function ft(t){const[h,m]=t.split(':'),hh=parseInt(h);return(hh%12||12)+':'+m+' 
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
 
 // ── INIT ──
-(async()=>{
+// Block execution if Chrome is prerendering this page in the background.
+// Prerendered pages have an isolated localStorage — running init here would
+// read stale data and the save on the real page would be lost.
+async function runInit() {
   const local = getRecs();
   if(!local.length){
     // localStorage empty — seed from Supabase
@@ -518,7 +525,14 @@ function toast(msg,type=''){const el=document.getElementById('toast');el.textCon
   clearLog();
   nudge();
   if(document.getElementById('tab-history').classList.contains('active')) renderHistory();
-})();
+}
+
+// If prerendering, wait for activation before running init
+if (document.prerendering) {
+  document.addEventListener('prerenderingchange', () => { if (!document.prerendering) runInit(); }, { once: true });
+} else {
+  runInit();
+}
 </script>
 </body>
 </html>
