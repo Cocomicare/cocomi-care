@@ -471,14 +471,22 @@ function fds(d){const[y,m,day]=d.split('-');return m+'/'+day;}
 function ft(t){const[h,m]=t.split(':'),hh=parseInt(h);return(hh%12||12)+':'+m+' '+(hh>=12?'PM':'AM');}
 function toast(msg,type=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');setTimeout(()=>el.className='toast',2800);}
 
-// ── INIT (same pattern as spirometer) ──
+// ── INIT ──
+// Only seed from Supabase if localStorage is empty (new device).
+// saveSessions() always pushes to Supabase so it stays current.
 (async()=>{
-  const remote = await syncLoadClinical('peak_flow');
-  if(remote && Array.isArray(remote) && remote.length){
-    localStorage.setItem(KEY, JSON.stringify(remote));
+  const local = getRecs();
+  if(!local.length){
+    try{
+      const remote = await syncLoadClinical('peak_flow');
+      if(remote && Array.isArray(remote) && remote.length){
+        localStorage.setItem(KEY, JSON.stringify(remote));
+      }
+    }catch(e){}
   }
   clearLog();
   nudge();
+  if(document.getElementById('tab-history').classList.contains('active')) renderHistory();
 })();
 </script>
 </body>
