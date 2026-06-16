@@ -279,6 +279,18 @@ textarea{resize:vertical;min-height:60px;}
 <div class="toast" id="toast"></div>
 
 <script>
+// ── PRERENDER GUARD ──
+// If Chrome is prerendering this page in a background process,
+// completely halt all execution. When the page is actually activated
+// (user navigates to it), reload fresh from the real localStorage context.
+if (document.prerendering) {
+  document.addEventListener('prerenderingchange', () => {
+    window.location.reload();
+  }, { once: true });
+  // Stop all further script execution in the prerendered context
+  throw new Error('Prerendering halted — will reload on activation');
+}
+
 // ── STORAGE (identical pattern to spirometer_surveillance.html) ──
 const KEY = 'peak_flow_sessions_v1';
 function getRecs(){ try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];} }
@@ -527,12 +539,9 @@ async function runInit() {
   if(document.getElementById('tab-history').classList.contains('active')) renderHistory();
 }
 
-// If prerendering, wait for activation before running init
-if (document.prerendering) {
-  document.addEventListener('prerenderingchange', () => { if (!document.prerendering) runInit(); }, { once: true });
-} else {
-  runInit();
-}
+// Run init — prerendering guard at top of script ensures we only reach
+// this point when the page is genuinely active in the real browsing context
+runInit();
 </script>
 </body>
 </html>
