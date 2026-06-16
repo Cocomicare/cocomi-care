@@ -280,15 +280,18 @@ textarea{resize:vertical;min-height:60px;}
 
 <script>
 // ── PRERENDER GUARD ──
-// If Chrome is prerendering this page in a background process,
-// completely halt all execution. When the page is actually activated
-// (user navigates to it), reload fresh from the real localStorage context.
+// Chrome speculatively pre-renders pages in isolated contexts with their own
+// localStorage snapshot. We intercept this by shadowing localStorage with a
+// dummy object so no reads/writes touch real storage during prerender.
+// On activation, we reload so the real page runs with real localStorage.
 if (document.prerendering) {
+  // Shadow localStorage so nothing reads or writes real storage
+  const _noop = { getItem:()=>null, setItem:()=>{}, removeItem:()=>{}, clear:()=>{}, key:()=>null, length:0 };
+  Object.defineProperty(window, 'localStorage', { value: _noop, writable: false });
+  // On activation, force a clean reload into the real browsing context
   document.addEventListener('prerenderingchange', () => {
     window.location.reload();
   }, { once: true });
-  // Stop all further script execution in the prerendered context
-  throw new Error('Prerendering halted — will reload on activation');
 }
 
 // ── STORAGE (identical pattern to spirometer_surveillance.html) ──
