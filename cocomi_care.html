@@ -520,10 +520,9 @@ function openModule(id) {
   const iframe = document.getElementById('module-iframe');
   // Only reload if switching to a different module
   // Never set src to about:blank — iOS Safari clears localStorage on iframe unload
-  if (iframe.src !== location.origin + '/' + mod.file &&
-      iframe.src !== location.href.replace(/[^/]*$/, mod.file)) {
-    iframe.src = mod.file;
-  }
+  // Always reload with cache-bust to prevent Chrome serving preloaded cached version
+  // which has a separate localStorage context (VM### frames)
+  iframe.src = mod.file + '?v=' + Date.now();
 }
 function goHome() {
   document.getElementById('view-module').classList.remove('active');
