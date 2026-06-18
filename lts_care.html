@@ -122,43 +122,17 @@ body {
 .loading-text { font-size: 14px; color: var(--ink3); }
 
 /* ── DASHBOARD (post-login) ── */
-.dashboard-screen { background: #F0F4F8; }
-.dash-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px 14px; position: sticky; top: 0; z-index: 50; }
+.dashboard-screen { background: var(--bg); }
+.dash-header { background: var(--teal); padding: 20px 20px 24px; color: #fff; }
 .dash-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-.dash-app-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); letter-spacing: -0.5px; }
-.dash-sub { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.6px; }
-.dash-greeting { font-size: 13px; color: var(--ink2); margin-top: 6px; }
-.dash-greeting strong { color: var(--ink); font-weight: 600; }
-.sign-out-btn { background: none; border: 1px solid var(--border); color: var(--ink3); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.dash-app-name { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; }
+.dash-sub { font-size: 11px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.6px; }
+.dash-greeting { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 6px; }
+.dash-greeting strong { color: #fff; }
+.sign-out-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-.dash-body { padding: 16px 16px 40px; max-width: 600px; margin: 0 auto; }
-
-/* ── IMMUNOSUPPRESSION BANNER ── */
-.immuno-banner { background: linear-gradient(135deg, #7B5EA7 0%, #5a3f90 100%); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
-.immuno-banner:active { transform: scale(0.98); }
-.immuno-banner-icon { font-size: 28px; flex-shrink: 0; }
-.immuno-banner-text { flex: 1; }
-.immuno-banner-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #fff; margin-bottom: 3px; }
-.immuno-banner-sub { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.4; }
-.immuno-banner-arrow { font-size: 22px; color: rgba(255,255,255,0.6); }
-
-/* ── HEALTH INDEX BANNER ── */
-.health-banner { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent; border-left: 4px solid #2D9E6B; }
-.health-banner:active { transform: scale(0.98); }
-.health-banner.alert-warn { border-color: var(--warn); background: var(--warn-bg); }
-.health-banner.alert-danger { border-color: var(--danger); background: var(--danger-bg); }
-.health-banner-icon { font-size: 26px; flex-shrink: 0; }
-.health-banner-text { flex: 1; }
-.health-banner-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink3); margin-bottom: 3px; }
-.health-banner-title { font-size: 14px; font-weight: 600; color: var(--ink); }
-.health-banner-sub { font-size: 12px; color: var(--ink3); margin-top: 2px; }
-.health-banner-score { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 500; color: #2D9E6B; line-height: 1; text-align: right; }
-.health-banner-score.warn { color: var(--warn); }
-.health-banner-score.danger { color: var(--danger); }
-.health-banner-score.none { color: var(--ink3); }
-
-.dash-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 10px; margin-top: 4px; display: flex; align-items: center; gap: 10px; }
-.dash-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.dash-body { padding: 20px 16px 40px; max-width: 600px; margin: 0 auto; }
+.dash-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink3); margin-bottom: 10px; margin-top: 4px; }
 .tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px 14px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
 .tile:active { transform: scale(0.97); }
@@ -169,15 +143,11 @@ body {
 .tile.spiro::before   { background: #6B4FA8; }
 .tile.medlog::before  { background: #C4663B; }
 .tile.labs::before    { background: #0E7490; }
-.tile.checkin::before { background: #9B7ABF; }
+.tile.checkin::before { background: #6B4FA8; }
 .tile.health::before  { background: #2D9E6B; }
-.tile.clinical::before{ background: #0E7490; }
-.tile.meds::before    { background: #6B4FA8; }
-.tile.immuno_tracker::before { background: #2D9E6B; }
 .tile-icon { font-size: 22px; margin-bottom: 8px; display: block; }
 .tile-name { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
 .tile-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1; margin-bottom: 3px; }
-.tile-empty { color: var(--ink3); font-size: 13px; font-style: italic; }
 .tile-sub { font-size: 11px; color: var(--ink3); }
 .tile-since { font-size: 10px; color: var(--ink3); margin-top: 5px; }
 .tile-alert-dot { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); display: none; }
@@ -186,13 +156,12 @@ body {
 .tile.alert-danger { border-color: #f0c0c0; background: var(--danger-bg); }
 .tile.alert-warn { border-color: #f0d0b0; background: var(--warn-bg); }
 .tile-since.overdue { color: var(--warn); font-weight: 500; }
+
 .global-alert { margin: 0 0 14px; display: none; background: var(--danger-bg); border: 1px solid #f0c0c0; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: var(--danger); font-weight: 500; }
 .global-alert.show { display: block; }
-.dash-footer { text-align: center; padding: 0 20px 40px; font-size: 11px; color: var(--ink3); line-height: 1.6; }
-.dash-footer strong { color: var(--ink2); }
 
 /* ── MODULE VIEW ── */
-#view-module { display: none; position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; flex-direction: column; background: var(--bg); z-index: 100; }
+#view-module { display: none; height: 100vh; overflow: hidden; flex-direction: column; }
 #view-module.active { display: flex; }
 .module-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; gap: 12px; height: 52px; flex-shrink: 0; }
 .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink2); cursor: pointer; background: none; border: none; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
@@ -428,57 +397,30 @@ body {
     <div class="dash-header">
       <div class="dash-header-top">
         <div>
-          <div class="dash-app-name">Cocomi Care</div>
+          <div class="dash-app-name">LTS Care</div>
           <div class="dash-sub">Lung Transplant Surveillance</div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:28px">🫁</div>
-          <button class="sign-out-btn" onclick="handleSignOut()">Sign out</button>
-        </div>
+        <button class="sign-out-btn" onclick="handleSignOut()">Sign out</button>
       </div>
       <div class="dash-greeting" id="dash-greeting"></div>
     </div>
 
     <div class="dash-body">
+      <div class="global-alert" id="global-alert"></div>
 
-      <!-- Immunosuppression Banner -->
-      <div class="immuno-banner" onclick="openModule('immuno')">
-        <div class="immuno-banner-icon">💊</div>
-        <div class="immuno-banner-text">
-          <div class="immuno-banner-title">Immunosuppression Balance</div>
-          <div class="immuno-banner-sub">Rejection risk · Infection risk · Drug toxicity — the balance that drives all surveillance</div>
-        </div>
-        <div class="immuno-banner-arrow">›</div>
-      </div>
+      <div class="dash-section-label">Pulmonary</div>
+      <div class="tiles-grid" id="tiles-pulmonary"></div>
 
-      <!-- Health Index Banner -->
-      <div class="health-banner" id="health-banner" onclick="openModule('health')">
-        <div class="health-banner-icon">📈</div>
-        <div class="health-banner-text">
-          <div class="health-banner-label">Composite Health Index</div>
-          <div class="health-banner-title" id="health-banner-title">How are you doing overall?</div>
-          <div class="health-banner-sub" id="health-banner-sub">8 weighted parameters · Tap to view breakdown</div>
-        </div>
-        <div>
-          <div class="health-banner-score none" id="health-banner-score">—</div>
-          <div style="font-size:10px;color:var(--ink3);text-align:right;margin-top:2px">out of 100</div>
-        </div>
-      </div>
+      <div class="dash-section-label">Vitals & Labs</div>
+      <div class="tiles-grid" id="tiles-vitals"></div>
 
-      <!-- Symptoms & Measurements -->
-      <div class="dash-section-label">Symptoms &amp; Measurements</div>
-      <div class="tiles-grid" id="tiles-measurements"></div>
+      <div class="dash-section-label">Medications & Symptoms</div>
+      <div class="tiles-grid" id="tiles-meds"></div>
 
-      <!-- Clinical Assistant & Medications -->
-      <div class="dash-section-label">Clinical Assistant &amp; Medications</div>
-      <div class="tiles-grid" id="tiles-medlabs"></div>
+      <div class="dash-section-label">Wellness</div>
+      <div class="tiles-grid" id="tiles-wellness"></div>
 
       <div style="text-align:center;font-size:11px;color:var(--ink3);margin-top:8px" id="last-updated"></div>
-    </div>
-
-    <div class="dash-footer">
-      <strong>Cocomi Care</strong> · Lung Transplant Surveillance Suite<br>
-      Data synced across your devices · For personal wellness tracking only
     </div>
   </div>
 </div>
@@ -489,7 +431,6 @@ body {
     <button class="back-btn" onclick="goHome()">← Home</button>
     <div class="module-bar-title" id="module-bar-title"></div>
   </div>
-  <div id="module-sync-bar" style="display:none;background:#E8F1FA;color:#3B82C4;font-size:12px;font-weight:500;padding:6px 16px;align-items:center;gap:8px;flex-shrink:0"></div>
   <iframe class="module-iframe" id="module-iframe" src="about:blank"></iframe>
 </div>
 
@@ -538,7 +479,7 @@ body {
 //  SUPABASE CLIENT
 // ══════════════════════════════════════════════════
 const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjQ4NjYsImV4cCI6MjA5Njg0MDg2Nn0.eJO66jfzL-iEP-dJ8CLgooNBcN6EdrZpFU-P37pkAm0';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -546,22 +487,21 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 //  MODULE DEFINITIONS
 // ══════════════════════════════════════════════════
 const MODULES = [
-  { id:'immuno',   name:'Immunosuppression Balance', icon:'💊', file:'cocomi_medication_balance.html', group:null },
-  { id:'health',   name:'Health Index',              icon:'📈', file:'health_index.html',              group:null },
-  { id:'checkin',  name:'Symptom Check-in',  icon:'🧠', file:'symptom_checkin.html',          group:'measurements', cadence:1,
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('symptom_checkins_v1')||'[]'); if(!r.length) return{val:null,sub:'Daily symptom check-in',since:null}; const l=r[r.length-1]; const s=l.wellnessScore; return{val:s,unit:'',sub:s>=85?'Near baseline':s>=70?'Minor deviation':s>=50?'Notable deviation':'Significant deviation',since:daysSince(l.date)}; }catch(e){return{val:null,sub:'Daily symptom check-in',since:null};} } },
-  { id:'peakflow', name:'Peak Flow',         icon:'📊', file:'peak_flow_tracker.html',         group:'measurements', cadence:3,
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]'); if(!r.length) return{val:null,sub:'PEF · FEV1',since:null}; const l=r[r.length-1]; const pef=l.pef??l.best; const fev1=l.fev1; const valStr=pef!=null?pef:fev1!=null?(fev1+' L'):null; const unitStr=pef!=null?' L/min':''; const sub=pef!=null&&fev1!=null?`FEV1 ${fev1} L`:pef!=null?'PEF peak flow':fev1!=null?'FEV1':'PEF · FEV1'; return{val:valStr,unit:unitStr,sub,since:daysSince(l.date)}; }catch(e){return{val:null,sub:'PEF · FEV1',since:null};} } },
-  { id:'spiro',    name:'Incentive Spirometer',  icon:'🌬️', file:'spirometer_surveillance.html',   group:'measurements', cadence:1,
-    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('spiro_records_v1')||'[]'); if(!r.length) return{val:null,sub:'Inspiratory volume',since:null}; const l=r[r.length-1]; return{val:l.val,unit:'mL',sub:'inspiratory vol',since:daysSince(l.date)}; }catch(e){return{val:null,sub:'Inspiratory volume',since:null};} } },
-  { id:'vitals',   name:'Vital Signs',       icon:'❤️', file:'vital_signs_surveillance.html',  group:'measurements', cadence:7,
-    getSummary(){ try{ let latestDate=null, tracked=0; ['spo2','hr','bp','wt','temp'].forEach(v=>{ const r=JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]'); if(!r.length) return; tracked++; const l=r[r.length-1]; if(!latestDate||l.date>latestDate) latestDate=l.date; }); return{val:'✓ Normal',unit:'',sub:`${tracked} vitals tracked`,since:latestDate?daysSince(latestDate):null}; }catch(e){return{val:null,sub:'5 vitals tracked',since:null};} } },
-  { id:'clinical', name:'Clinical Assistant', icon:'🧬', file:'clinical_assistant.html',        group:'medlabs',
-    getSummary(){ try{ const conv=JSON.parse(localStorage.getItem('clinical_conversation_v1')||'[]'); const files=JSON.parse(localStorage.getItem('clinical_files_v1')||'[]'); if(!conv.length&&!files.length) return{val:null,sub:'Labs · Medications · Trends',since:null}; const lastMsg=conv.length?conv[conv.length-1]:null; const lastDate=lastMsg?.timestamp?lastMsg.timestamp.split('T')[0]:null; const fileCount=files.length; const msgCount=conv.filter(m=>m.role==='user'&&m.hasFile).length; const count=Math.max(fileCount,msgCount); return{val:count||null,unit:count?' docs analyzed':'',sub:'Labs · Medications · Trends',since:lastDate?daysSince(lastDate):null}; }catch(e){return{val:null,sub:'Labs · Medications · Trends',since:null};} } },
-  { id:'meds',     name:'Medications',        icon:'💊', file:'medications.html',               group:'medlabs',
-    getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('clinical_meds_v1')||'[]'); const active=meds.filter(m=>m.active); if(!active.length) return{val:null,sub:'Current medication list',since:null}; const lastUpdated=meds.reduce((a,m)=>m.updated>a?m.updated:a,''); return{val:active.length,unit:' active',sub:active.slice(0,2).map(m=>m.name+(m.dose?' '+m.dose:'')).join(', ')+(active.length>2?'…':''),since:lastUpdated?daysSince(lastUpdated.split('T')[0]):null}; }catch(e){return{val:null,sub:'Current medication list',since:null};} } },
-  { id:'immuno_tracker', name:'Immunosuppression Tracker', icon:'🧪', file:'immuno_tracker.html', group:'medlabs', tileColor:'#2D9E6B',
-    getSummary(){ try{ const d=JSON.parse(localStorage.getItem('immuno_tracker_v1')||'[]'); if(!d.length) return{val:null,sub:'Drug doses · Trough · Immune labs',since:null}; const last=d[d.length-1]; const tac=d.filter(e=>e.type==='tac').pop(); const trough=d.filter(e=>e.type==='trough').pop(); return{val:tac?tac.value:null,unit:tac?' mg Tac':'',sub:trough?`Trough ${trough.value} ng/mL`:'Drug doses · Trough · Immune labs',since:daysSince(last.date)}; }catch(e){return{val:null,sub:'Drug doses · Trough · Immune labs',since:null};} } },
+  { id:'immuno',   name:'Immunosuppression', icon:'💊', file:'cocomi_medication_balance.html', group:'pulmonary', getSummary(){ return { val:null, sub:'Rejection / Infection balance', since:null }; } },
+  { id:'peakflow', name:'Peak Flow',         icon:'📊', file:'peak_flow_tracker.html',         group:'pulmonary', cadence:3,
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]'); if(!r.length) return{val:null,sub:'FEV1 max value',since:null}; const l=r[r.length-1]; return{val:l.best,unit:'mL',sub:'FEV1 max',since:daysSince(l.date)}; }catch(e){return{val:null,sub:'FEV1 max value',since:null};} } },
+  { id:'spiro',    name:'Spirometer',        icon:'🌬️', file:'spirometer_surveillance.html',   group:'pulmonary', cadence:1,
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('spiro_records_v1')||'[]'); const s=JSON.parse(localStorage.getItem('spiro_settings_v1')||'{}'); if(!r.length) return{val:null,sub:'Inspiratory volume',since:null}; const l=r[r.length-1]; const pct=s.target?Math.round((l.val/s.target)*100):null; return{val:l.val,unit:'mL',sub:pct?`${pct}% of target`:'inspiratory vol',since:daysSince(l.date),alert:s.target&&l.val<s.target*(s.warnPct||80)/100?'warn':null}; }catch(e){return{val:null,sub:'Inspiratory volume',since:null};} } },
+  { id:'vitals',   name:'Vital Signs',       icon:'❤️', file:'vital_signs_surveillance.html',  group:'vitals',   cadence:7,
+    getSummary(){ try{ const s=JSON.parse(localStorage.getItem('vss_settings_v1')||'{}'); let alerts=[],latestDate=null; ['spo2','hr','bp','wt','temp'].forEach(v=>{ const r=JSON.parse(localStorage.getItem(`vss_${v}_v1`)||'[]'); if(!r.length) return; const l=r[r.length-1]; if(!latestDate||l.date>latestDate) latestDate=l.date; if(v==='spo2'&&l.val<(s.spo2?.low||92)) alerts.push('SpO₂ low'); if(v==='hr'&&l.val>(s.hr?.high||100)) alerts.push('HR high'); if(v==='temp'&&l.val>=(s.temp?.high||99.5)) alerts.push('Temp elevated'); }); return{val:alerts.length?`${alerts.length} alert${alerts.length>1?'s':''}`:'✓ Normal',unit:'',sub:alerts.length?alerts.slice(0,2).join(', '):'5 vitals tracked',since:latestDate?daysSince(latestDate):null,alert:alerts.length?'danger':null}; }catch(e){return{val:null,sub:'5 vitals tracked',since:null};} } },
+  { id:'labs',     name:'Lab Results',       icon:'🧪', file:'lab_results_tracker.html',       group:'vitals',
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('lab_records_v2')||'[]'); if(!r.length) return{val:null,sub:'AI-extracted from portal',since:null}; const l=r[r.length-1]; const flags=Object.keys(l.flags||{}); return{val:flags.length?`${flags.length} flag${flags.length>1?'s':''}`:'✓ All normal',unit:'',sub:flags.length?flags.slice(0,2).join(', '):`${Object.values(l.values).filter(v=>v!==null).length} values`,since:daysSince(l.date),alert:flags.some(k=>(l.flags[k]==='critical'||l.flags[k]==='high'))?'danger':flags.length?'warn':null}; }catch(e){return{val:null,sub:'Lab panel not set up',since:null};} } },
+  { id:'medlog',   name:'Med & Symptom',     icon:'🔬', file:'med_symptom_tracker.html',       group:'meds',
+    getSummary(){ try{ const meds=JSON.parse(localStorage.getItem('msc_meds_v1')||'[]'); const syms=JSON.parse(localStorage.getItem('msc_syms_v1')||'[]'); const cur=JSON.parse(localStorage.getItem('msc_cur_meds_v1')||'[]').filter(m=>m.active); const all=[...meds,...syms].sort((a,b)=>b.date.localeCompare(a.date)); return{val:cur.length||null,unit:cur.length?' active meds':'',sub:cur.length?`${meds.length} changes · ${syms.length} symptom logs`:'No entries yet',since:all.length?daysSince(all[0].date):null}; }catch(e){return{val:null,sub:'Med changes & symptoms',since:null};} } },
+  { id:'checkin',  name:'Symptom Check-in',  icon:'🧠', file:'symptom_checkin.html',           group:'wellness', cadence:1,
+    getSummary(){ try{ const r=JSON.parse(localStorage.getItem('symptom_checkins_v1')||'[]'); if(!r.length) return{val:null,sub:'Daily wellness check-in',since:null}; const l=r[r.length-1]; return{val:l.wellnessScore,unit:'',sub:'Wellness score',since:daysSince(l.date),alert:l.wellnessScore&&l.wellnessScore<50?'danger':l.wellnessScore&&l.wellnessScore<70?'warn':null}; }catch(e){return{val:null,sub:'Daily wellness check-in',since:null};} } },
+  { id:'health',   name:'Health Index',      icon:'📈', file:'health_index.html',              group:'wellness',
+    getSummary(){ try{ const h=JSON.parse(localStorage.getItem('chi_history_v1')||'[]'); if(!h.length) return{val:null,sub:'Composite score',since:null}; const l=h[h.length-1]; return{val:l.score,unit:'',sub:'Composite Health Index',since:daysSince(l.date),alert:l.score&&l.score<50?'danger':l.score&&l.score<70?'warn':null}; }catch(e){return{val:null,sub:'Composite score',since:null};} } },
 ];
 
 
@@ -664,7 +604,8 @@ async function initAuth() {
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
       currentUser = session.user;
-      showDashboard();
+      // Redirect to Cocomi Care dashboard
+      window.location.replace('https://cocomicare.github.io/cocomi-care/cocomi_care.html');
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       showScreen('screen-login');
@@ -754,55 +695,9 @@ async function handleSignOut() {
 // ══════════════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════════════
-
-// Listen for settings save requests from module iframes
-window.addEventListener('message', async (e) => {
-  const { type } = e.data || {};
-  if (!type) return;
-
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) return;
-    const uid = session.user.id;
-
-    if (type === 'SAVE_HEALTH_INDEX_SETTINGS') {
-      await sb.from('clinical_data').upsert(
-        { user_id:uid, data_type:'health_index_settings', data:e.data.settings, updated_at:new Date().toISOString() },
-        { onConflict:'user_id,data_type' }
-      );
-      if (e.data.settings.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(e.data.settings.weights));
-      if (e.data.settings.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(e.data.settings.thresholds));
-      if (e.data.settings.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(e.data.settings.windows));
-      if (e.data.settings.savedAt)    localStorage.setItem('chi_settings_saved_at', e.data.settings.savedAt);
-      sessionStorage.setItem('chi_settings_pulled', '1');
-    }
-
-    if (type === 'SYNC_DELETE_HEALTH_RECORD') {
-      await sb.from('health_records').delete()
-        .eq('user_id', uid)
-        .eq('module', e.data.module)
-        .eq('recorded_at', e.data.recordedAt);
-    }
-
-    if (type === 'SYNC_SAVE_HEALTH_RECORD') {
-      await sb.from('health_records').upsert(
-        { user_id:uid, module:e.data.module, recorded_at:e.data.recordedAt, data:e.data.data },
-        { onConflict:'user_id,module,recorded_at' }
-      );
-    }
-
-    if (type === 'SYNC_SAVE_CLINICAL') {
-      await sb.from('clinical_data').upsert(
-        { user_id:uid, data_type:e.data.dataType, data:e.data.data, updated_at:new Date().toISOString() },
-        { onConflict:'user_id,data_type' }
-      );
-    }
-
-  } catch(err) { console.error('postMessage save failed:', err); }
-});
-
 function showDashboard() {
   showScreen('screen-dashboard');
+  // Load display name from Supabase if not cached
   if (currentUser && !localStorage.getItem('lts_display_name')) {
     sb.from('profiles').select('display_name').eq('id', currentUser.id).single()
       .then(({ data }) => {
@@ -814,60 +709,6 @@ function showDashboard() {
   }
   setGreeting();
   renderDashboard();
-  // Pull data from Supabase in background
-  (async () => {
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) return;
-      const uid = session.user.id;
-
-      // Pull clinical data
-      const typeMap = { medications:'clinical_meds_v1', conversation:'clinical_conversation_v1', files:'clinical_files_v1' };
-      for (const [type, key] of Object.entries(typeMap)) {
-        const { data } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', type).single();
-        if (data?.data) localStorage.setItem(key, JSON.stringify(data.data));
-      }
-
-      // Pull health index settings — only on first login per session, not every dashboard visit
-      // (postMessage from health_index iframe handles saves, pulling every time overwrites local changes)
-      if (!sessionStorage.getItem('chi_settings_pulled')) {
-        const { data: hiSettings } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_settings').single();
-        if (hiSettings?.data) {
-          if (hiSettings.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(hiSettings.data.weights));
-          if (hiSettings.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(hiSettings.data.thresholds));
-          if (hiSettings.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(hiSettings.data.windows));
-          if (hiSettings.data.savedAt)    localStorage.setItem('chi_settings_saved_at', hiSettings.data.savedAt);
-        }
-        sessionStorage.setItem('chi_settings_pulled', '1');
-      }
-
-      // Pull health index history
-      const { data: hiHistory } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'health_index_history').single();
-      if (hiHistory?.data) localStorage.setItem('chi_history_v1', JSON.stringify(hiHistory.data));
-
-      // Pull spirometer settings
-      const { data: spiroSet } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'spiro_settings').single();
-      if (spiroSet?.data) localStorage.setItem('spiro_settings_v1', JSON.stringify(spiroSet.data));
-
-      // Pull vitals settings
-      const { data: vitalsSet } = await sb.from('clinical_data').select('data').eq('user_id', uid).eq('data_type', 'vitals_settings').single();
-      if (vitalsSet?.data) localStorage.setItem('vss_settings_v1', JSON.stringify(vitalsSet.data));
-
-      // Pull health records
-      const modMap = {
-        symptoms:'symptom_checkins_v1', peak_flow:'peak_flow_sessions_v1',
-        spirometer:'spiro_records_v1', vitals_spo2:'vss_spo2_v1',
-        vitals_hr:'vss_hr_v1', vitals_bp:'vss_bp_v1',
-        vitals_wt:'vss_wt_v1', vitals_temp:'vss_temp_v1'
-      };
-      for (const [module, key] of Object.entries(modMap)) {
-        const { data } = await sb.from('health_records').select('data').eq('user_id', uid).eq('module', module).order('recorded_at');
-        if (data?.length) localStorage.setItem(key, JSON.stringify(data.map(r => r.data)));
-      }
-
-      renderDashboard();
-    } catch(e) {}
-  })();
 }
 
 function setGreeting() {
@@ -878,174 +719,51 @@ function setGreeting() {
 }
 
 function renderDashboard() {
-  // Health Index banner — check nonnegotiables first
-  try {
-    const scoreEl = document.getElementById('health-banner-score');
-    const titleEl = document.getElementById('health-banner-title');
-    const subEl   = document.getElementById('health-banner-sub');
-    const banner  = document.getElementById('health-banner');
-
-    // Check nonnegotiables
-    const NONNEGOTIABLES = [
-      { key:'symptom_checkins_v1', name:'Symptom Check-in', days:2 },
-      { key:'vss_spo2_v1',         name:'SpO₂',            days:2 },
-      { key:'peak_flow_sessions_v1', name:'FEV1', days:2,
-        hasRecent(recs) { return recs.some(r=>r.fev1!=null && Math.floor((new Date()-new Date(r.date+'T12:00:00'))/86400000)<=2); } },
-      { key:'peak_flow_sessions_v1', name:'PEF', days:2,
-        hasRecent(recs) { return recs.some(r=>r.pef!=null && Math.floor((new Date()-new Date(r.date+'T12:00:00'))/86400000)<=2); } },
-      { key:'vss_hr_v1',           name:'Heart Rate',       days:2 },
-    ];
-
-    const today = new Date(); today.setHours(0,0,0,0);
-    const missing = NONNEGOTIABLES.filter(n => {
-      try {
-        const recs = JSON.parse(localStorage.getItem(n.key)||'[]');
-        if (!recs.length) return true;
-        // Use custom hasRecent if defined (e.g. FEV1/PEF check specific fields)
-        if (n.hasRecent) return !n.hasRecent(recs);
-        const last = recs[recs.length-1];
-        const lastDate = new Date(last.date||last.recorded_at||'');
-        if (isNaN(lastDate)) return true;
-        lastDate.setHours(0,0,0,0);
-        const daysAgo = Math.floor((today - lastDate) / 86400000);
-        return daysAgo > n.days;
-      } catch(e) { return true; }
-    });
-
-    if (missing.length > 0) {
-      scoreEl.textContent = '?'; scoreEl.className = 'health-banner-score none';
-      titleEl.textContent = 'Insufficient data — score unavailable';
-      subEl.textContent = 'Missing: ' + missing.map(m=>m.name).join(', ') + ' · Tap to view';
-      banner.className = 'health-banner alert-warn';
-    } else {
-      const hist = JSON.parse(localStorage.getItem('chi_history_v1')||'[]');
-      if (hist.length) {
-        const l = hist[hist.length-1]; const s = l.score;
-        scoreEl.textContent = s;
-        scoreEl.className = 'health-banner-score' + (s<85?' danger':s<90?' warn':'');
-        titleEl.textContent = s>=95?'All parameters near baseline':s>=90?'Watch closely — mild deviation':s>=85?'Notable deviation — review parameters':'Significant deviation — contact team';
-        subEl.textContent = `Last updated ${daysSince(l.date)===0?'today':daysSince(l.date)+' days ago'} · Tap to view breakdown`;
-        banner.className = 'health-banner' + (s<85?' alert-danger':s<90?' alert-warn':'');
-      } else {
-        scoreEl.textContent = '—'; scoreEl.className = 'health-banner-score none';
-        titleEl.textContent = 'No data yet — log readings to calculate';
-        subEl.textContent = '8 weighted parameters · Tap to open';
-      }
-    }
-  } catch(e) {}
-
-  // Tiles
-  const groups = { measurements:[], medlabs:[] };
+  const groups = { pulmonary:[], vitals:[], meds:[], wellness:[] };
   let alerts = [];
 
-  MODULES.filter(m => m.group).forEach(mod => {
+  MODULES.forEach(mod => {
     const s = mod.getSummary();
     const days = s.since;
     const overdue = mod.cadence && days !== null && days >= mod.cadence;
     const sinceStr = days === null ? 'Never logged' : days === 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
-    const valHtml = s.val !== null
-      ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>`
-      : `<div class="tile-empty">No data yet</div>`;
+    const alertCls = s.alert === 'danger' ? 'alert-danger' : s.alert === 'warn' ? 'alert-warn' : '';
+    if (s.alert === 'danger') alerts.push(`${mod.icon} ${mod.name}: ${s.sub}`);
+    const valHtml = s.val !== null ? `<div class="tile-val">${s.val}<span style="font-size:12px;color:var(--ink3);margin-left:3px">${s.unit||''}</span></div>` : `<div style="color:var(--ink3);font-size:13px;font-style:italic">No data yet</div>`;
     groups[mod.group].push(`
-      <div class="tile ${mod.id}" onclick="openModule('${mod.id}')">
+      <div class="tile ${mod.id} ${alertCls}" onclick="openModule('${mod.id}')">
+        <div class="tile-alert-dot"></div>
         <span class="tile-icon">${mod.icon}</span>
         <div class="tile-name">${mod.name}</div>
         ${valHtml}
         <div class="tile-sub">${s.sub}</div>
-        <div class="tile-since ${overdue?'overdue':''}">${overdue?'⏰ ':''}${sinceStr}</div>
+        <div class="tile-since ${overdue?'overdue':''}">${overdue?'⏰ ':''} ${sinceStr}</div>
       </div>`);
   });
 
-  document.getElementById('tiles-measurements').innerHTML = groups.measurements.join('');
-  document.getElementById('tiles-medlabs').innerHTML      = groups.medlabs.join('');
+  document.getElementById('tiles-pulmonary').innerHTML = groups.pulmonary.join('');
+  document.getElementById('tiles-vitals').innerHTML    = groups.vitals.join('');
+  document.getElementById('tiles-meds').innerHTML      = groups.meds.join('');
+  document.getElementById('tiles-wellness').innerHTML  = groups.wellness.join('');
 
+  const alertEl = document.getElementById('global-alert');
+  if (alerts.length) { alertEl.innerHTML = `⚠️ <strong>Alerts:</strong><br>${alerts.join('<br>')}`; alertEl.classList.add('show'); }
+  else alertEl.classList.remove('show');
 
-  document.getElementById('last-updated').textContent = 'Refreshed ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('last-updated').textContent = 'Refreshed ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
-async function openModule(id) {
+function openModule(id) {
   const mod = MODULES.find(m=>m.id===id); if(!mod) return;
-  document.getElementById('screen-dashboard').style.display = 'none';
+  document.getElementById('screen-dashboard').classList.remove('active');
   document.getElementById('view-module').classList.add('active');
   document.getElementById('module-bar-title').textContent = mod.name;
-
-  // Pull fresh data from Supabase before loading the module
-  const bar = document.getElementById('module-sync-bar');
-  if (bar) { bar.style.display='flex'; bar.textContent='⟳ Loading latest data…'; }
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      const uid = session.user.id;
-
-      // Module-specific pulls
-      const pulls = {
-        vitals:   async () => {
-          for (const v of ['spo2','hr','bp','wt','temp']) {
-            const { data } = await sb.from('health_records').select('data').eq('user_id',uid).eq('module','vitals_'+v).order('recorded_at');
-            if (data?.length) localStorage.setItem('vss_'+v+'_v1', JSON.stringify(data.map(r=>r.data)));
-          }
-          const { data: s } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','vitals_settings').single();
-          if (s?.data) localStorage.setItem('vss_settings_v1', JSON.stringify(s.data));
-        },
-        checkin:  async () => {
-          const { data } = await sb.from('health_records').select('data').eq('user_id',uid).eq('module','symptoms').order('recorded_at');
-          if (data?.length) localStorage.setItem('symptom_checkins_v1', JSON.stringify(data.map(r=>r.data)));
-        },
-        peakflow: async () => {
-          const { data } = await sb.from('health_records').select('data').eq('user_id',uid).eq('module','peak_flow').order('recorded_at');
-          if (data?.length) localStorage.setItem('peak_flow_sessions_v1', JSON.stringify(data.map(r=>r.data)));
-        },
-        spiro:    async () => {
-          const { data } = await sb.from('health_records').select('data').eq('user_id',uid).eq('module','spirometer').order('recorded_at');
-          if (data?.length) localStorage.setItem('spiro_records_v1', JSON.stringify(data.map(r=>r.data)));
-          const { data: s } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','spiro_settings').single();
-          if (s?.data) localStorage.setItem('spiro_settings_v1', JSON.stringify(s.data));
-        },
-        meds:     async () => {
-          const { data } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','medications').single();
-          if (data?.data) localStorage.setItem('clinical_meds_v1', JSON.stringify(data.data));
-        },
-        clinical: async () => {
-          const { data: c } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','conversation').single();
-          if (c?.data) localStorage.setItem('clinical_conversation_v1', JSON.stringify(c.data));
-          const { data: f } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','files').single();
-          if (f?.data) localStorage.setItem('clinical_files_v1', JSON.stringify(f.data));
-        },
-        immuno_tracker: async () => {
-          const { data } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','immuno_tracker').single();
-          if (data?.data) localStorage.setItem('immuno_tracker_v1', JSON.stringify(data.data));
-        },
-        health: async () => {
-          if (!sessionStorage.getItem('chi_settings_pulled')) {
-            const { data } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','health_index_settings').single();
-            if (data?.data) {
-              if (data.data.weights)    localStorage.setItem('chi_weights_v1',    JSON.stringify(data.data.weights));
-              if (data.data.thresholds) localStorage.setItem('chi_thresholds_v1', JSON.stringify(data.data.thresholds));
-              if (data.data.windows)    localStorage.setItem('chi_windows_v1',    JSON.stringify(data.data.windows));
-              sessionStorage.setItem('chi_settings_pulled', '1');
-            }
-          }
-          const { data: h } = await sb.from('clinical_data').select('data').eq('user_id',uid).eq('data_type','health_index_history').single();
-          if (h?.data) localStorage.setItem('chi_history_v1', JSON.stringify(h.data));
-        },
-      };
-
-      if (pulls[id]) await pulls[id]();
-      if (bar) { bar.textContent='✓ Data refreshed'; setTimeout(()=>bar.style.display='none', 1500); }
-    } else {
-      if (bar) { bar.textContent='⚠ Not signed in'; setTimeout(()=>bar.style.display='none', 2000); }
-    }
-  } catch(e) {
-    console.warn('Pre-load pull failed:', e.message);
-    if (bar) { bar.textContent='⚠ Could not reach server: ' + e.message; setTimeout(()=>bar.style.display='none', 3000); }
-  }
-
-  document.getElementById('module-iframe').src = mod.file + '?v=' + Date.now() + '&preloaded=1';
+  document.getElementById('module-iframe').src = mod.file;
 }
 
 function goHome() {
   document.getElementById('view-module').classList.remove('active');
-  document.getElementById('screen-dashboard').style.display = '';
+  document.getElementById('screen-dashboard').classList.add('active');
   document.getElementById('module-iframe').src = 'about:blank';
   renderDashboard();
 }

@@ -8,7 +8,7 @@
 const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
 
 // Use the publishable key — matches lts_care.html login so session is shared
-const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjQ4NjYsImV4cCI6MjA5Njg0MDg2Nn0.eJO66jfzL-iEP-dJ8CLgooNBcN6EdrZpFU-P37pkAm0'; // legacy anon JWT — works with REST API
 
 // Single Supabase client instance shared by all modules
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

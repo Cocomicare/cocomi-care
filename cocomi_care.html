@@ -258,7 +258,7 @@ document.documentElement.style.visibility = 'hidden';
 (async function() {
   try {
     const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjQ4NjYsImV4cCI6MjA5Njg0MDg2Nn0.eJO66jfzL-iEP-dJ8CLgooNBcN6EdrZpFU-P37pkAm0';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data: { session }, error } = await sb.auth.getSession();
     if (error || !session) {
