@@ -187,7 +187,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--i
         <div class="app-name">Cocomi Care</div>
         <div class="app-sub">Lung Transplant Surveillance</div>
       </div>
-      <div style="font-size:32px">🫁</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:32px">🫁</div>
+        <button onclick="handleSignOut()" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--ink2);cursor:pointer;font-family:'DM Sans',sans-serif;">Sign out</button>
+      </div>
     </div>
     <div class="greeting" id="greeting"></div>
   </div>
@@ -338,9 +341,12 @@ const MODULES = [
     getSummary() {
       try {
         const r=JSON.parse(localStorage.getItem('peak_flow_sessions_v1')||'[]');
-        if(!r.length) return{val:null,sub:'FEV1 max value',since:null};
+        if(!r.length) return{val:null,sub:'PEF · FEV1',since:null};
         const l=r[r.length-1];
-        return{val:l.best,unit:'mL',sub:'FEV1 max value',since:daysSince(l.date)};
+        const pef=l.pef??null, fev1=l.fev1??l.best??null;
+        const val=fev1??pef, unit=fev1!=null?' L FEV1':' L/min PEF';
+        const sub=(pef!=null&&fev1!=null)?'PEF '+pef+' · FEV1 '+fev1:'PEF · FEV1';
+        return{val,unit,sub,since:daysSince(l.date)};
       } catch(e){return{val:null,sub:'FEV1 max value',since:null};}
     }
   },
@@ -442,6 +448,17 @@ function sinceText(days) {
 // ══════════════════════════════════════════════════
 //  RENDER
 // ══════════════════════════════════════════════════
+async function handleSignOut() {
+  try {
+    const sb2 = supabase.createClient(
+      'https://nrurfusjkvuudfzgfsww.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjQ4NjYsImV4cCI6MjA5Njg0MDg2Nn0.eJO66jfzL-iEP-dJ8CLgooNBcN6EdrZpFU-P37pkAm0'
+    );
+    await sb2.auth.signOut();
+  } catch(e) {}
+  window.location.replace('https://cocomicare.github.io/cocomi-care/lts_care.html');
+}
+
 function renderDashboard() {
   // Greeting
   const h = new Date().getHours();
