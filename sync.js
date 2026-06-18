@@ -1,10 +1,10 @@
 // ══════════════════════════════════════════════════
-//  LTS Care — Supabase Sync Layer v2.1 (no single())
+//  LTS Care — Supabase Sync Layer
 //  Shared by all modules. Include before module JS.
 // ══════════════════════════════════════════════════
 
 const SUPABASE_URL = 'https://nrurfusjkvuudfzgfsww.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_iN8epmLwCUeTSpoa3LXAiQ_ArxibPfq'; // must match lts_care.html
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydXJmdXNqa3Z1dWRmemdmc3d3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NjMyNzMsImV4cCI6MjA2NTMzOTI3M30.auXmdHDVGaQYeHUpjrPMBDMdMthLeSQk9J81f5JDzYw';
 
 // ── Init Supabase client ──
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -83,7 +83,6 @@ async function syncLoadClinical(dataType) {
   const userId = await syncGetUserId();
   if (!userId) return null;
   try {
-    // Use array result instead of .single() — .single() returns 406 when no rows exist
     const { data, error } = await _sb
       .from('clinical_data')
       .select('data, updated_at')
@@ -184,7 +183,7 @@ async function syncPushAll() {
     const userId = await syncGetUserId();
     if (!userId) { syncShowStatus('error'); return; }
 
-    // Push health records (vitals/spiro/symptoms — individual rows)
+    // Push all health record modules
     const modules = [
       { key:'vss_spo2_v1',          module:'vitals_spo2' },
       { key:'vss_hr_v1',            module:'vitals_hr' },
@@ -200,14 +199,16 @@ async function syncPushAll() {
       if (!raw) continue;
       const records = JSON.parse(raw);
       if (!Array.isArray(records) || !records.length) continue;
+      // Push each record individually
       for (const record of records) {
         const ts = record.date ? record.date + 'T00:00:00Z' : new Date().toISOString();
         await syncSaveHealthRecord(module, ts, record);
       }
     }
 
-    // Push clinical data (peak_flow goes here — whole array as single document)
+    // Push clinical data
     const clinicalKeys = [
+      { key:'peak_flow_sessions_v1',    type:'peak_flow' },
       { key:'clinical_meds_v1',         type:'medications' },
       { key:'clinical_conversation_v1', type:'conversation' },
       { key:'clinical_summary_v1',      type:'summary', isString:true },
@@ -236,7 +237,7 @@ async function syncPullAll() {
     const userId = await syncGetUserId();
     if (!userId) { syncShowStatus('error'); return; }
 
-    // Pull health records (vitals only — peak_flow now syncs via clinical_data)
+    // Pull health records
     const modules = [
       { key:'vss_spo2_v1',          module:'vitals_spo2' },
       { key:'vss_hr_v1',            module:'vitals_hr' },
@@ -254,8 +255,9 @@ async function syncPullAll() {
       localStorage.setItem(key, JSON.stringify(data));
     }
 
-    // Pull clinical data (includes peak_flow which saves here via saveSessions)
+    // Pull clinical data
     const clinicalKeys = [
+      { key:'peak_flow_sessions_v1',    type:'peak_flow' },
       { key:'clinical_meds_v1',         type:'medications' },
       { key:'clinical_conversation_v1', type:'conversation' },
       { key:'clinical_summary_v1',      type:'summary', isString:true },
@@ -265,15 +267,9 @@ async function syncPullAll() {
     ];
 
     for (const { key, type, isString } of clinicalKeys) {
-      const remote = await syncLoadClinical(type);
-      if (!remote) continue;
-      const data = isString ? remote.text : remote;
-      // Only write to localStorage if it is completely empty — never overwrite local edits
-      const existing = localStorage.getItem(key);
-      const isEmpty = !existing || existing === '[]' || existing === '""' || existing === 'null';
-      if (isEmpty) {
-        localStorage.setItem(key, isString ? data : JSON.stringify(data));
-      }
+      const data = await syncLoadClinical(type);
+      if (!data) continue;
+      localStorage.setItem(key, isString ? data.text : JSON.stringify(data));
     }
 
     syncShowStatus('synced');
