@@ -83,14 +83,15 @@ async function syncLoadClinical(dataType) {
   const userId = await syncGetUserId();
   if (!userId) return null;
   try {
+    // Use array result instead of .single() — .single() returns 406 when no rows exist
     const { data, error } = await _sb
       .from('clinical_data')
       .select('data, updated_at')
       .eq('user_id', userId)
       .eq('data_type', dataType)
-      .single();
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found, that's ok
-    return data?.data || null;
+      .limit(1);
+    if (error) throw error;
+    return data?.[0]?.data || null;
   } catch(e) { console.warn('Sync load clinical failed:', e.message); return null; }
 }
 
