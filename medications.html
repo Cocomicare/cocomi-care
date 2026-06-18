@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="sync.js"></script>
+<script src="sync.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Medications</title>
 <style>
@@ -117,18 +117,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .btn-cancel{flex:1;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink2);cursor:pointer;}
 .btn-save{flex:2;background:var(--purple);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
 
-/* Attach button in add bar */
-.attach-btn{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;-webkit-tap-highlight-color:transparent;}
-.attach-btn:hover{border-color:var(--purple);background:var(--purple-bg);}
-
-/* Analyzing overlay */
-.analyzing-bar{display:none;padding:11px 16px;background:var(--purple-bg);border-top:1px solid #C8B0E8;align-items:center;gap:10px;font-size:13px;color:var(--purple);}
-.analyzing-bar.show{display:flex;}
-.analyzing-spinner{width:16px;height:16px;border:2px solid #C8B0E8;border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
-@keyframes spin{to{transform:rotate(360deg)}}
-
 /* Toast */
-.toast{position:fixed;bottom:76px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:var(--good);}
 
@@ -158,23 +148,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     </div>
   </div>
 
-  <!-- Hidden file input -->
-  <input type="file" id="med-file-input" accept=".pdf,image/*" style="display:none" onchange="handleMedFile(this)">
-
   <div class="content" id="content"></div>
-
-  <div class="analyzing-bar" id="analyzing-bar">
-    <div class="analyzing-spinner"></div>
-    <span id="analyzing-status">Analyzing medication document…</span>
-  </div>
 
   <div class="add-bar">
     <div class="add-row">
-      <button class="attach-btn" onclick="document.getElementById('med-file-input').click()" title="Upload medication document">📎</button>
-      <button class="attach-btn" onclick="pasteFromClipboard()" title="Paste screenshot from clipboard">📋</button>
-      <input class="add-input" id="quick-add" placeholder="Add medication manually, or tap 📎 📋 to upload" onkeydown="if(event.key==='Enter')quickAdd()">
+      <input class="add-input" id="quick-add" placeholder="Add: e.g. Tacrolimus 2mg twice daily" onkeydown="if(event.key==='Enter')quickAdd()">
       <button class="add-btn" onclick="quickAdd()">+ Add</button>
     </div>
+    <div class="add-hint">Upload a medication document in Clinical Assistant to auto-update this list.</div>
   </div>
 </div>
 
@@ -219,10 +200,6 @@ const CAT_ORDER = ['Immunosuppression','Antiviral','Antifungal','Antibiotic','Ca
 function getMeds()    { try{return JSON.parse(localStorage.getItem(MEDS_KEY)||'[]');}catch(e){return[];} }
 function saveMeds(d) {
   localStorage.setItem(MEDS_KEY, JSON.stringify(d));
-  // Only mark as imported if at least one real (non-default) med exists
-  if (d.some(m => !m._isDefault)) {
-    localStorage.setItem('clinical_meds_imported', '1');
-  }
   syncSaveClinical('medications', d).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
 }
 
@@ -387,14 +364,15 @@ function showToast(msg,type=''){const e=document.getElementById('toast');e.textC
 
 // ── INIT ──
 function resetToDefaults() {
-  if(!confirm('Clear the medication list? You can then upload a document to repopulate it.')) return;
+  if(!confirm('Reset to default medication list? This will overwrite your current list.')) return;
   localStorage.removeItem(MEDS_KEY);
-  localStorage.removeItem('clinical_meds_imported');
+  initKnownMeds();
   render();
-  showToast('Medication list cleared ✓','success');
+  showToast('Reset to defaults ✓','success');
 }
 
 function initKnownMeds() {
+  if(getMeds().length) return; // Already set up
   const now = new Date().toISOString();
   const known = [
     {name:'Tacrolimus',     dose:'2mg',  freq:'twice daily',  timing:'Morning and evening',
@@ -458,210 +436,17 @@ function initKnownMeds() {
      note:'Inhaled form has minimal systemic absorption, avoiding the serious kidney toxicity of IV amphotericin.',
      category:'Antifungal'},
   ];
-  saveMeds(known.map((m,i)=>({...m, id:String(i+1), active:true, updated:now, _isDefault:true})));
+  saveMeds(known.map((m,i)=>({...m, id:String(i+1), active:true, updated:now})));
 }
 
 (async () => {
-  // One-time cleanup: wipe old hardcoded defaults from localStorage
-  const DEFAULT_NAMES = ['Tacrolimus','CellCept','Prednisone','Valganciclovir',
-    'Posaconazole','Amphotericin B','Atovaquone','Amikacin','Rifabutin','Clofazimine'];
-  const current = getMeds();
-  const allAreDefaults = current.length > 0 && current.every(m => m._isDefault || DEFAULT_NAMES.includes(m.name));
-  if (allAreDefaults) {
-    localStorage.removeItem(MEDS_KEY);
-    localStorage.removeItem('clinical_meds_imported');
-  }
-
-  // Always pull from Supabase — remote wins if it has data
   const remote = await syncLoadClinical('medications');
   if (remote && Array.isArray(remote) && remote.length) {
     localStorage.setItem(MEDS_KEY, JSON.stringify(remote));
-    localStorage.setItem('clinical_meds_imported', '1');
   }
+  initKnownMeds();
   render();
 })();
-
-// ══════════════════════════════════════════════════
-//  IMPORT FROM FILE (PDF or image → Claude)
-// ══════════════════════════════════════════════════
-async function handleMedFile(input) {
-  const file = input.files?.[0]; if (!file) return; input.value = '';
-  await processMedFile(file);
-}
-
-async function processMedFile(file) {
-
-  const bar    = document.getElementById('analyzing-bar');
-  const status = document.getElementById('analyzing-status');
-  bar.classList.add('show');
-  status.textContent = 'Reading document…';
-
-  try {
-    const isPdf = file.type === 'application/pdf';
-    let messages;
-
-    if (isPdf) {
-      const b64 = await toBase64(file);
-      messages = [{ role:'user', content:[
-        { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } },
-        { type:'text', text: EXTRACT_PROMPT }
-      ]}];
-    } else {
-      // Image — compress if needed
-      const b64 = await toBase64(file);
-      const mediaType = file.type || 'image/jpeg';
-      messages = [{ role:'user', content:[
-        { type:'image', source:{ type:'base64', media_type:mediaType, data:b64 } },
-        { type:'text', text: EXTRACT_PROMPT }
-      ]}];
-    }
-
-    status.textContent = 'Analyzing medications…';
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
-
-    // PASS 1: Extract medication names and basic info from the document
-    const response = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
-        system: 'You are a medical document assistant. Extract medication information and return compact JSON only.',
-        messages
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) throw new Error(`Server error ${response.status}`);
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message || 'Analysis failed');
-
-    const text = data.content?.map(c=>c.text||'').join('').trim().replace(/```json|```/g,'').trim();
-
-    let extracted;
-    try {
-      extracted = JSON.parse(text);
-    } catch(e) {
-      const lastClose = text.lastIndexOf('}');
-      if (lastClose > 0) {
-        try { extracted = JSON.parse(text.slice(0, lastClose+1) + ']'); } catch(e2) {}
-      }
-      if (!extracted) throw new Error('Could not parse medication list — please try again');
-    }
-    if (!Array.isArray(extracted) || !extracted.length) throw new Error('No medications found — please try again');
-
-    status.textContent = `Found ${extracted.length} medications — adding clinical details…`;
-
-    // PASS 2: Enrich with full clinical details using Claude's knowledge
-    const enrichController = new AbortController();
-    const enrichTimeout = setTimeout(() => enrichController.abort(), 45000);
-
-    const enrichResponse = await fetch('https://nrurfusjkvuudfzgfsww.supabase.co/functions/v1/claude-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
-        system: 'You are a clinical pharmacist. Return only valid JSON arrays.',
-        messages: [{ role:'user', content: `For each medication below, return a JSON array with full clinical details. Return ONLY the JSON array, no markdown, no explanation.
-
-Medications: ${extracted.map(m=>`${m.name} ${m.dose||''} ${m.freq||''}`).join(', ')}
-
-Each object must have ALL these fields:
-{"name":"","dose":"","freq":"","timing":"","category":"Immunosuppression|Antiviral|Antifungal|Antibiotic|Cardiac|GI|Other","active":true,"purpose":"What this drug does in 1-2 sentences","sideEffects":["side effect 1","side effect 2","side effect 3"],"monitoring":["what to monitor 1","what to monitor 2"],"note":"Special instructions or considerations"}
-
-Use the dose/freq/timing from the extracted list. Fill in purpose, sideEffects, monitoring, note from your clinical knowledge.` }]
-      }),
-      signal: enrichController.signal
-    });
-    clearTimeout(enrichTimeout);
-
-    const enrichData = await enrichResponse.json();
-    if (enrichData.error) throw new Error(enrichData.error.message);
-    const enrichText = enrichData.content?.map(c=>c.text||'').join('').trim().replace(/```json|```/g,'').trim();
-
-    let imported;
-    try {
-      imported = JSON.parse(enrichText);
-    } catch(e) {
-      // Fall back to basic extracted data if enrichment fails
-      imported = extracted;
-    }
-
-    const existing = getMeds().filter(m => !m._isDefault);
-    imported.forEach(u => {
-      const i = existing.findIndex(m => m.name.toLowerCase() === u.name.toLowerCase());
-      const entry = {
-        id: i>=0 ? existing[i].id : Date.now().toString()+Math.random(),
-        name:u.name, dose:u.dose||'', freq:u.freq||'', timing:u.timing||'',
-        category:u.category||'Other', purpose:u.purpose||'',
-        sideEffects:u.sideEffects||[], monitoring:u.monitoring||[],
-        note:u.note||'', active:u.active!==false, updated:new Date().toISOString()
-      };
-      if(i>=0) existing[i]=entry; else existing.push(entry);
-    });
-
-    saveMeds(existing);
-    render();
-    status.textContent = `✓ ${imported.length} medication${imported.length>1?'s':''} added`;
-    setTimeout(() => bar.classList.remove('show'), 3000);
-    showToast(`${imported.length} medications updated ✓`, 'success');
-
-  } catch(err) {
-    const msg = err.name === 'AbortError'
-      ? 'Timed out — try a screenshot instead of a PDF'
-      : (err.message || 'Could not read document');
-    status.textContent = '⚠️ ' + msg;
-    setTimeout(() => bar.classList.remove('show'), 6000);
-  }
-}
-
-// ── CLIPBOARD PASTE ──
-async function pasteFromClipboard() {
-  try {
-    const items = await navigator.clipboard.read();
-    for (const item of items) {
-      const imageType = item.types.find(t => t.startsWith('image/'));
-      if (imageType) {
-        const blob = await item.getType(imageType);
-        const file = new File([blob], 'paste.png', { type: imageType });
-        await processMedFile(file);
-        return;
-      }
-    }
-    showToast('No image found on clipboard — copy a screenshot first', '');
-  } catch(e) {
-    showToast('Paste failed — try the 📎 upload button instead', '');
-  }
-}
-
-// Also support Ctrl+V / Cmd+V anywhere on the page
-document.addEventListener('paste', async (e) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const blob = item.getAsFile();
-      if (blob) { await processMedFile(blob); return; }
-    }
-  }
-});
-
-function toBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-const EXTRACT_PROMPT = `List every medication from this document as a JSON array. Return ONLY the JSON array, nothing else, no markdown.
-Format: [{"name":"","dose":"","freq":"","timing":"","category":"Immunosuppression|Antiviral|Antifungal|Antibiotic|Cardiac|GI|Other","active":true,"note":""}]
-Be concise. Empty string for missing fields.`;
 </script>
 </body>
 </html>

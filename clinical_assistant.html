@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="sync.js"></script>
+<script src="sync.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clinical Assistant</title>
 <style>
@@ -204,19 +204,11 @@ function applyMedUpdate(updates) {
   const meds = load(MEDS_KEY);
   updates.forEach(u => {
     const i = meds.findIndex(m=>m.name.toLowerCase()===u.name.toLowerCase());
-    const entry = {
-      id: i>=0 ? meds[i].id : Date.now().toString()+Math.random(),
-      name: u.name, dose: u.dose||'', freq: u.freq||'',
-      note: u.note||'', purpose: u.purpose||'', category: u.category||'Other',
-      active: u.active!==false, updated: new Date().toISOString()
-    };
+    const entry = {id:i>=0?meds[i].id:Date.now().toString()+Math.random(), name:u.name, dose:u.dose||'', freq:u.freq||'', note:u.note||'', category:u.category||'Other', active:u.active!==false, updated:new Date().toISOString()};
     if(i>=0) meds[i]=entry; else meds.push(entry);
   });
   save(MEDS_KEY, meds);
-  // Sync to Supabase clinical_data table
   syncSaveClinical('medications', meds).then(()=>syncShowStatus('synced')).catch(()=>syncShowStatus('error'));
-  // Dispatch storage event so Medications page iframe picks up the change immediately
-  window.dispatchEvent(new StorageEvent('storage', { key: MEDS_KEY, newValue: JSON.stringify(meds) }));
   showToast('Medication list updated ✓','success');
 }
 
@@ -253,18 +245,18 @@ async function send() {
     apiContent = [fb, {type:'text',text:prompt}];
     displayText = text || `📄 ${file.name}`;
     const files = load(FILES_KEY);
-    const fileEntry = {name:file.name, date:new Date().toLocaleDateString(), timestamp:new Date().toISOString()};
-    files.push(fileEntry);
-    save(FILES_KEY, files);
-    // Sync to Supabase via parent postMessage (guaranteed session)
-    window.parent.postMessage({ type:'SYNC_SAVE_CLINICAL', dataType:'files', data:files }, '*');
+    const fileEntry = {name:file.name, date:new Date().toLocaleDateString(), storagePath:null};
+    // Upload file to Supabase Storage
     syncUploadFile(file.b64, file.mime, file.name).then(path => {
       if (path) {
         fileEntry.storagePath = path;
+        files.push(fileEntry);
         save(FILES_KEY, files);
-        window.parent.postMessage({ type:'SYNC_SAVE_CLINICAL', dataType:'files', data:files }, '*');
+        syncSaveClinical('files', files).catch(()=>{});
       }
     });
+    files.push(fileEntry);
+    save(FILES_KEY, files);
   } else {
     apiContent = text;
   }
