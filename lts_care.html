@@ -593,8 +593,9 @@ let currentUser = null;
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    currentUser = session.user;
-    showDashboard();
+    // Already logged in — go straight to the main dashboard
+    window.location.replace('https://cocomicare.github.io/cocomi-care/cocomi_care.html');
+    return;
   } else {
     showScreen('screen-login');
   }
