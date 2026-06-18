@@ -1212,29 +1212,43 @@ async function syncSettings() {
 //  DATA SYNC — pull all measurement data from Supabase
 //  peak_flow saves to clinical_data; vitals etc to clinical_data too
 // ══════════════════════════════════════════════════
-const DATA_PULLS = [
-  { storageKey: 'peak_flow_sessions_v1',  clinicalType: 'peak_flow' },
-  { storageKey: 'spiro_records_v1',       clinicalType: 'spirometer' },
-  { storageKey: 'symptom_checkins_v1',    clinicalType: 'symptoms' },
-  { storageKey: 'vss_spo2_v1',           clinicalType: 'vitals_spo2' },
-  { storageKey: 'vss_hr_v1',             clinicalType: 'vitals_hr' },
-  { storageKey: 'vss_bp_v1',             clinicalType: 'vitals_bp' },
-  { storageKey: 'vss_temp_v1',           clinicalType: 'vitals_temp' },
-  { storageKey: 'vss_wt_v1',             clinicalType: 'vitals_wt' },
+// Vitals are stored in health_records table (one row per reading)
+// Peak flow, spirometer, symptoms are stored in clinical_data table (whole array)
+const CLINICAL_PULLS = [
+  { storageKey: 'peak_flow_sessions_v1', clinicalType: 'peak_flow' },
+  { storageKey: 'spiro_records_v1',      clinicalType: 'spirometer' },
+  { storageKey: 'symptom_checkins_v1',   clinicalType: 'symptoms' },
+];
+
+const HEALTH_RECORD_PULLS = [
+  { storageKey: 'vss_spo2_v1',  module: 'vitals_spo2' },
+  { storageKey: 'vss_hr_v1',   module: 'vitals_hr' },
+  { storageKey: 'vss_bp_v1',   module: 'vitals_bp' },
+  { storageKey: 'vss_temp_v1', module: 'vitals_temp' },
+  { storageKey: 'vss_wt_v1',   module: 'vitals_wt' },
 ];
 
 async function pullMeasurementData() {
-  for (const { storageKey, clinicalType } of DATA_PULLS) {
+  // Pull vitals from health_records table
+  for (const { storageKey, module } of HEALTH_RECORD_PULLS) {
+    try {
+      const records = await syncLoadHealthRecords(module);
+      if (records && records.length) {
+        localStorage.setItem(storageKey, JSON.stringify(records.map(r => r.data)));
+      }
+    } catch(e) { /* offline */ }
+  }
+  // Pull clinical data (peak flow, spiro, symptoms)
+  for (const { storageKey, clinicalType } of CLINICAL_PULLS) {
     try {
       const remote = await syncLoadClinical(clinicalType);
       if (remote && Array.isArray(remote) && remote.length) {
         const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        // Only overwrite if remote has more records (never lose local edits)
         if (remote.length >= local.length) {
           localStorage.setItem(storageKey, JSON.stringify(remote));
         }
       }
-    } catch(e) { /* offline — use localStorage */ }
+    } catch(e) { /* offline */ }
   }
 }
 
