@@ -301,8 +301,8 @@ document.documentElement.style.visibility = 'hidden';
         ];
         for (const { key, type } of _clinical) {
           try {
-            const r = await _sbPull.from('clinical_data').select('data').eq('user_id',_uid).eq('data_type',type).single();
-            if (r.data?.data) localStorage.setItem(key, JSON.stringify(r.data.data));
+            const r = await _sbPull.from('clinical_data').select('data').eq('user_id',_uid).eq('data_type',type).limit(1);
+            if (r.data?.[0]?.data) localStorage.setItem(key, JSON.stringify(r.data[0].data));
           } catch(e) {}
         }
       }
