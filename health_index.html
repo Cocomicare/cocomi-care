@@ -438,6 +438,12 @@ header {
 <script src="sync.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+// ── PRERENDER GUARD ──
+if (document.prerendering) {
+  const _noop = { getItem:()=>null, setItem:()=>{}, removeItem:()=>{}, clear:()=>{}, key:()=>null, length:0 };
+  Object.defineProperty(window, 'localStorage', { value: _noop, writable: false });
+  document.addEventListener('prerenderingchange', () => { window.location.reload(); }, { once: true });
+}
 // ══════════════════════════════════════════════════
 //  PARAMETER DEFINITIONS
 // ══════════════════════════════════════════════════

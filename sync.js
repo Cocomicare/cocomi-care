@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════
-//  LTS Care — Supabase Sync Layer
+//  LTS Care — Supabase Sync Layer v2.1 (no single())
 //  Shared by all modules. Include before module JS.
 // ══════════════════════════════════════════════════
 
